@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>My New Epix Site</title>
+ <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+   line-height: 1.6; color: #333; background: #f8f9fa;
+   padding: 20px; max-width: 800px; margin: 0 auto;
+  }
+  h1 { color: #7c3aed; margin-bottom: 10px; }
+  h2 { color: #555; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+  p { margin-bottom: 12px; }
+  .hero {
+   background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+   color: #fff; padding: 40px 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;
+  }
+  .hero h1 { color: #fff; font-size: 2em; }
+  .hero p { opacity: 0.9; font-size: 1.1em; }
+  .card {
+   background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px;
+   border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  code {
+   background: #f3f0ff; color: #7c3aed; padding: 2px 6px; border-radius: 4px;
+   font-size: 0.9em;
+  }
+  pre {
+   background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 8px;
+   overflow-x: auto; margin: 12px 0; font-size: 0.85em; line-height: 1.5;
+  }
+  pre .comment { color: #6c7086; }
+  pre .tag { color: #89b4fa; }
+  pre .attr { color: #f9e2af; }
+  pre .string { color: #a6e3a1; }
+  ul { margin: 10px 0 10px 24px; }
+  li { margin-bottom: 6px; }
+  a { color: #7c3aed; }
+  .tip {
+   background: #f3f0ff; border-left: 4px solid #7c3aed; padding: 12px 16px;
+   border-radius: 0 8px 8px 0; margin: 12px 0;
+  }
+  footer { text-align: center; margin-top: 40px; color: #999; font-size: 0.85em; }
+ </style>
+</head>
+<body>
+
+<div class="hero">
+ <h1>Welcome to Your New Site</h1>
+ <p>This site is hosted on EpixNet! A decentralized, peer-to-peer web.</p>
+</div>
+
+<div class="card">
+ <h2>Getting Started</h2>
+ <p>This is your site's <code>index.html</code> file. Everything you see here can be edited to make it your own.</p>
+ <ul>
+  <li>Open the <strong>sidebar</strong> (drag from the right edge of the page) to access the file manager</li>
+  <li>Edit <code>index.html</code> to change this page</li>
+  <li>Upload images, CSS, and JavaScript files to build your site</li>
+  <li>Click <strong>Sign &amp; Publish</strong> in the sidebar to push changes to the network</li>
+ </ul>
+</div>
+
+<div class="card">
+ <h2>How EpixNet Sites Work</h2>
+ <ul>
+  <li><strong>No servers needed</strong> your site is served directly from your browser to visitors</li>
+  <li><strong>Your private key</strong> is stored locally and proves you own this site</li>
+  <li><strong>content.json</strong> tracks all files and their hashes, it gets updated automatically when you sign</li>
+  <li><strong>Peers</strong> who visit your site help serve it to others</li>
+ </ul>
+ <div class="tip">
+  As long as EpixNet is running, your site is being served to peers. The more visitors, the more available your site becomes.
+ </div>
+</div>
+
+<div class="card">
+ <h2>Example: Adding Content</h2>
+ <p>EpixNet sites are standard HTML, CSS, and JavaScript. Here's a simple example:</p>
+ <pre><span class="comment">&lt;!-- Add an image --&gt;</span>
+<span class="tag">&lt;img</span> <span class="attr">src=</span><span class="string">"photo.jpg"</span> <span class="attr">alt=</span><span class="string">"My photo"</span><span class="tag">&gt;</span>
+
+<span class="comment">&lt;!-- Add a link to another EpixNet site --&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">href=</span><span class="string">"/epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety"</span><span class="tag">&gt;</span>EpixNet Docs<span class="tag">&lt;/a&gt;</span>
+
+<span class="comment">&lt;!-- Add a stylesheet --&gt;</span>
+<span class="tag">&lt;link</span> <span class="attr">rel=</span><span class="string">"stylesheet"</span> <span class="attr">href=</span><span class="string">"style.css"</span><span class="tag">&gt;</span>
+
+<span class="comment">&lt;!-- Add JavaScript --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src=</span><span class="string">"app.js"</span><span class="tag">&gt;&lt;/script&gt;</span></pre>
+</div>
+
+<div class="card">
+ <h2>Using the EpixNet API</h2>
+ <p>Your site can interact with EpixNet through the <strong>EpixFrame API</strong>. Add this to your HTML:</p>
+ <pre><span class="tag">&lt;script&gt;</span>
+<span class="comment">// Connect to the EpixNet wrapper</span>
+var page = new EpixFrame()
+
+page.cmd(<span class="string">"siteInfo"</span>, [], function(info) {
+  console.log(<span class="string">"Site address:"</span>, info.address)
+  console.log(<span class="string">"Peers:"</span>, info.peers)
+})
+
+<span class="comment">// Show a notification</span>
+page.cmd(<span class="string">"wrapperNotification"</span>,
+  [<span class="string">"info"</span>, <span class="string">"Hello from my site!"</span>, 5000])
+<span class="tag">&lt;/script&gt;</span></pre>
+ <div class="tip">
+  The EpixFrame API lets you read/write files, interact with the database, manage users, and more. Check the docs for the full API reference.
+ </div>
+</div>
+
+<div class="card">
+ <h2>Tips</h2>
+ <ul>
+  <li>Site size limit is <strong>10 MB</strong> by default, visitors can increase it from the sidebar</li>
+  <li>Use the sidebar's <strong>file manager</strong> to upload, edit, and delete files</li>
+  <li>After making changes, always <strong>Sign &amp; Publish</strong> to update the network</li>
+  <li>You can register an <strong>xID name</strong> (like <code>mysite.epix</code>) for a human-readable address</li>
+ </ul>
+</div>
+
+<footer>
+ Powered by your EpixNet Node! The Decentralized Web
+</footer>
+
+</body>
+</html>
