@@ -121,5 +121,10 @@
 	"Show more": "Prikaži več",
 	"System": "Sistem",
 	"Light": "Svetla",
-	"Dark": "Temna"
+	"Dark": "Temna",
+	"All": "Vse",
+	"message": "sporočilo",
+	"topic": "tema",
+	"post": "objava",
+	"Discover": "Odkrij"
 }

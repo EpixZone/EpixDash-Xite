@@ -147,5 +147,10 @@
 	"Show more": "顯示更多",
 	"System": "系統",
 	"Light": "淺色",
-	"Dark": "深色"
+	"Dark": "深色",
+	"All": "全部",
+	"message": "訊息",
+	"topic": "話題",
+	"post": "貼文",
+	"Discover": "探索"
 }

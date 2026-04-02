@@ -121,5 +121,10 @@
 	"Show more": "Vis mere",
 	"System": "System",
 	"Light": "Lys",
-	"Dark": "Mørk"
+	"Dark": "Mørk",
+	"All": "Alle",
+	"message": "besked",
+	"topic": "emne",
+	"post": "opslag",
+	"Discover": "Udforsk"
 }

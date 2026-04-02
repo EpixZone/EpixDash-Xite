@@ -628,7 +628,7 @@ class FeedList {
                 active: active_filter === feed_type
               },
               onclick: this.handleFilterClick
-            }, feed_type));
+            }, _(feed_type)));
           }
           return results;
         })(),

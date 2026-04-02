@@ -3,7 +3,7 @@
  "address_index": 38156479,
  "description": "Epix Dashboard",
  "domain": "dashboard.epix",
- "epixnet_version": "0.0.2",
+ "epixnet_version": "0.0.6",
  "files": {
   "LICENSE": {
    "sha512": "e67014a69caa38c58575f333619243c9ebb3c98d462f0b4823ff5ed3d2cfdba3",
@@ -18,8 +18,8 @@
    "size": 208221
   },
   "css/all.css": {
-   "sha512": "c2a876f3c35d2af4d794790d6286967d2f4f8d4daf1e6d63ceb6a9ed28ed75be",
-   "size": 242893
+   "sha512": "3fc6a62542db9ad79dc15377484a90142f1198c26a6bf3805f2b13d94c4fe158",
+   "size": 243117
   },
   "img/loading-circle.gif": {
    "sha512": "339baf1bccb9b80ae29c2493e73b40cf0588c96fc095954b475dea0538aaa929",
@@ -74,20 +74,20 @@
    "size": 15350
   },
   "js/EpixDash.js": {
-   "sha512": "c2fa354f55e19118dda7cd8d430f4e69346efcf392d15008b742bf04c2152871",
-   "size": 9929
+   "sha512": "7728cb87ddf243c8ac7b6089ad68cfe96f8cf4bcd5373361f1059e3e1abf538a",
+   "size": 10735
   },
   "js/FeedList.js": {
-   "sha512": "d59071d43c84d5e593991088a256280130c12d303516cceb7b8da892f0b9f059",
-   "size": 23684
+   "sha512": "0628d8e8ffc1b6b6f16e271a4a01afbb3111962b9a1b8eede25bed7603d12cc1",
+   "size": 23687
   },
   "js/FilesResult.js": {
    "sha512": "05bd9d699e2767a7378b607e9bd96753f2cd5b998c22dd59dde3ffce625ec385",
    "size": 2000
   },
   "js/Head.js": {
-   "sha512": "bb9114cedc4f4805c788efd69a73e608bb19addcfb26488c837cf699bae5e378",
-   "size": 9782
+   "sha512": "da850e614cd46dd9513bab919c41aec45e3001b20c61aa15fee585cda095e6c9",
+   "size": 10436
   },
   "js/MuteList.js": {
    "sha512": "a2c515eaa4f2f833a6ded9130a601c7ffbe2eeb31added9db0a2fe0cb757e597",
@@ -181,81 +181,85 @@
    "sha512": "987200cdd55ff52d24062752089e69d73fa736f01233544455febf80c3daab22",
    "size": 956
   },
+  "languages/ar.json": {
+   "sha512": "bffd2699055f353aed03d3ac3803595a211145078c3a071b9ff7becce401c9f1",
+   "size": 6449
+  },
   "languages/da.json": {
-   "sha512": "3688101da15033661a8139b477f14e99aad0ddd8e395ea72a119ff7331c6f1d8",
-   "size": 5012
+   "sha512": "a2b3e32555d40bcaec2e26ea8a25d1b51daf6b8900a9ba17e2e54b3b5cf91b84",
+   "size": 5111
   },
   "languages/en.json": {
    "sha512": "27c74670adb75075fad058d5ceaf7b20c4e7786c83bae8a32f626f9782af34c9",
    "size": 2
   },
   "languages/es.json": {
-   "sha512": "2a36d4e8568edbe59b4f286bbf9d0aba4f60910f9c484558939be766c50d1a8f",
-   "size": 5493
+   "sha512": "37f1861babc48ee8be0777e66808f402af87f7a7f9c6228510ca649adc2c140d",
+   "size": 5601
   },
   "languages/fa.json": {
-   "sha512": "f3355cd8585f53371b86d297303ed7baafa9ea3ffcc9a1d8ee00c4007ff96dd5",
-   "size": 13056
+   "sha512": "cf92d9fb7018b4cab907603032117dd3e67dd2dd93942d57dd85a72103fe4861",
+   "size": 13168
   },
   "languages/fr.json": {
-   "sha512": "cde09de19b3060f6bcfd57861f7007447d59ac7610e29f848da6f07efa592151",
-   "size": 5487
+   "sha512": "a740d4bee2efe201706175c9c8788da4da0790c42719b0001afe15baa33f6052",
+   "size": 5596
   },
   "languages/hu.json": {
-   "sha512": "fca5d88b6594c209df729aedd2b7ff2d1417f7622dcbdcaae24feed11e54e142",
-   "size": 5587
+   "sha512": "8f944dde32adca93df5726f22fe7ce73776e76a3bc7a4ccfaca633d9c3601fb5",
+   "size": 5699
   },
   "languages/it.json": {
-   "sha512": "f6df45b90ddeed276e8081e93266f7e3cdf2f28436c1bfc2b41880a7a75e5fd1",
-   "size": 5640
+   "sha512": "9086127278edbcabbe8a8611e9faff90671232f6d8192ed251bdb56c85e60a30",
+   "size": 5754
   },
   "languages/jp.json": {
    "sha512": "38e0b6b78d18012df93ba539af54134fe613fbca0fa130d0bae9cfa673c1917a",
    "size": 12134
   },
   "languages/nl.json": {
-   "sha512": "0a1ef86d2df345ab46fd1acf03f7d1f509f0cafc8ed576592c7591be1bce8d53",
-   "size": 5312
+   "sha512": "e1525234c4c7fc3d70f2e4e6bc350bec4717bf3c3758a4bb1b9c68f631a92f0c",
+   "size": 5418
   },
   "languages/pl.json": {
-   "sha512": "d4d635ef956ebd0ea9fe018476c8c410b099dadaaded92ae3c27ebc0f1102928",
-   "size": 5633
+   "sha512": "3e8ef423a8d734d506974b64bc9389d8ddfa10c6f272cb4a80ab86ea8c372094",
+   "size": 5739
   },
   "languages/pt-br.json": {
-   "sha512": "abba4a671cbd0ba29b20c1260e7834b9848ced16b5a05d9592f63b8c2bd3cef3",
-   "size": 9357
+   "sha512": "ae085c29e1158d2329439e64ebf585be395d9d84f7549a3cf7ce06570bd167aa",
+   "size": 9469
   },
   "languages/pt.json": {
-   "sha512": "834e5b05d59a1276224ffab45c2cc73b82f9819163d278be998a2fd0dc861053",
-   "size": 5443
+   "sha512": "7c2e92962a268d0250310656522a910d5bb412a2a683b285815db5d6e98731d7",
+   "size": 5555
   },
   "languages/ru.json": {
-   "sha512": "b10776fbf8314463b48a18f3285cf2739ae25b9f1e32c9c79f52c5283d48ba84",
-   "size": 6943
+   "sha512": "5a1dd7f89786da0a1fa786a072bbbf16fe119acd016357ca2f23cb0e69bdb2d5",
+   "size": 7069
   },
   "languages/sk.json": {
    "sha512": "bd981ab3f761c0387e0e13624665cde52afe1d1d5dbd000ea68458b3cd8175af",
    "size": 7080
   },
   "languages/sl.json": {
-   "sha512": "1fa15be907668da802acefed542d0b88608f02358522abbdfc51516fad35aae4",
-   "size": 5340
+   "sha512": "0881727b506b7e3ce0f22cdd00121c1f27fb23c9804b757b841ddcf70df184fb",
+   "size": 5441
   },
   "languages/tr.json": {
-   "sha512": "04cc3c55f091c33b4580d1ecb7809b5a4359884515dd44664a8a32932d40dbca",
-   "size": 5423
+   "sha512": "0ccbbd5cc06c978b1f2ae88e0b2030c1c774084cc0e595a2b44e21494ad3f0d7",
+   "size": 5525
   },
   "languages/uk.json": {
-   "sha512": "297259aa7bd38c8e0bb9ed60bcc2d027ed03edd7365460e719f4b3b3ff527f72",
-   "size": 8719
+   "sha512": "ec9b399557bd247a6c08232c2ec66f59a850548d74c4c54782ca437fef125a13",
+   "size": 8849
   },
   "languages/zh-tw.json": {
-   "sha512": "59f6ba44735b1683a7d5a3d72213dffcd82e6229175ed27321f5029f4835ad7d",
-   "size": 7418
+   "sha512": "fb15a94bd4045d6c989dec5c629d1ca011bf69eceb8f96168c6a379ddf14368f",
+   "size": 7520
   },
   "languages/zh.json": {
-   "sha512": "ab50b13d4bc7fe3ae3a109b1a1a12fd47755dcc815a63100d0697a62895d8ae7",
-   "size": 9421
+   "sha512": "6a6d69953a1355d42bdbfc87e36bdc8b23e5500b4f2866e4425c97c05b53a6c3",
+   "size": 9523
   },
   "template-new/index.html": {
    "sha512": "f417f24d1dc7657be0db7a602fe8b52c8a7aa265acf6880dfc6f5ec643ef9b7a",
@@ -264,10 +268,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1773780331,
+ "modified": 1775164644,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G9yEmjDIZqKx4x+G8cLVcG77LBiqd7h0uBMiMUpRpkYHJJHHcB8QyY+SsibWjrl4biI9gpbeil8d8uAka8zfAJk="},
+ "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G29C6Vqz1A2Vl6mPsyO+wpPJ4+TOalIGqaM89bzsrMlpFF5Q3+djAYenBOjNazyWCK2EI2Y5B4/IyUTEb9dlVOs="},
  "signs_required": 1,
  "title": "Dashboard"
 }

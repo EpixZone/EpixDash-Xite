@@ -121,5 +121,10 @@
 	"Show more": "Daha fazla göster",
 	"System": "Sistem",
 	"Light": "Açık",
-	"Dark": "Koyu"
+	"Dark": "Koyu",
+	"All": "Tümü",
+	"message": "mesaj",
+	"topic": "konu",
+	"post": "gönderi",
+	"Discover": "Keşfet"
 }

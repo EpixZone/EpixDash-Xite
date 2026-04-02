@@ -303,6 +303,25 @@ class EpixDash extends EpixFrame {
     this.server_info = server_info;
     if (server_info.language) {
       loadLanguage(server_info.language);
+    } else if (!this._lang_detected) {
+      this._lang_detected = true;
+      var supported = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw"];
+      var browser_lang = (navigator.language || "").toLowerCase();
+      var detected = null;
+      if (supported.indexOf(browser_lang) >= 0) {
+        detected = browser_lang;
+      } else {
+        var short_lang = browser_lang.split("-")[0];
+        if (short_lang === "ja") short_lang = "jp";
+        if (supported.indexOf(short_lang) >= 0) {
+          detected = short_lang;
+        }
+      }
+      if (detected && detected !== "en") {
+        server_info.language = detected;
+        loadLanguage(detected);
+        this.cmd("configSet", ["language", detected]);
+      }
     }
     this.projector.scheduleRender();
     if (((ref = server_info.event) != null ? ref[0] : void 0) === "log_event") {

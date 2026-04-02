@@ -42,7 +42,7 @@ class Head {
 
   renderMenuLanguage() {
     var lang, langs, ref;
-    langs = ["da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw"];
+    langs = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw"];
     if (Page.server_info.language && Page.server_info.language.length >= 2 && (ref = Page.server_info.language, langs.indexOf(ref) < 0)) {
       langs.push(Page.server_info.language);
     }
@@ -51,16 +51,35 @@ class Head {
       results = [];
       for (i = 0, len = langs.length; i < len; i++) {
         lang = langs[i];
-        results.push([
-          h("a", {
-            href: "#" + lang,
-            onclick: this.handleLanguageClick,
-            classes: {
-              selected: Page.server_info.language === lang,
-              long: lang.length > 2
-            }
-          }, lang), " "
-        ]);
+        if (lang === "pt") {
+          results.push([
+            h("span.lang-pair", [
+              h("a.half", {
+                href: "#pt",
+                onclick: this.handleLanguageClick,
+                classes: { selected: Page.server_info.language === "pt" }
+              }, "pt"),
+              h("a.half", {
+                href: "#pt-br",
+                onclick: this.handleLanguageClick,
+                classes: { selected: Page.server_info.language === "pt-br" }
+              }, "pt-br")
+            ]), " "
+          ]);
+        } else if (lang === "pt-br") {
+          continue;
+        } else {
+          results.push([
+            h("a", {
+              href: "#" + lang,
+              onclick: this.handleLanguageClick,
+              classes: {
+                selected: Page.server_info.language === lang,
+                long: lang.length > 2
+              }
+            }, lang), " "
+          ]);
+        }
       }
       return results;
     })());

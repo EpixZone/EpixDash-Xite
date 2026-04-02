@@ -122,5 +122,10 @@
 	"Show more": "Pokaż więcej",
 	"System": "Systemowy",
 	"Light": "Jasny",
-	"Dark": "Ciemny"
+	"Dark": "Ciemny",
+	"All": "Wszystko",
+	"message": "wiadomość",
+	"topic": "temat",
+	"post": "wpis",
+	"Discover": "Odkryj"
 }

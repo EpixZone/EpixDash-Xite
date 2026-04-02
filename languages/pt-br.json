@@ -187,5 +187,10 @@
 	"Show more": "Mostrar mais",
 	"System": "Sistema",
 	"Light": "Claro",
-	"Dark": "Escuro"
+	"Dark": "Escuro",
+	"All": "Tudo",
+	"message": "mensagem",
+	"topic": "tópico",
+	"post": "publicação",
+	"Discover": "Descobrir"
 }

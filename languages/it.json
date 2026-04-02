@@ -127,5 +127,10 @@
 	"Show more": "Mostra di più",
 	"System": "Sistema",
 	"Light": "Chiaro",
-	"Dark": "Scuro"
+	"Dark": "Scuro",
+	"All": "Tutto",
+	"message": "messaggio",
+	"topic": "argomento",
+	"post": "pubblicazione",
+	"Discover": "Scopri"
 }

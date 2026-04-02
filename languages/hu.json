@@ -122,5 +122,10 @@
 	"Show more": "Több megjelenítése",
 	"System": "Rendszer",
 	"Light": "Világos",
-	"Dark": "Sötét"
+	"Dark": "Sötét",
+	"All": "Összes",
+	"message": "üzenet",
+	"topic": "téma",
+	"post": "bejegyzés",
+	"Discover": "Felfedezés"
 }

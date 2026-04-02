@@ -121,5 +121,10 @@
 	"Show more": "Afficher plus",
 	"System": "Système",
 	"Light": "Clair",
-	"Dark": "Sombre"
+	"Dark": "Sombre",
+	"All": "Tout",
+	"message": "message",
+	"topic": "sujet",
+	"post": "publication",
+	"Discover": "Découvrir"
 }

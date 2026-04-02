@@ -1015,6 +1015,22 @@ body:after {
 	font-size: 11px
 }
 
+.menu-radio .lang-pair {
+	display: inline-flex;
+	width: 18.5%;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	gap: 0;
+}
+
+.menu-radio .lang-pair a.half {
+	flex: 1;
+	width: auto;
+	font-size: 10px;
+	text-align: center;
+	margin: 0;
+}
+
 
 /* ---- MuteList.css ---- */
 

@@ -200,5 +200,10 @@
 	"Trackers": "追踪器",
 	"System": "系统",
 	"Light": "浅色",
-	"Dark": "深色"
+	"Dark": "深色",
+	"All": "全部",
+	"message": "消息",
+	"topic": "话题",
+	"post": "帖子",
+	"Discover": "发现"
 }
