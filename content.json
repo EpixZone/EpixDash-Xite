@@ -70,8 +70,8 @@
    "size": 6104
   },
   "js/Dashboard.js": {
-   "sha512": "1c06cad5ac8a25a1d946ab577f6a688721a8be82d4c728cf90a5ac7e85b9c328",
-   "size": 15350
+   "sha512": "443dc7ded7e70c19e98d32a5af5616595d559b635e6681b4af782c9d30c592ab",
+   "size": 15448
   },
   "js/EpixDash.js": {
    "sha512": "7728cb87ddf243c8ac7b6089ad68cfe96f8cf4bcd5373361f1059e3e1abf538a",
@@ -268,10 +268,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1775164644,
+ "modified": 1775169332,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G29C6Vqz1A2Vl6mPsyO+wpPJ4+TOalIGqaM89bzsrMlpFF5Q3+djAYenBOjNazyWCK2EI2Y5B4/IyUTEb9dlVOs="},
+ "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "HDtPbeDnhPBln/LZbdFy5NEOPxcfFVgJvGRe2mqjHIH9R+KqSoklpJ6/+dphcLTrKe25zZNqzSKlfj1ktUZHnSo="},
  "signs_required": 1,
  "title": "Dashboard"
 }

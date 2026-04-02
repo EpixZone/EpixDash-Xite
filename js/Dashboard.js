@@ -24,6 +24,10 @@ class Dashboard {
     this.has_web_gl = null;
     Page.cmd('wrapperPermissionAdd', 'ADMIN', () => {
       Page.reloadServerInfo();
+      Page.reloadSiteInfo();
+      if (Page.site_list) {
+        Page.site_list.update();
+      }
     });
   }
 
