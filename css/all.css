@@ -2240,10 +2240,10 @@ body:after {
 }
 
 
-/* ---- PageStats.css ---- */
+/* ---- NetworkStats.css ---- */
 
 
-#PageStats {
+#NetworkStats {
 	margin-top: 50px;
 	max-width: 1400px;
 	padding-left: 40px;
@@ -3868,13 +3868,13 @@ input::placeholder {
 }
 
 .PageFiles-container,
-.PageStats-container {
+.NetworkStats-container {
 	width: 0px;
 	float: left;
 }
 
 #PageFiles,
-#PageStats {
+#NetworkStats {
 	-webkit-transition: all 0.3s;
 	-moz-transition: all 0.3s;
 	-o-transition: all 0.3s;
@@ -3934,10 +3934,10 @@ body.changing .left {
 	z-index: 0;
 }
 
-#BodySites #PageStats,
-#BodyHome #PageStats,
-#BodyFiles #PageStats,
-body.changing #PageStats {
+#BodySites #NetworkStats,
+#BodyHome #NetworkStats,
+#BodyFiles #NetworkStats,
+body.changing #NetworkStats {
 	opacity: 0;
 	-webkit-transform: translateY(30px);
 	-moz-transform: translateY(30px);
@@ -3968,9 +3968,9 @@ body.changing #PageFiles {
 	max-height: 0px
 }
 
-#BodySites #PageStats,
-#BodyHome #PageStats,
-#BodyFiles #PageStats {
+#BodySites #NetworkStats,
+#BodyHome #NetworkStats,
+#BodyFiles #NetworkStats {
 	max-height: 0px
 }
 
@@ -4044,7 +4044,7 @@ body.changing #PageFiles .files {
 	height: 0px
 }
 
-/* PageStats */
+/* NetworkStats */
 #BodyStats .left {
 	/*background-image: -webkit-linear-gradient(60deg, #272a38 0px, #1E2527 1260px);background-image: -moz-linear-gradient(60deg, #272a38 0px, #1E2527 1260px);background-image: -o-linear-gradient(60deg, #272a38 0px, #1E2527 1260px);background-image: -ms-linear-gradient(60deg, #272a38 0px, #1E2527 1260px);background-image: linear-gradient(60deg, #272a38 0px, #1E2527 1260px);*/
 	min-height: 1260px;

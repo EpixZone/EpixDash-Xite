@@ -1,6 +1,6 @@
 (function() {
 
-class PageStats {
+class NetworkStats {
   constructor() {
     this.render = this.render.bind(this);
     this.loadChartjs = this.loadChartjs.bind(this);
@@ -185,7 +185,7 @@ class PageStats {
       this.need_load_chartjs = false;
     }
     intervals = ["1w", "1d"];
-    return h("div#PageStats", [
+    return h("div#NetworkStats", [
       h("div.intervals", intervals.map((interval) => {
         var interval_param;
         if (interval === "1d") {
@@ -205,7 +205,7 @@ class PageStats {
   }
 }
 
-Object.assign(PageStats.prototype, LogMixin);
-window.PageStats = PageStats;
+Object.assign(NetworkStats.prototype, LogMixin);
+window.NetworkStats = NetworkStats;
 
 })();

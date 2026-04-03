@@ -62,7 +62,7 @@ class EpixDash extends EpixFrame {
       this.addRenderer($("#PageFiles"), this.page_files.render);
       this.page_files.need_update = true;
     } else if (mode === "Stats") {
-      this.addRenderer($("#PageStats"), this.page_stats.render);
+      this.addRenderer($("#NetworkStats"), this.page_stats.render);
       this.page_stats.need_update = true;
     } else {
       mode = "Sites";
@@ -90,7 +90,7 @@ class EpixDash extends EpixFrame {
     this.site_list = new SiteList();
     this.feed_list = new FeedList();
     this.page_files = new PageFiles();
-    this.page_stats = new PageStats();
+    this.page_stats = new NetworkStats();
     this.head = new Head();
     this.dashboard = new Dashboard();
     this.mute_list = new MuteList();

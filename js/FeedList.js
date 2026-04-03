@@ -303,6 +303,75 @@ class FeedList {
     }
   }
 
+  inlineMarkdown(text) {
+    try {
+      var html;
+      if (typeof marked !== "undefined") {
+        if (marked.parseInline) {
+          html = marked.parseInline(text);
+        } else if (marked.inlineLexer) {
+          html = marked.inlineLexer(text, [], {});
+        } else {
+          html = text;
+        }
+      } else {
+        html = text;
+      }
+      // Sanitize: strip any tags except basic inline formatting
+      return html.replace(/<(?!\/?(?:b|i|em|strong|code|a|del|s)\b)[^>]*>/gi, "");
+    } catch (e) {
+      return text;
+    }
+  }
+
+  isQuotedIn(main_body, other_body) {
+    // Check if the main body quotes the other body's text
+    var quote_match = main_body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
+    if (!quote_match) return false;
+    var quote_text = quote_match[2].replace(/^\s+/, "").slice(0, 80).trim();
+    if (!quote_text) return false;
+    // Strip username prefix from the other body
+    var stripped = other_body.replace(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/, "");
+    stripped = stripped.replace(/[\n\r>]+/g, " ").trim();
+    return stripped.length > 0 && quote_text.indexOf(stripped.slice(0, 80)) === 0;
+  }
+
+  escapeHtml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  formatBodyHtml(body, type) {
+    body = body.replace(/[\n\r]+/g, "\n");
+    var username_html = "";
+    var reply_html = "";
+
+    if (type === "comment" || type === "mention") {
+      // Extract username prefix
+      var username_match = body.match(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/);
+      if (username_match) {
+        var username = username_match[2] || username_match[3];
+        username_html = "<b>" + this.escapeHtml(username) + " \u203A </b>";
+        body = body.replace(username_match[0], "");
+      }
+      // Extract reply quote: > [user](#anchor): quoted text
+      var quote_match = body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
+      if (quote_match) {
+        var quote_user = quote_match[1];
+        var quote_text = quote_match[2].replace(/^\s+/, "");
+        if (quote_text) {
+          reply_html = '<div class="reply-quote"><span class="reply-user">' +
+            this.escapeHtml(quote_user) + ": </span>" +
+            this.escapeHtml(quote_text.slice(0, 80)) + "</div>";
+        }
+      }
+      // Remove all blockquote lines from body
+      body = body.replace(/^[ ]*>.*$/gm, "");
+    }
+
+    var text = body.replace(/\n/g, " ").trim().slice(0, 201);
+    return reply_html + username_html + this.inlineMarkdown(text);
+  }
+
   formatBody(body, type) {
     var username_formatted, username_match, reply_quote;
     body = body.replace(/[\n\r]+/g, "\n");
@@ -425,14 +494,19 @@ class FeedList {
           }, this.formatTitle(feed.title))
         ]), h("div.body", {
           key: feed.body,
+          innerHTML: this.formatBodyHtml(feed.body, feed.type),
           enterAnimation: this.enterAnimation,
           exitAnimation: this.exitAnimation
-        }, this.formatBody(feed.body, feed.type)), feed.body_more ? feed.body_more.map((body_more) => {
+        }), feed.body_more ? feed.body_more.map((body_more) => {
+          if (this.isQuotedIn(feed.body, body_more)) {
+            return null;
+          }
           return h("div.body", {
             key: body_more,
+            innerHTML: this.formatBodyHtml(body_more, feed.type),
             enterAnimation: this.enterAnimation,
             exitAnimation: this.exitAnimation
-          }, this.formatBody(body_more, feed.type));
+          });
         }) : void 0, feed.more > 0 ? h("a.more", {
           href: site.getHref() + feed.url
         }, ["+" + feed.more + " more"]) : void 0

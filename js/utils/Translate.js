@@ -4,6 +4,9 @@
   var current_language = "en";
 
   window.loadLanguage = function(lang) {
+    if (!lang || lang === "en" || lang === "english") {
+      return;  // English is the default, no translation file needed
+    }
     if (lang === current_language && !isEmpty(translations)) {
       return;
     }
