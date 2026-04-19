@@ -8,6 +8,9 @@ class FeedList {
     this.saveFeedVisit = this.saveFeedVisit.bind(this);
     this.getClass = this.getClass.bind(this);
     this.renderNotifications = this.renderNotifications.bind(this);
+    this.renderNotificationAlerts = this.renderNotificationAlerts.bind(this);
+    this.queryNotificationAlerts = this.queryNotificationAlerts.bind(this);
+    this.handleAlertDismissClick = this.handleAlertDismissClick.bind(this);
     this.handleNotificationHideClick = this.handleNotificationHideClick.bind(this);
     this.renderSearchStat = this.renderSearchStat.bind(this);
     this.renderWelcome = this.renderWelcome.bind(this);
@@ -41,8 +44,11 @@ class FeedList {
     this.feed_keys = {};
     this.date_feed_visit = null;
     this.date_save_feed_visit = 0;
+    this.notification_alerts = [];
+    this.notification_alerts_loaded = false;
     Page.on_settings.then(() => {
       this.need_update = true;
+      this.queryNotificationAlerts();
       return document.body.onscroll = () => {
         return RateLimit(300, () => {
           return this.checkScroll();
@@ -559,6 +565,76 @@ class FeedList {
     return false;
   }
 
+  queryNotificationAlerts() {
+    try {
+      Page.cmd("notificationQuery", {}, (res) => {
+        try {
+          if (!res || res.error || res.muted) {
+            this.notification_alerts = [];
+          } else {
+            this.notification_alerts = (res.results || []).filter(function(r) {
+              return r.count > 0;
+            });
+          }
+        } catch(e) {
+          console.log("notificationQuery callback error:", e);
+          this.notification_alerts = [];
+        }
+        this.notification_alerts_loaded = true;
+        Page.projector.scheduleRender();
+      });
+    } catch(e) {
+      console.log("notificationQuery call error:", e);
+    }
+  }
+
+  handleAlertDismissClick(e) {
+    e.preventDefault();
+    var site_address = e.target.getAttribute("data-site");
+    var name = e.target.getAttribute("data-name");
+    if (site_address && name) {
+      Page.cmd("notificationDismiss", [site_address, name], () => {
+        this.queryNotificationAlerts();
+      });
+    }
+    return false;
+  }
+
+  renderNotificationAlerts() {
+    try {
+      if (!this.notification_alerts_loaded || this.notification_alerts.length === 0) {
+        return null;
+      }
+      return h("div.notification-alerts",
+        this.notification_alerts.map((alert) => {
+          var linkChildren = [];
+          if (alert.icon) {
+            linkChildren.push(h("img.alert-icon", {src: "/" + alert.site + "/" + alert.icon, width: 20, height: 20}));
+          }
+          linkChildren.push(h("span.alert-count", alert.count.toString()));
+          linkChildren.push(h("span.alert-title", alert.title || alert.name));
+          return h("div.alert-item-row", {
+            key: alert.site + "-" + alert.name,
+            enterAnimation: Animation.slideDown,
+            exitAnimation: Animation.slideUp
+          }, [
+            h("a.alert-item", {href: "/" + alert.site + "/"}, linkChildren),
+            h("a.alert-dismiss", {
+              href: "#Dismiss",
+              title: "Dismiss",
+              "data-site": alert.site,
+              "data-name": alert.name,
+              onclick: this.handleAlertDismissClick
+            }, "\u00D7")
+          ]);
+        })
+      );
+    } catch(e) {
+      console.log("renderNotificationAlerts error:", e);
+      return null;
+    }
+  }
+
   renderNotifications() {
     return h("div.notifications", {
       classes: {
@@ -683,7 +759,7 @@ class FeedList {
       classes: {
         faded: Page.mute_list.visible
       }
-    }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
+    }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
       h("div.feeds-filters", has_feeds ? [
         h("a.feeds-filter", {
           href: "#all",
@@ -768,8 +844,9 @@ class FeedList {
     var ref, ref1, ref2;
     if (((ref = site_info.event) != null ? ref[0] : void 0) === "file_done" && ((ref1 = site_info.event) != null ? ref1[1].endsWith(".json") : void 0) && !((ref2 = site_info.event) != null ? ref2[1].endsWith("content.json") : void 0)) {
       if (!this.searching) {
-        return this.need_update = true;
+        this.need_update = true;
       }
+      this.queryNotificationAlerts();
     }
   }
 }

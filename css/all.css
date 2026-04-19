@@ -2951,6 +2951,69 @@ body:after {
 	color: #9760F9;
 }
 
+/* Notification alerts from cross-site notification plugin */
+.notification-alerts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 15px 25px;
+	margin-bottom: 10px;
+}
+
+.notification-alerts .alert-item-row {
+	display: flex;
+	align-items: center;
+	background: #546;
+	border-radius: 6px;
+}
+
+.notification-alerts .alert-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	color: #fff;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.notification-alerts .alert-dismiss {
+	color: rgba(255, 255, 255, 0.4);
+	text-decoration: none;
+	font-size: 14px;
+	padding: 0 10px 0 0;
+	line-height: 1;
+}
+
+.notification-alerts .alert-dismiss:hover {
+	color: #fff;
+}
+
+.notification-alerts .alert-icon {
+	border-radius: 3px;
+	flex-shrink: 0;
+}
+
+.notification-alerts .alert-count {
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 4px;
+	min-width: 20px;
+	height: 20px;
+	line-height: 20px;
+	text-align: center;
+	font-size: 12px;
+	font-weight: bold;
+	padding: 0 5px;
+	flex-shrink: 0;
+}
+
+.notification-alerts .alert-title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .feeds-filters {
 	margin-top: 10px;
 	margin-left: 25px;

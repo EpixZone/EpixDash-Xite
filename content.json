@@ -3,7 +3,7 @@
  "address_index": 38156479,
  "description": "Epix Dashboard",
  "domain": "dashboard.epix",
- "epixnet_version": "0.0.7",
+ "epixnet_version": "0.2.0",
  "files": {
   "LICENSE": {
    "sha512": "e67014a69caa38c58575f333619243c9ebb3c98d462f0b4823ff5ed3d2cfdba3",
@@ -18,8 +18,8 @@
    "size": 208221
   },
   "css/all.css": {
-   "sha512": "45bc7e863b9fbf1e25b8386c05b042865aae5fb9b5c182eb6771273a128ce27c",
-   "size": 243153
+   "sha512": "3200ac8a8a4cea126e8abd5656bd4f6b9c7c57bdd33808b8262d366513b4a6f8",
+   "size": 244277
   },
   "img/loading-circle.gif": {
    "sha512": "339baf1bccb9b80ae29c2493e73b40cf0588c96fc095954b475dea0538aaa929",
@@ -78,16 +78,16 @@
    "size": 10741
   },
   "js/FeedList.js": {
-   "sha512": "c10d50d275677c12f78b278f4afacff40df2e2e36138d3b6649e1bb60d79b683",
-   "size": 26406
+   "sha512": "4f3d9a30404c11ac4ec49b4b3f702fb2aac55d9e7721c284a03092c6509c8608",
+   "size": 29101
   },
   "js/FilesResult.js": {
    "sha512": "05bd9d699e2767a7378b607e9bd96753f2cd5b998c22dd59dde3ffce625ec385",
    "size": 2000
   },
   "js/Head.js": {
-   "sha512": "da850e614cd46dd9513bab919c41aec45e3001b20c61aa15fee585cda095e6c9",
-   "size": 10436
+   "sha512": "a88372f3b87be8dcc01d3fb0ba769318977fba6b6e9073996cb155c5a0f1733c",
+   "size": 10561
   },
   "js/MuteList.js": {
    "sha512": "a2c515eaa4f2f833a6ded9130a601c7ffbe2eeb31added9db0a2fe0cb757e597",
@@ -189,6 +189,10 @@
    "sha512": "a2b3e32555d40bcaec2e26ea8a25d1b51daf6b8900a9ba17e2e54b3b5cf91b84",
    "size": 5111
   },
+  "languages/de.json": {
+   "sha512": "91373c9d0abb7c40dffd12dd4d3c607dbca0b7bb21d29eb99dfe39300962314f",
+   "size": 5615
+  },
   "languages/en.json": {
    "sha512": "27c74670adb75075fad058d5ceaf7b20c4e7786c83bae8a32f626f9782af34c9",
    "size": 2
@@ -268,10 +272,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1775252866,
+ "modified": 1776641305,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G54Oyc5AM352oksPA1gIcExWmTKxqZblkyjYISVd7WXoRCHxskRBJj0TuPC5QQPUKlq/nds+bYsfs1lfvKYuoIM="},
+ "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "GyS3ehNC48RS0Lf+CDAPoDM68sMLoGnAsuzNDqdHs1lgXWpxTgvJio4pg4Rja4DX+RfWWMh5GQZv8UEqnColelA="},
  "signs_required": 1,
  "title": "Dashboard"
 }
