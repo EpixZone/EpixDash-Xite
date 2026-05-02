@@ -982,7 +982,7 @@ body:after {
 
 .menu-radio a {
 	background-color: #EEE;
-	width: 18.5%;
+	width: 15%;
 	;
 	text-align: center;
 	margin-top: 2px;
@@ -1012,7 +1012,7 @@ body:after {
 }
 
 .menu-radio a.long {
-	font-size: 11px
+	font-size: 10px
 }
 
 .menu-radio .lang-pair {
