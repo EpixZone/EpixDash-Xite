@@ -305,7 +305,7 @@ class EpixDash extends EpixFrame {
       loadLanguage(server_info.language);
     } else if (!this._lang_detected) {
       this._lang_detected = true;
-      var supported = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw"];
+      var supported = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "nl", "pl", "pt", "pt-br", "ru", "sk", "tr", "uk", "zh", "zh-tw", "jp", "sl", "kr"];
       var browser_lang = (navigator.language || "").toLowerCase();
       var detected = null;
       if (supported.indexOf(browser_lang) >= 0) {
