@@ -276,10 +276,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1777992292,
+ "modified": 1777992697,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G7J2hx8ig72RY8R5pfOukzDV2qTMLd3zWMV1lScByQIvDZWL3UBzhitYdyaSdX8zZw7VAwneX2YNlTBmOES6S4Q="},
+ "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "GyCBTmezfbEnvrxMyLsMXOc2q8arMMJzG6GnPBVwnd7HQOJMEsweGAXhXbk9bOsIEsoV91OXkW3+kjAL79v250E="},
  "signs_required": 1,
  "title": "Dashboard"
 }
