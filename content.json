@@ -3,7 +3,7 @@
  "address_index": 38156479,
  "description": "Epix Dashboard",
  "domain": "dashboard.epix",
- "epixnet_version": "0.2.0",
+ "epixnet_version": "0.2.4",
  "files": {
   "LICENSE": {
    "sha512": "e67014a69caa38c58575f333619243c9ebb3c98d462f0b4823ff5ed3d2cfdba3",
@@ -18,8 +18,8 @@
    "size": 208221
   },
   "css/all.css": {
-   "sha512": "3200ac8a8a4cea126e8abd5656bd4f6b9c7c57bdd33808b8262d366513b4a6f8",
-   "size": 244277
+   "sha512": "3b7011d621375be35fb7bb4a88eae3dcf727bf957720d0714b523b96d5258621",
+   "size": 244275
   },
   "img/loading-circle.gif": {
    "sha512": "339baf1bccb9b80ae29c2493e73b40cf0588c96fc095954b475dea0538aaa929",
@@ -74,8 +74,8 @@
    "size": 15448
   },
   "js/EpixDash.js": {
-   "sha512": "7309715cf6b72159a18017f7016920a4052979095375a44ec10c5242c8763d23",
-   "size": 10741
+   "sha512": "edf6fe40ece511a3d27f546036cfcec136b555c9743e3b5c40f400165957ea05",
+   "size": 10747
   },
   "js/FeedList.js": {
    "sha512": "4f3d9a30404c11ac4ec49b4b3f702fb2aac55d9e7721c284a03092c6509c8608",
@@ -86,8 +86,8 @@
    "size": 2000
   },
   "js/Head.js": {
-   "sha512": "a88372f3b87be8dcc01d3fb0ba769318977fba6b6e9073996cb155c5a0f1733c",
-   "size": 10561
+   "sha512": "a8aa44b4b3cd7540a11fb48c9fb64c21b57b18843bc0874569dcee51bf07bd9a",
+   "size": 10567
   },
   "js/MuteList.js": {
    "sha512": "a2c515eaa4f2f833a6ded9130a601c7ffbe2eeb31added9db0a2fe0cb757e597",
@@ -190,8 +190,8 @@
    "size": 5111
   },
   "languages/de.json": {
-   "sha512": "91373c9d0abb7c40dffd12dd4d3c607dbca0b7bb21d29eb99dfe39300962314f",
-   "size": 5615
+   "sha512": "74275426085b817ef0f64f3915d4225668d19ceffb64c5d80d3ab09f968e3cfe",
+   "size": 5704
   },
   "languages/en.json": {
    "sha512": "27c74670adb75075fad058d5ceaf7b20c4e7786c83bae8a32f626f9782af34c9",
@@ -220,6 +220,10 @@
   "languages/jp.json": {
    "sha512": "38e0b6b78d18012df93ba539af54134fe613fbca0fa130d0bae9cfa673c1917a",
    "size": 12134
+  },
+  "languages/kr.json": {
+   "sha512": "50acf64b8aff1133cd96959f51a234a36a898dbcbfdaaeeced7ddffbac1a3d52",
+   "size": 5819
   },
   "languages/nl.json": {
    "sha512": "e1525234c4c7fc3d70f2e4e6bc350bec4717bf3c3758a4bb1b9c68f631a92f0c",
@@ -272,10 +276,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1776641305,
+ "modified": 1777992292,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "GyS3ehNC48RS0Lf+CDAPoDM68sMLoGnAsuzNDqdHs1lgXWpxTgvJio4pg4Rja4DX+RfWWMh5GQZv8UEqnColelA="},
+ "signs": {"epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t": "G7J2hx8ig72RY8R5pfOukzDV2qTMLd3zWMV1lScByQIvDZWL3UBzhitYdyaSdX8zZw7VAwneX2YNlTBmOES6S4Q="},
  "signs_required": 1,
  "title": "Dashboard"
 }
