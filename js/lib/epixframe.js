@@ -312,14 +312,6 @@
     feedSearch(query) { return this.cmd('feedSearch', [query]); }
 
     // ---------------------------------------------------------------------------
-    // Content filtering / Mute
-    // ---------------------------------------------------------------------------
-
-    muteAdd(authAddress, certUserId, reason) { return this.cmd('muteAdd', [authAddress, certUserId, reason]); }
-    muteRemove(authAddress) { return this.cmd('muteRemove', [authAddress]); }
-    muteList() { return this.cmd('muteList'); }
-
-    // ---------------------------------------------------------------------------
     // Optional files
     // ---------------------------------------------------------------------------
 
