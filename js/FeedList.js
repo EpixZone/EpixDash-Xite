@@ -560,7 +560,6 @@ class FeedList {
     var address;
     address = e.target.getAttribute("address");
     Page.settings.siteblocks_ignore[address] = true;
-    Page.mute_list.update();
     Page.saveSettings();
     return false;
   }
@@ -635,29 +634,13 @@ class FeedList {
     }
   }
 
-  renderNotifications() {
-    return h("div.notifications", {
-      classes: {
-        empty: Page.mute_list.siteblocks_serving.length === 0
-      }
-    }, [
-      Page.mute_list.siteblocks_serving.map((siteblock) => {
-        return h("div.notification", {
-          key: siteblock.address,
-          enterAnimation: Animation.show,
-          exitAnimation: Animation.slideUpInout
-        }, [
-          "You are serving a blocked site: ", h("a.site", {
-            href: siteblock.site.getHref()
-          }, siteblock.site.row.content.title), h("span.reason", [h("b", "Reason: "), siteblock.reason]), h("a.hide", {
-            href: "#Hide",
-            onclick: this.handleNotificationHideClick,
-            address: siteblock.address
-          }, "\u00D7")
-        ]);
-      })
-    ]);
-  }
+   renderNotifications() {
+     return h("div.notifications", {
+       classes: {
+         empty: true
+       }
+     }, []);
+   }
 
   getClass() {
     if (this.searching !== null) {
@@ -757,9 +740,9 @@ class FeedList {
     }
     return h("div#FeedList.FeedContainer", {
       classes: {
-        faded: Page.mute_list.visible
+        faded: false
       }
-    }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
+    }, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
       h("div.feeds-filters", has_feeds ? [
         h("a.feeds-filter", {
           href: "#all",
