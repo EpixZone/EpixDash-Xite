@@ -191,32 +191,38 @@ class Site {
       });
     } else {
       if (!this.row.content.title) {
-        Page.cmd("siteDelete", {
-          "address": this.row.address
-        });
-        this.item_list.deleteItem(this);
-        Page.projector.scheduleRender();
+        this.deleteSite();
       } else {
         Page.cmd("wrapperConfirm", ["Are you sure?" + (" <b>" + this.row.content.title + "</b>"), ["Delete", "Blacklist"]], (confirmed) => {
           if (confirmed === 1) {
-            Page.cmd("siteDelete", {
-              "address": this.row.address
-            });
-            this.item_list.deleteItem(this);
-            return Page.projector.scheduleRender();
+            return this.deleteSite();
           } else if (confirmed === 2) {
             return Page.cmd("wrapperPrompt", ["Blacklist <b>" + this.row.content.title + "</b>", "text", "Delete and Blacklist", "Reason"], (reason) => {
-              Page.cmd("siteDelete", {
-                "address": this.row.address
+              return this.deleteSite(() => {
+                Page.cmd("siteblockAdd", [this.row.address, reason]);
               });
-              Page.cmd("siteblockAdd", [this.row.address, reason]);
-              this.item_list.deleteItem(this);
-              return Page.projector.scheduleRender();
             });
           }
         });
       }
     }
+    return false;
+  }
+
+  deleteSite(onSuccess) {
+    // Wait for the server: only remove the row when the delete actually
+    // succeeded, so a refusal (e.g. NoNewSites) leaves the site in place.
+    // The node surfaces policy refusals as their own notification.
+    Page.cmd("siteDelete", { "address": this.row.address }, (res) => {
+      if (res && res.error) {
+        return false; // refused - keep the row; the node showed why
+      }
+      if (onSuccess) {
+        onSuccess();
+      }
+      this.item_list.deleteItem(this);
+      return Page.projector.scheduleRender();
+    });
     return false;
   }
 
