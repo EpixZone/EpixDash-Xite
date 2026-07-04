@@ -93,7 +93,6 @@ class EpixDash extends EpixFrame {
     this.page_stats = new NetworkStats();
     this.head = new Head();
     this.dashboard = new Dashboard();
-    this.mute_list = new MuteList();
     this.console_list = new ConsoleList();
     this.trigger = new Trigger();
     if (base.href.indexOf("?") === -1) {
