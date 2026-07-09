@@ -19,11 +19,11 @@ class ChartRadar {
       {
         id: "site_bw",
         title: "Transferred data (last 7 days)",
-        color: "#608DECDD"
+        color: "#5954CD"
       }, {
         id: "site_size",
         title: "Site size",
-        color: "#9C27B0DD"
+        color: "#8A4BDB"
       }
     ];
   }
@@ -129,23 +129,6 @@ class ChartRadar {
   }
 
   getChartConfiguration() {
-    var fill, fill2, shadowed;
-    fill = this.ctx.createLinearGradient(0, 0, 900, 0);
-    fill.addColorStop(0, "#608DECCC");
-    fill.addColorStop(1, "#9C27B0CC");
-    fill2 = this.ctx.createLinearGradient(0, 0, 900, 0);
-    fill2.addColorStop(0, "#9C27B0DD");
-    fill2.addColorStop(1, "#608DECDD");
-    shadowed = {
-      beforeDatasetsDraw: function(chart, options) {
-        chart.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        return chart.ctx.shadowBlur = 40;
-      },
-      afterDatasetsDraw: function(chart, options) {
-        chart.ctx.shadowColor = 'rgba(0, 0, 0, 0)';
-        return chart.ctx.shadowBlur = 0;
-      }
-    };
     return {
       type: 'radar',
       data: {
@@ -153,17 +136,17 @@ class ChartRadar {
         datasets: [
           {
             label: "Transferred data",
-            backgroundColor: fill,
-            borderColor: "transparent",
-            borderWidth: 0,
+            backgroundColor: "rgba(89, 84, 205, 0.14)",
+            borderColor: "#5954CD",
+            borderWidth: 2,
             pointBorderWidth: 0,
             pointRadius: 0,
             data: []
           }, {
             label: "Site size",
-            backgroundColor: fill2,
-            borderColor: "transparent",
-            borderWidth: 0,
+            backgroundColor: "rgba(138, 75, 219, 0.14)",
+            borderColor: "#8A4BDB",
+            borderWidth: 2,
             pointBorderWidth: 0,
             pointRadius: 0,
             data: []
@@ -185,26 +168,25 @@ class ChartRadar {
             beginAtZero: true
           },
           angleLines: {
-            color: "#99999911"
+            color: "rgba(114, 116, 123, 0.18)"
           },
           gridLines: {
-            color: "#99999911",
+            color: "rgba(114, 116, 123, 0.18)",
             tickMarkLength: 1
           },
           tooltips: {
             enabled: true
           },
           pointLabels: {
-            fontColor: "rgba(200,210,232,1)",
+            fontColor: "#72747B",
             fontSize: 14,
-            fontFamily: "Roboto",
+            fontFamily: "Inter",
             fontStyle: "lighter",
             padding: 10,
             callback: this.formatLabel
           }
         }
-      },
-      plugins: [shadowed]
+      }
     };
   }
 

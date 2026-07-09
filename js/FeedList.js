@@ -493,7 +493,7 @@ class FeedList {
             href: site.getHref()
           }, [site.row.content.title]), h("div.added", [Time.since(feed.date_added)])
         ]), h("div.circle", {
-          style: "border-color: " + (Text.toColor(feed.type + site.row.address, 60, 60))
+          style: "border-color: " + (Text.toColor(feed.type + site.row.address, 55, 55))
         }), h("div.title-container", [
           type_formatted ? h("span.type", type_formatted) : void 0, h("a.title", {
             href: site.getHref() + feed.url

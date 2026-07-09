@@ -4,6 +4,7 @@
  "description": "Epix Dashboard",
  "domain": "dashboard.epix",
  "epixnet_version": "0.2.4",
+ "favicon": "img/favicon.ico",
  "files": {
   "LICENSE": {
    "sha512": "e67014a69caa38c58575f333619243c9ebb3c98d462f0b4823ff5ed3d2cfdba3",
