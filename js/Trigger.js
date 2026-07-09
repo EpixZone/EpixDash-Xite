@@ -23,6 +23,13 @@ class Trigger {
         "active": this.active
       }
     }, [
+      // Backdrop behind the open drawer; clicking it closes the drawer.
+      // Only visible on small screens via css (.Trigger-backdrop).
+      h("a.Trigger-backdrop", {
+        "href": "#Trigger",
+        onclick: this.handleTitleClick,
+        ontouchend: ""
+      }),
       h("a.icon", {
         "href": "#Trigger",
         onclick: this.handleTitleClick,

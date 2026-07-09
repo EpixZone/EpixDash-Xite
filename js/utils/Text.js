@@ -8,8 +8,8 @@
 
   class Text {
     toColor(text, saturation, lightness) {
-      if (saturation == null) saturation = 30;
-      if (lightness == null) lightness = 50;
+      if (saturation == null) saturation = 55;
+      if (lightness == null) lightness = 55;
       var hash = 0;
       for (var i = 0; i <= text.length - 1; i++) {
         hash += text.charCodeAt(i) * i;

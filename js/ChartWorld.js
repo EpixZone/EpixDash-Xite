@@ -94,8 +94,7 @@ class ChartWorld {
   initCanvas(node) {
     this.canvas = node;
     this.ctx = node.getContext("2d");
-    this.ctx.globalCompositeOperation = 'screen';
-    this.ctx.fillStyle = '#30758e';
+    this.ctx.fillStyle = '#31BDC6';
     return this.drawPoints();
   }
 

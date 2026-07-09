@@ -181,43 +181,14 @@ class ChartBig {
     }), 5000);
   }
 
-  createGradientStroke(stops) {
-    var color, gradient, i, j, len;
-    gradient = this.ctx.createLinearGradient(0, 0, 900, 0);
-    for (i = j = 0, len = stops.length; j < len; i = ++j) {
-      color = stops[i];
-      gradient.addColorStop(i * (1 / (stops.length - 1)), color);
-    }
-    return gradient;
-  }
-
-  createGradientFill(stops, mode) {
-    var color, gradient, i, j, len;
-    if (mode == null) {
-      mode = "normal";
-    }
-    if (mode === "lower") {
-      gradient = this.ctx.createLinearGradient(0, 0, 0, 300);
-    } else {
-      gradient = this.ctx.createLinearGradient(0, 50, 0, 200);
-    }
-    for (i = j = 0, len = stops.length; j < len; i = ++j) {
-      color = stops[i];
-      gradient.addColorStop(i * (1 / (stops.length - 1)), color);
-    }
-    return gradient;
-  }
-
   getChartConfiguration() {
-    var configuration, gradient_fill, gradient_fill_down, gradient_fill_up, gradient_stroke, gradient_stroke_bgline_down, gradient_stroke_bgline_up, gradient_stroke_down, gradient_stroke_up;
-    gradient_stroke = this.createGradientStroke(["#5A46DF", "#8F49AA", "#D64C57"]);
-    gradient_stroke_bgline_up = this.createGradientStroke(["#EEAAFF11", "#EEAAFF33", "#2da3b366"]);
-    gradient_stroke_bgline_down = this.createGradientStroke(["#EEAAFF11", "#EEAAFF33", "#80623f88"]);
-    gradient_stroke_up = this.createGradientStroke(["#2b68d9", "#2f99be", "#1dfc59"]);
-    gradient_stroke_down = this.createGradientStroke(["#bac735", "#c2a548", "#f1294b"]);
-    gradient_fill = this.createGradientFill(["#50455DEE", "#26262C33"]);
-    gradient_fill_up = this.createGradientFill(["#1dfc5922", "#2f373333"]);
-    gradient_fill_down = this.createGradientFill(["#45353533", "#f1294b22"], "lower");
+    var color_down, color_recv, color_sent, color_up, configuration, fill_down, fill_up;
+    color_up = "#31BDC6";
+    color_down = "#8A4BDB";
+    color_sent = "#5954CD";
+    color_recv = "#72747B";
+    fill_up = "rgba(49, 189, 198, 0.14)";
+    fill_down = "rgba(138, 75, 219, 0.14)";
     configuration = {
       type: 'line',
       data: {
@@ -226,45 +197,45 @@ class ChartBig {
           {
             type: 'line',
             label: "Upload",
-            borderColor: gradient_stroke_up,
-            pointBorderColor: gradient_stroke_up,
-            pointBackgroundColor: gradient_stroke_up,
-            pointHoverBackgroundColor: gradient_stroke_up,
-            pointHoverBorderColor: gradient_stroke_up,
+            borderColor: color_up,
+            pointBorderColor: color_up,
+            pointBackgroundColor: color_up,
+            pointHoverBackgroundColor: color_up,
+            pointHoverBorderColor: color_up,
             pointHoverRadius: 2,
             pointRadius: 0,
             steppedLine: true,
             fill: true,
-            backgroundColor: gradient_fill_up,
-            borderWidth: 1,
+            backgroundColor: fill_up,
+            borderWidth: 2,
             lineTension: 0,
             data: []
           }, {
             type: 'line',
             label: "Download",
-            borderColor: gradient_stroke_down,
-            pointBorderColor: gradient_stroke_down,
-            pointBackgroundColor: gradient_stroke_down,
-            pointHoverBackgroundColor: gradient_stroke_down,
-            pointHoverBorderColor: gradient_stroke_down,
+            borderColor: color_down,
+            pointBorderColor: color_down,
+            pointBackgroundColor: color_down,
+            pointHoverBackgroundColor: color_down,
+            pointHoverBorderColor: color_down,
             pointHoverRadius: 2,
             pointRadius: 0,
             steppedLine: true,
             fill: true,
-            backgroundColor: gradient_fill_down,
-            borderWidth: 1,
+            backgroundColor: fill_down,
+            borderWidth: 2,
             lineTension: 0,
             data: []
           }, {
             type: 'line',
             label: 'Sent',
-            borderColor: gradient_stroke_bgline_up,
+            borderColor: color_sent,
             backgroundColor: "rgba(255,255,255,0.0)",
             pointRadius: 0,
             borderWidth: 1,
             pointHoverRadius: 2,
-            pointHoverBackgroundColor: gradient_stroke_bgline_up,
-            pointHoverBorderColor: gradient_stroke_bgline_up,
+            pointHoverBackgroundColor: color_sent,
+            pointHoverBorderColor: color_sent,
             fill: true,
             yAxisID: 'Request',
             steppedLine: true,
@@ -273,13 +244,13 @@ class ChartBig {
           }, {
             type: 'line',
             label: 'Received',
-            borderColor: gradient_stroke_bgline_down,
+            borderColor: color_recv,
             backgroundColor: "rgba(255,255,255,0.0)",
             pointRadius: 0,
             borderWidth: 1,
             pointHoverRadius: 2,
-            pointHoverBackgroundColor: gradient_stroke_bgline_down,
-            pointHoverBorderColor: gradient_stroke_bgline_down,
+            pointHoverBackgroundColor: color_recv,
+            pointHoverBorderColor: color_recv,
             fill: true,
             yAxisID: 'Request',
             steppedLine: true,
@@ -297,7 +268,7 @@ class ChartBig {
           display: false,
           position: "top",
           labels: {
-            fontColor: 'white'
+            fontColor: "#72747B"
           }
         },
         title: {
@@ -311,7 +282,7 @@ class ChartBig {
           yPadding: 10,
           cornerRadius: 0,
           caretPadding: 10,
-          bodyFontColor: "rgba(255,255,255,0.6)",
+          bodyFontColor: "#DCDCE3",
           callbacks: {
             title: function(tootlip_items, data) {
               return Time.date(tootlip_items[0].xLabel, "long").replace(/:00$/, "");
@@ -334,7 +305,7 @@ class ChartBig {
             {
               id: 'Transfer',
               ticks: {
-                fontColor: "rgba(100,110,132,1)",
+                fontColor: "#72747B",
                 fontStyle: "bold",
                 beginAtZero: true,
                 suggestedMax: 30000000,
@@ -349,10 +320,10 @@ class ChartBig {
                 drawTicks: true,
                 drawBorder: false,
                 display: true,
-                zeroLineColor: "rgba(255,255,255,0.1)",
+                zeroLineColor: "rgba(114, 116, 123, 0.35)",
                 tickMarkLength: 20,
                 zeroLineBorderDashOffset: 100,
-                color: "rgba(255,255,255,0.05)"
+                color: "rgba(114, 116, 123, 0.18)"
               }
             }, {
               id: 'Request',
@@ -375,14 +346,14 @@ class ChartBig {
             {
               type: "time",
               gridLines: {
-                color: "rgba(255,255,255,0.1)",
+                color: "rgba(114, 116, 123, 0.18)",
                 display: false,
                 offsetGridLines: true,
                 drawBorder: false
               },
               ticks: {
                 padding: 15,
-                fontColor: "rgba(100,110,132,1)",
+                fontColor: "#72747B",
                 fontStyle: "bold",
                 callback: ((data_label, index) => {
                   var back, parts;

@@ -35,20 +35,20 @@ class NetworkStats {
         getValue: (() => {
           return Text.formatSize(this.chart_big.data_total.file_bytes_sent);
         }),
-        color: "#1dfc59"
+        color: "#31BDC6"
       }, {
         title: "Download",
         getValue: (() => {
           return Text.formatSize(this.chart_big.data_total.file_bytes_recv);
         }),
-        color: "#c94d47"
+        color: "#8A4BDB"
       }, {
         title: "Ratio",
         getValue: (() => {
           return this.chart_big.data_total.file_bytes_sent / this.chart_big.data_total.file_bytes_recv;
         }),
         type: "ratio",
-        color: "#16ffe9"
+        color: "#69E9F5"
       }
     ];
     this.chart_legend.items_right = [
@@ -59,7 +59,7 @@ class NetworkStats {
         }),
         post: "requests",
         dot: "\u2500",
-        color: "#2da3b3"
+        color: "#5954CD"
       }, {
         title: "Received",
         getValue: (() => {
@@ -67,7 +67,7 @@ class NetworkStats {
         }),
         post: "requests",
         dot: "\u2500",
-        color: "#80623f"
+        color: "#72747B"
       }
     ];
     this.chart_radar = new ChartRadar();
@@ -85,7 +85,7 @@ class NetworkStats {
       back.push("Ping avg: " + type_data.connection_ping_avg + "ms (min: " + type_data.connection_ping_min + "ms)");
       return back;
     };
-    this.chart_connections.chart_stroke = ["#608DECAA", "#D74C58FF"];
+    this.chart_connections.chart_stroke = ["#31BDC6", "rgba(240, 34, 75, 0.14)"];
     this.chart_connections.getChartQuery = function() {
       return "SELECT * FROM data WHERE type_id = " + Page.page_stats.type_id_db['connection'] + " ORDER BY date_added DESC LIMIT 50";
     };
@@ -96,7 +96,7 @@ class NetworkStats {
         onclick: Page.handleLinkClick
       }, "Total size");
     };
-    this.chart_size.chart_stroke = ["#F99739AA", "#51B8F2"];
+    this.chart_size.chart_stroke = ["#5954CD", "rgba(105, 233, 245, 0.14)"];
     this.chart_size.type_names = ["size", "size_optional", "optional_limit", "optional_used", "content"];
     this.chart_size.formatValue = function(type_data) {
       return Text.formatSize(type_data.size) + (" in " + Page.site_list.sites.length + " sites");

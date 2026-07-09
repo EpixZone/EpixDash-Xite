@@ -5,45 +5,94 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>My New Epix Site</title>
  <style>
+  /* Epix UI kit tokens (inline copy, light + dark via prefers-color-scheme) */
+  :root {
+   color-scheme: light;
+   --epix-cyan: #69E9F5;
+   --epix-teal: #31BDC6;
+   --epix-indigo: #5954CD;
+   --epix-purple: #8A4BDB;
+   --epix-info: #31BDC6;
+   --epix-info-soft: #E7F8FA;
+   --epix-ink-soft: #1D1D1F;
+   --epix-bg: #FEFEFE;
+   --epix-surface: #FEFEFE;
+   --epix-surface-2: #F6F6F9;
+   --epix-border: #DCDCE3;
+   --epix-text: #1D1D1F;
+   --epix-text-mid: #404045;
+   --epix-text-low: #72747B;
+   --epix-accent: var(--epix-purple);
+   --epix-on-accent: #FEFEFE;
+   --epix-link: var(--epix-purple);
+   --epix-focus: var(--epix-purple);
+   --epix-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+   --epix-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+   --epix-radius-sm: 4px;
+   --epix-radius-md: 8px;
+   --epix-radius-lg: 12px;
+   --epix-shadow-sm: 0 1px 2px rgba(2, 2, 2, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+   :root {
+    color-scheme: dark;
+    --epix-bg: #151517;
+    --epix-surface: #1D1D1F;
+    --epix-surface-2: #242428;
+    --epix-border: #2E2E32;
+    --epix-text: #F6F6F9;
+    --epix-text-mid: #DCDCE3;
+    --epix-text-low: #ABABB5;
+    --epix-link: var(--epix-cyan);
+    --epix-focus: var(--epix-cyan);
+   }
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-   line-height: 1.6; color: #333; background: #f8f9fa;
+   font-family: var(--epix-font-sans);
+   line-height: 1.6; color: var(--epix-text); background: var(--epix-bg);
    padding: 20px; max-width: 800px; margin: 0 auto;
   }
-  h1 { color: #7c3aed; margin-bottom: 10px; }
-  h2 { color: #555; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+  h2 { font-size: 20px; font-weight: 600; color: var(--epix-text); margin-bottom: 10px; }
   p { margin-bottom: 12px; }
   .hero {
-   background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-   color: #fff; padding: 40px 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;
+   background: var(--epix-accent);
+   color: var(--epix-on-accent); padding: 40px 30px; border-radius: var(--epix-radius-lg);
+   margin-bottom: 30px; text-align: center;
   }
-  .hero h1 { color: #fff; font-size: 2em; }
-  .hero p { opacity: 0.9; font-size: 1.1em; }
+  .hero h1 { color: var(--epix-on-accent); font-size: 28px; }
+  .hero p { font-size: 16px; }
   .card {
-   background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px;
-   border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+   background: var(--epix-surface); border-radius: var(--epix-radius-md); padding: 20px;
+   margin-bottom: 16px; border: 1px solid var(--epix-border); box-shadow: var(--epix-shadow-sm);
   }
   code {
-   background: #f3f0ff; color: #7c3aed; padding: 2px 6px; border-radius: 4px;
-   font-size: 0.9em;
+   font-family: var(--epix-font-mono);
+   background: var(--epix-surface-2); color: var(--epix-text);
+   border: 1px solid var(--epix-border); padding: 1px 5px;
+   border-radius: var(--epix-radius-sm); font-size: 0.85em;
   }
   pre {
-   background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 8px;
-   overflow-x: auto; margin: 12px 0; font-size: 0.85em; line-height: 1.5;
+   font-family: var(--epix-font-mono);
+   background: #151517; color: #F2F2F6; border: 1px solid #2E2E32;
+   padding: 16px; border-radius: var(--epix-radius-md);
+   overflow-x: auto; margin: 12px 0; font-size: 13px; line-height: 1.5;
   }
-  pre .comment { color: #6c7086; }
-  pre .tag { color: #89b4fa; }
-  pre .attr { color: #f9e2af; }
-  pre .string { color: #a6e3a1; }
+  pre .comment { color: #ABABB5; }
+  pre .tag { color: #69E9F5; }
+  pre .attr { color: #31BDC6; }
+  pre .string { color: #2DCE89; }
   ul { margin: 10px 0 10px 24px; }
   li { margin-bottom: 6px; }
-  a { color: #7c3aed; }
+  a { color: var(--epix-link); }
+  a:focus-visible { outline: 2px solid var(--epix-focus); outline-offset: 2px; }
   .tip {
-   background: #f3f0ff; border-left: 4px solid #7c3aed; padding: 12px 16px;
-   border-radius: 0 8px 8px 0; margin: 12px 0;
+   background: var(--epix-info-soft); border-left: 4px solid var(--epix-info);
+   color: var(--epix-ink-soft); padding: 12px 16px;
+   border-radius: 0 var(--epix-radius-md) var(--epix-radius-md) 0; margin: 12px 0;
   }
-  footer { text-align: center; margin-top: 40px; color: #999; font-size: 0.85em; }
+  footer { text-align: center; margin-top: 40px; color: var(--epix-text-low); font-size: 13px; }
  </style>
 </head>
 <body>

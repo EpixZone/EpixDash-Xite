@@ -14,7 +14,7 @@ The control panel for your [EpixNet](https://epixnet.io) node.
 - Server console log viewer
 - Port, Tor, and tracker status monitoring
 - Light/dark/system theme toggle
-- 19 language translations
+- 22 language translations
 
 ## Structure
 
@@ -28,7 +28,10 @@ epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t/
 ├── chartjs/
 │   └── chart.bundle.min.js
 ├── img/
+│   ├── favicon.ico
+│   ├── loading-circle.gif
 │   ├── logo.png
+│   ├── logo.svg
 │   └── world.png
 ├── js/
 │   ├── EpixDash.js        # Main app (extends EpixFrame)
@@ -44,7 +47,7 @@ epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t/
 │   ├── SiteFiles.js       # Per-site files
 │   ├── Bigfiles.js        # Large file display
 │   ├── FilesResult.js     # File search results
-│   ├── PageStats.js       # Statistics page
+│   ├── NetworkStats.js    # Statistics page
 │   ├── Chart.js           # Base chart
 │   ├── ChartBig.js        # Bandwidth/request charts
 │   ├── ChartLegend.js     # Chart legends
@@ -54,16 +57,16 @@ epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t/
 │   ├── StatList.js        # Stats list
 │   ├── lib/               # Maquette, EpixFrame, marked
 │   └── utils/             # Animation, Deferred, Text, Time, Menu, etc.
-├── languages/             # 19 languages
+├── languages/             # 22 languages
 └── template-new/
     └── index.html          # Template for new sites
 ```
 
 ## Modes
 
-1. **Sites** — Browse and manage your EpixNet sites
-2. **Files** — File browser with storage limit management
-3. **Stats** — Network analytics with interactive charts
+1. **Sites** - Browse and manage your EpixNet sites
+2. **Files** - File browser with storage limit management
+3. **Stats** - Network analytics with interactive charts
 
 ## Tech Stack
 

@@ -34,8 +34,9 @@ class ChartTimeline {
   updateChart() {
     var data, data_last_i, data_max, i, j, len, line_width, line_x, line_y, ref, val;
     this.chart_ctx.clearRect(0, 0, this.chart_canvas.width, this.chart_canvas.height);
-    this.chart_ctx.lineWidth = 0;
-    this.chart_ctx.fillStyle = '#EDC54B';
+    this.chart_ctx.lineWidth = 2;
+    this.chart_ctx.strokeStyle = '#31BDC6';
+    this.chart_ctx.fillStyle = 'rgba(49, 189, 198, 0.14)';
     this.chart_ctx.beginPath();
     this.chart_ctx.moveTo(-10, 0);
     data_max = Math.max.apply(null, this.line_data);
@@ -62,13 +63,14 @@ class ChartTimeline {
         break;
       }
     }
+    this.chart_ctx.stroke();
     this.chart_ctx.lineTo(line_x, 120);
     this.chart_ctx.lineTo(0, 120);
     this.chart_ctx.fill();
     if (data_last_i > 36) {
       this.chart_ctx.beginPath();
       this.chart_ctx.lineWidth = 0;
-      this.chart_ctx.strokeStyle = '#EDC54B';
+      this.chart_ctx.strokeStyle = '#31BDC6';
       this.chart_ctx.setLineDash([0, 1, 1]);
       this.chart_ctx.moveTo(line_x, line_y);
       this.chart_ctx.lineTo(1500, line_y);

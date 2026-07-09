@@ -152,11 +152,11 @@
             var classes, percent, percent_bg, percent_title, profile_color, site, status;
             site = file.site || this.site;
             if (file.peer >= 10) {
-              profile_color = "#47d094";
+              profile_color = "#2DCE89";
             } else if (file.peer > 0) {
-              profile_color = "#f5b800";
+              profile_color = "#F0B622";
             } else {
-              profile_color = "#d1d1d1";
+              profile_color = "#ABABB5";
             }
             if (this.mode === "bigfiles") {
               if (file.pieces == null) {
@@ -172,10 +172,10 @@
               }
               if (file.is_downloading || percent === 100) {
                 status = "";
-                percent_bg = "#9ef5cf";
+                percent_bg = "rgba(45, 206, 137, 0.35)";
               } else {
                 status = "paused";
-                percent_bg = "#f5f49e";
+                percent_bg = "rgba(240, 182, 34, 0.35)";
               }
               percent_title = percent + "% " + status;
             }

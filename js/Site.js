@@ -349,7 +349,7 @@ class Site {
         "working": this.isWorking()
       }
     }, h("div.circle", {
-      style: "color: " + (Text.toColor(this.row.address, 40, 50))
+      style: "color: " + (Text.toColor(this.row.address, 55, 55))
     }, ["\u2022"]), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
@@ -380,7 +380,7 @@ class Site {
     } else {
       dashoffset = Math.max(0, 75 - ((value - 1) / 9) * 75);
     }
-    stroke = "hsl(" + (Math.min(555, value * 50)) + ", 100%, 61%)";
+    stroke = "hsl(" + (Math.min(555, value * 50)) + ", 55%, 55%)";
     return h("div.circle", {
       title: "Upload/Download ratio",
       innerHTML: "<svg class=\"circle-svg\" width=\"30\" height=\"30\" viewPort=\"0 0 30 30\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n  \t\t\t<circle r=\"12\" cx=\"15\" cy=\"15\" fill=\"transparent\" class='circle-bg'></circle>\n  \t\t\t<circle r=\"12\" cx=\"15\" cy=\"15\" fill=\"transparent\" class='circle-fg' style='stroke-dashoffset: " + dashoffset + "; stroke: " + stroke + "'></circle>\n</svg>"
@@ -423,7 +423,7 @@ class Site {
           classes: {
             negative: ratio < 1
           },
-          style: "color: hsl(" + ratio_hue + ", 70%, 60%)"
+          style: "color: hsl(" + ratio_hue + ", 55%, 55%)"
         }, ratio), h("div.transfers", [
           h("div.up", {
             "title": _("Uploaded")

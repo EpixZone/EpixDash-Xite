@@ -12,7 +12,6 @@ class Chart {
     this.value = "";
     this.line_data = [];
     this.details = [];
-    this.colorize = "cc00ff0a";
     this.chart_ctx = null;
     this.chart_type_name = null;
     this.need_update = false;
@@ -67,18 +66,11 @@ class Chart {
   }
 
   updateChart() {
-    var data, data_max, data_min, gradient, i, j, len, line_y, ref, step, stroke;
+    var data, data_max, data_min, i, j, len, line_y, ref, step;
     this.chart_ctx.clearRect(0, 0, this.chart_canvas.width, this.chart_canvas.height);
-    stroke = this.chart_ctx.createLinearGradient(0, 0, 900, 0);
-    stroke.addColorStop(0, this.chart_stroke[0]);
-    stroke.addColorStop(1, this.chart_stroke[1]);
     this.chart_ctx.lineWidth = 4;
-    this.chart_ctx.strokeStyle = stroke;
-    this.chart_ctx.fillStyle = '#66666611';
-    gradient = this.chart_ctx.createLinearGradient(0, 200, 0, 400);
-    gradient.addColorStop(0, "#42324599");
-    gradient.addColorStop(1, "#2C2E3700");
-    this.chart_ctx.fillStyle = gradient;
+    this.chart_ctx.strokeStyle = this.chart_stroke[0];
+    this.chart_ctx.fillStyle = this.chart_stroke[1];
     this.chart_ctx.beginPath();
     this.chart_ctx.moveTo(-10, 0);
     step = 900 / (this.line_data.length - 2);
@@ -103,9 +95,7 @@ class Chart {
       this.update();
       this.need_update = false;
     }
-    return h("div.Chart", {
-      style: "background-image: radial-gradient(at 29% top, #eaaeda05, " + this.colorize + ")"
-    }, [
+    return h("div.Chart", [
       h("div.titles", [
         h("div.title", this.getTitle()), h("div.value", this.value), h("div.details", this.details.map((detail) => {
           return [
