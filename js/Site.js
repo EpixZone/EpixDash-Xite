@@ -354,17 +354,20 @@ class Site {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [
-      h("span.title", [this.row.content.title || this.row.address]), h("div.details", [h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.since(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
+      h("span.title", [this.row.content.title || this.row.address]), h("div.details", [
+        h("div.message", {
+          classes: {
+            visible: this.message_visible,
+            done: this.message_class === 'done',
+            error: this.message_class === 'error',
+            collapsed: this.message_collapsed
+          }
+        }, [this.message]),
+        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.since(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
+      ]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
         href: "#Set+limit",
         onclick: this.handleLimitIncreaseClick
-      }, "Set limit to " + this.row.need_limit + "MB") : void 0, h("div.message", {
-        classes: {
-          visible: this.message_visible,
-          done: this.message_class === 'done',
-          error: this.message_class === 'error',
-          collapsed: this.message_collapsed
-        }
-      }, [this.message])
+      }, "Set limit to " + this.row.need_limit + "MB") : void 0
     ]), h("a.settings", {
       href: "#Settings",
       tabIndex: -1,
