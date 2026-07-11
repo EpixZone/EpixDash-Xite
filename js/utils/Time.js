@@ -29,7 +29,10 @@
     sinceShort(timestamp) {
       var back = this.since(timestamp);
       var year = new Date().getFullYear();
-      back = back.replace(/^on /, "");
+      var prefix = _("on ");
+      if (back.indexOf(prefix) === 0) {
+        back = back.slice(prefix.length);
+      }
       back = back.replace(new RegExp(",? " + year + "$"), "");
       return back;
     }

@@ -348,9 +348,7 @@ class Site {
         "disabled": !this.row.settings.serving && !this.row.demo,
         "working": this.isWorking()
       }
-    }, h("div.circle", {
-      style: "color: " + (Text.toBrandColor(this.row.address))
-    }, ["\u2022"]), h("a.inner", {
+    }, h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [

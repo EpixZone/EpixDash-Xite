@@ -68,6 +68,21 @@
 	--dash-rail: var(--epix-neutral-1);
 	--dash-rail-line: var(--epix-neutral-3);
 	--dash-chip: var(--epix-neutral-0);
+	/* Semantic status text on light chips (strong brand colors fail contrast
+	   on light fills); brand dot buckets darkened for light surfaces; the
+	   mention highlight and served notice as theme tokens. */
+	--dash-ok-ink: #177e53;
+	--dash-warn-ink: #8a6d0b;
+	--dash-bad-ink: #c11b3d;
+	--dot-cyan: #0d94ab;
+	--dot-teal: #17858d;
+	--dot-indigo: var(--epix-indigo);
+	--dot-purple: var(--epix-purple);
+	--dash-hl-bg: rgba(240, 182, 34, 0.32);
+	--dash-hl-ink: var(--epix-ink-soft);
+	--dash-served-bg: var(--epix-info-soft);
+	--dash-served-ink: var(--epix-ink-soft);
+	--dash-served-border: var(--epix-info);
 	--dash-band: var(--epix-neutral-1);
 
 	/* Type */
@@ -107,6 +122,18 @@
 		--dash-rail: var(--epix-neutral-9);
 		--dash-rail-line: var(--epix-neutral-7);
 		--dash-chip: var(--epix-neutral-8);
+		--dash-ok-ink: var(--epix-success);
+		--dash-warn-ink: var(--epix-warning);
+		--dash-bad-ink: var(--epix-danger);
+		--dot-cyan: var(--epix-cyan);
+		--dot-teal: var(--epix-teal);
+		--dot-indigo: var(--epix-indigo);
+		--dot-purple: var(--epix-purple);
+		--dash-hl-bg: rgba(240, 182, 34, 0.16);
+		--dash-hl-ink: var(--epix-warning);
+		--dash-served-bg: rgba(105, 233, 245, 0.10);
+		--dash-served-ink: var(--epix-text);
+		--dash-served-border: rgba(105, 233, 245, 0.35);
 		--dash-band: var(--epix-neutral-9);
 	}
 }
@@ -126,6 +153,18 @@
 	--dash-rail: var(--epix-neutral-9);
 	--dash-rail-line: var(--epix-neutral-7);
 	--dash-chip: var(--epix-neutral-8);
+	--dash-ok-ink: var(--epix-success);
+	--dash-warn-ink: var(--epix-warning);
+	--dash-bad-ink: var(--epix-danger);
+	--dot-cyan: var(--epix-cyan);
+	--dot-teal: var(--epix-teal);
+	--dot-indigo: var(--epix-indigo);
+	--dot-purple: var(--epix-purple);
+	--dash-hl-bg: rgba(240, 182, 34, 0.16);
+	--dash-hl-ink: var(--epix-warning);
+	--dash-served-bg: rgba(105, 233, 245, 0.10);
+	--dash-served-ink: var(--epix-text);
+	--dash-served-border: rgba(105, 233, 245, 0.35);
 	--dash-band: var(--epix-neutral-9);
 }
 
@@ -657,6 +696,19 @@ body:after {
 	line-height: 20px;
 	color: var(--epix-text-low);
 	padding: 1px 0px;
+}
+
+/* The demo "Activate" and "Set limit" chips stay pills. */
+.SiteList .site .inner .details.demo,
+.SiteList .site .inner a.details.needaction {
+	font-size: 10px;
+	text-transform: uppercase;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	padding: 1px 8px;
+	border-radius: 999px;
+	background-color: var(--dash-chip);
+	border: 1px solid var(--epix-border);
 }
 
 .SiteList .site .inner .details .modified {
@@ -2075,6 +2127,10 @@ body:after {
 	margin-top: -60px;
 	right: 44px;
 	position: absolute;
+	z-index: 5;
+	background-color: var(--epix-bg);
+	padding: 0px 10px;
+	border-radius: 999px;
 }
 
 .interval {
@@ -2531,34 +2587,16 @@ body:after {
 }
 
 #Dashboard .status-ok {
-	color: var(--epix-success);
-}
-
-/* Strong semantic colors are not text colors on light fills: darkened
-   variants for the light theme (tokens file's own warning). */
-body.theme-light #Dashboard .status-ok {
-	color: #177e53;
-}
-
-body.theme-light #Dashboard .status-warning {
-	color: #8a6d0b;
-}
-
-body.theme-light #Dashboard .status-bad,
-body.theme-light #Dashboard .status-error {
-	color: #c11b3d;
+	color: var(--dash-ok-ink);
 }
 
 #Dashboard .status-warning {
-	color: var(--epix-warning);
+	color: var(--dash-warn-ink);
 }
 
-#Dashboard .status-bad {
-	color: var(--epix-danger);
-}
-
+#Dashboard .status-bad,
 #Dashboard .status-error {
-	color: var(--epix-danger);
+	color: var(--dash-bad-ink);
 }
 
 #Dashboard .status-disabled {
@@ -2847,7 +2885,7 @@ body.theme-light #Dashboard .status-error {
 
 .search-clear {
 	position: absolute;
-	right: -37px;
+	right: 18px;
 	margin-top: 8px;
 	text-decoration: none;
 	color: var(--epix-text-low);
@@ -3065,6 +3103,26 @@ body.theme-light #Dashboard .status-error {
 	margin-top: 10px;
 }
 
+.b-cyan {
+	color: var(--dot-cyan);
+	border-color: var(--dot-cyan) !important;
+}
+
+.b-teal {
+	color: var(--dot-teal);
+	border-color: var(--dot-teal) !important;
+}
+
+.b-indigo {
+	color: var(--dot-indigo);
+	border-color: var(--dot-indigo) !important;
+}
+
+.b-purple {
+	color: var(--dot-purple);
+	border-color: var(--dot-purple) !important;
+}
+
 .FeedList .feed .marker .circle {
 	width: 12px;
 	height: 12px;
@@ -3148,19 +3206,13 @@ body.theme-light #Dashboard .status-error {
 	color: var(--epix-text-mid);
 }
 
-.highlight {
-	background-color: var(--epix-warning-soft);
-	outline: 2px solid var(--epix-warning-soft);
-	color: var(--epix-ink-soft);
-}
-
-body.theme-dark .highlight,
-body.theme-dark .FeedList .feed.mention .type {
-	background-color: rgba(240, 182, 34, 0.16);
-	color: var(--epix-warning);
-	outline: none;
+.highlight,
+.FeedList .feed.mention .type {
+	background-color: var(--dash-hl-bg);
+	color: var(--dash-hl-ink);
 	border-radius: var(--epix-radius-sm);
 	padding: 0px 4px;
+	outline: none;
 }
 
 /* Welcome / discover */
@@ -3215,9 +3267,9 @@ body.theme-dark .FeedList .feed.mention .type {
 }
 
 .welcome .served {
-	background-color: var(--epix-info-soft);
-	color: var(--epix-ink-soft);
-	border: 1px solid var(--epix-info);
+	background-color: var(--dash-served-bg);
+	color: var(--dash-served-ink);
+	border: 1px solid var(--dash-served-border);
 	border-radius: var(--epix-radius-md);
 	display: inline-block;
 	padding: 10px 16px;
@@ -3349,15 +3401,13 @@ body.theme-dark .FeedList .feed.mention .type {
 
 .welcome .utility-sites {
 	text-align: left;
-	overflow: hidden;
 	padding-bottom: 10px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
 }
 
-@media only screen and (max-width: 1250px) {
-	.welcome .site {
-		width: 49%;
-	}
-}
+
 
 
 /* ---- Selectbar.css ---- */
@@ -3820,6 +3870,10 @@ body.changing #PageFiles .files {
 
 /* Trigger button + drawer backdrop (hidden on desktop) */
 
+#Trigger .icon {
+	position: relative;
+}
+
 #Trigger {
 	display: none;
 }
@@ -3991,9 +4045,8 @@ body.changing #PageFiles .files {
 
 	/* Feed layout gets narrower */
 	.feeds-search {
-		padding-left: 20px;
+		padding: 0px 12px;
 		margin-top: 16px;
-		margin-right: 56px;
 	}
 
 	.search-help {
@@ -4005,9 +4058,6 @@ body.changing #PageFiles .files {
 		margin-left: 14px;
 	}
 
-	.search-clear {
-		right: -30px;
-	}
 }
 
 /* Stacked feed rows (no timeline column) */
@@ -4035,6 +4085,7 @@ body.changing #PageFiles .files {
 
 	.feeds-filters {
 		margin-top: 12px;
+		padding: 0px 12px;
 		scroll-snap-type: x proximity;
 		/* Feed types are dynamic: keep the tabs on one row and let the row
 		   scroll sideways instead of clipping the last tab */
@@ -4054,6 +4105,10 @@ body.changing #PageFiles .files {
 		flex: none;
 		padding: 12px 14px;
 		scroll-snap-align: start;
+	}
+
+	#Dashboard .status::before {
+		margin-left: 4px;
 	}
 
 	/* Stats blocks stack */
@@ -4322,8 +4377,7 @@ body.changing #PageFiles .files {
 	}
 
 	.feeds-search {
-		margin-right: 20px;
-		padding-left: 12px;
+		padding: 0px 12px;
 	}
 
 	.feeds-search input {
@@ -4332,10 +4386,6 @@ body.changing #PageFiles .files {
 
 	.icon-magnifier {
 		margin-left: 28px;
-	}
-
-	.search-clear {
-		right: -12px;
 	}
 
 	.search-info {

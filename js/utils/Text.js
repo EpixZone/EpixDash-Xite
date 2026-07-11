@@ -18,17 +18,18 @@
       return "hsl(" + (hash % 360) + "," + saturation + "%," + lightness + "%)";
     }
 
-    // Deterministic pick from the four Epix brand colors. Used for the site
-    // dots and the feed fallback rings so one address always gets one hue and
-    // every hue is on-palette.
-    toBrandColor(text) {
-      var colors = ["#69E9F5", "#31BDC6", "#5954CD", "#8A4BDB"];
+    // Deterministic pick from the four Epix brand colors, as a css class so
+    // each theme can tune the actual hue (cyan and teal need darkening on
+    // light surfaces). Used for the site dots and the feed fallback rings so
+    // one address always gets one bucket everywhere.
+    toBrandClass(text) {
+      var classes = ["b-cyan", "b-teal", "b-indigo", "b-purple"];
       var hash = 0;
       for (var i = 0; i <= text.length - 1; i++) {
         hash += text.charCodeAt(i) * (i + 7);
         hash = hash % 100003;
       }
-      return colors[hash % colors.length];
+      return classes[hash % classes.length];
     }
 
     renderMarked(text, options) {

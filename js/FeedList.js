@@ -47,8 +47,16 @@ class FeedList {
     this.notification_alerts = [];
     this.notification_alerts_loaded = false;
     // Addresses whose declared favicon failed to load; they fall back to the
-    // brand-color ring until the page reloads.
+    // brand-color ring until the page reloads. The handler is bound once:
+    // maquette forbids a function property changing identity across renders.
     this.favicon_failed = {};
+    this.handleFaviconError = (e) => {
+      var address = e.target.getAttribute("data-address");
+      if (address) {
+        this.favicon_failed[address] = true;
+      }
+      return Page.projector.scheduleRender();
+    };
     Page.on_settings.then(() => {
       this.need_update = true;
       this.queryNotificationAlerts();
@@ -480,15 +488,11 @@ class FeedList {
       return h("img.favicon", {
         src: "/" + address + "/" + favicon,
         alt: "",
-        onerror: () => {
-          this.favicon_failed[address] = true;
-          return Page.projector.scheduleRender();
-        }
+        "data-address": address,
+        onerror: this.handleFaviconError
       });
     }
-    return h("div.circle", {
-      style: "border-color: " + Text.toBrandColor(address)
-    });
+    return h("div.circle." + Text.toBrandClass(address));
   }
 
   renderFeed(feed) {
