@@ -59,6 +59,7 @@
 	--epix-text-mid: var(--epix-neutral-6);
 	--epix-text-low: var(--epix-neutral-5);
 	--epix-accent: var(--epix-purple);
+	--epix-accent-soft: rgba(138, 75, 219, 0.14);
 	--epix-on-accent: #FEFEFE;
 	--epix-link: var(--epix-purple);
 	--epix-focus: var(--epix-purple);
@@ -652,14 +653,10 @@ body:after {
 .SiteList .site .inner .details {
 	flex: none;
 	white-space: nowrap;
-	font-size: 10px;
-	text-transform: uppercase;
+	font-size: 11px;
 	line-height: 20px;
-	background-color: var(--dash-chip);
-	border: 1px solid var(--epix-border);
 	color: var(--epix-text-low);
-	padding: 1px 8px;
-	border-radius: 999px;
+	padding: 1px 0px;
 }
 
 .SiteList .site .inner .details .modified {
@@ -692,7 +689,7 @@ body:after {
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	padding: 0 8px;
-	margin: 0 6px 0 -6px;
+	margin: 0px 6px 0px 0px;
 	background-color: var(--epix-info);
 	color: var(--epix-ink-strong);
 	max-width: 140px;
@@ -750,13 +747,41 @@ body:after {
 }
 
 .SiteList .site .message.collapsed:before {
-	content: "\01F514";
-	color: var(--epix-text-low);
-	font-family: Arial, Helvetica, 'Segoe UI Symbol', "Times", "Times New Roman", "serif", "sans-serif", "EmojiSymbols";
+	content: "!";
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 13px;
+	height: 13px;
+	border-radius: 999px;
+	background-color: var(--epix-danger);
+	color: #ffffff;
+	font-size: 9.5px;
+	font-weight: 700;
+	vertical-align: -2px;
 }
 
 .SiteList .site:hover .message.collapsed:before {
 	display: none;
+}
+
+/* No hover on touch: errors always show in full. */
+@media (hover: none) {
+	.SiteList .site:not(:hover) .message.visible.collapsed {
+		background-color: var(--epix-danger);
+		color: var(--epix-ink-strong);
+		max-width: 140px;
+		padding: 0 8px;
+		margin-right: 6px;
+	}
+
+	.SiteList .site:not(:hover) .message.visible.collapsed+.modified {
+		display: none;
+	}
+
+	.SiteList .site .message.collapsed:before {
+		display: none;
+	}
 }
 
 .SiteList .site:hover .settings {
@@ -2494,8 +2519,34 @@ body:after {
 	transform: translateY(1px);
 }
 
+#Dashboard .status::before {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background-color: currentColor;
+	margin-right: 6px;
+	vertical-align: 0.5px;
+}
+
 #Dashboard .status-ok {
 	color: var(--epix-success);
+}
+
+/* Strong semantic colors are not text colors on light fills: darkened
+   variants for the light theme (tokens file's own warning). */
+body.theme-light #Dashboard .status-ok {
+	color: #177e53;
+}
+
+body.theme-light #Dashboard .status-warning {
+	color: #8a6d0b;
+}
+
+body.theme-light #Dashboard .status-bad,
+body.theme-light #Dashboard .status-error {
+	color: #c11b3d;
 }
 
 #Dashboard .status-warning {
@@ -2515,7 +2566,7 @@ body:after {
 }
 
 #Dashboard .status {
-	transition: all 0.3s;
+	transition: color 0.3s ease;
 }
 
 #Dashboard .dashboard-item.multiuser .status {
@@ -2724,45 +2775,50 @@ body:after {
 	text-overflow: ellipsis;
 }
 
+/* Feed filters are chips (filter grammar); the rail's SITES/FILES/STATS
+   keeps the underline (navigation grammar). Shares the feed's column axis. */
 .feeds-filters {
-	margin-top: 10px;
-	margin-left: 25px;
-	max-width: 100%;
+	margin: 14px auto 0 auto;
+	max-width: 720px;
+	box-sizing: border-box;
+	padding: 0px 8px;
 }
 
 .feeds-filter {
-	padding: 8px 15px;
-	color: var(--epix-text-mid);
-	text-transform: uppercase;
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 0.04em;
+	padding: 7px 14px;
+	color: var(--epix-text-low);
+	font-size: 13.5px;
+	font-weight: 500;
 	text-decoration: none;
-	margin-right: 5px;
-	opacity: 0.7;
-	transition: all 0.3s;
-	border-bottom: 2px solid transparent;
+	margin-right: 4px;
+	border-radius: 999px;
+	border: 1px solid transparent;
 	display: inline-block;
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .feeds-filter.active {
-	opacity: 1;
 	color: var(--epix-accent);
-	border-bottom: 2px solid var(--epix-accent);
+	background-color: var(--epix-accent-soft);
+	font-weight: 600;
 }
 
 .feeds-filter:hover {
-	transition: none;
-	opacity: 1;
+	color: var(--epix-text);
+	border-color: var(--epix-border);
+}
+
+.feeds-filter.active:hover {
+	color: var(--epix-accent);
+	border-color: transparent;
 }
 
 .feeds-search {
 	max-width: 720px;
 	box-sizing: border-box;
-	padding-left: 190px;
-	margin-top: 30px;
+	padding: 0px 8px;
+	margin: 22px auto 0 auto;
 	position: relative;
-	margin-right: 50px;
 }
 
 .feeds-search input {
@@ -2883,23 +2939,11 @@ body:after {
 	opacity: 1;
 }
 
-.feeds-line {
-	position: absolute;
-	border-right: 1px solid var(--epix-border);
-	height: 100%;
-	left: 174px;
-	top: 0px;
-	z-index: -1;
-}
-
 .FeedList {
-	margin: 50px auto 0 auto;
+	margin: 40px auto 0 auto;
 	position: relative;
 	max-width: 720px;
 	overflow: hidden;
-	/* Own stacking context: keeps the feeds-line (z-index -1) above the
-	   column background instead of buried beneath it. */
-	z-index: 0;
 }
 
 .FeedList.loading {
@@ -2907,23 +2951,86 @@ body:after {
 	transition: all 1s ease-out;
 }
 
+/* One feed anatomy at every width: a slim marker gutter (favicon or brand
+   ring + connector segment) and a meta line above the title. */
 .FeedList .feed {
 	display: block;
-	padding: 15px;
-	margin-bottom: 40px;
-	padding-left: 200px;
+	position: relative;
+	padding: 12px 16px 12px 48px;
+	margin-bottom: 18px;
+	border-radius: var(--epix-radius-md);
+	transition: background-color 0.15s ease;
 }
 
-.FeedList .feed .dot {
+.FeedList .feed:hover {
+	background-color: var(--dash-chip);
+}
+
+/* Connector segment: from below this item's marker to the next item's
+   marker. The last item ends its own segment. */
+.FeedList .feed::before {
+	content: "";
+	position: absolute;
+	left: 19px;
+	top: 42px;
+	bottom: -18px;
+	width: 1px;
+	background-color: var(--epix-border);
+}
+
+.FeedList .feed:last-child::before {
 	display: none;
-	font-size: 181%;
-	line-height: 0px;
-	vertical-align: -5px;
-	margin-right: 5px;
-	color: var(--epix-teal);
 }
 
-.FeedList .feed.new .dot {
+.FeedList .feed .marker {
+	position: absolute;
+	left: 8px;
+	top: 13px;
+	width: 22px;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.FeedList .feed .marker img.favicon {
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	border: 1px solid var(--epix-border);
+	background-color: var(--epix-bg);
+	box-sizing: border-box;
+	object-fit: cover;
+	display: block;
+}
+
+.FeedList .feed.new .marker img.favicon {
+	outline: 2px solid var(--epix-teal);
+	outline-offset: 1px;
+}
+
+.FeedList .feed .meta {
+	font-size: 12.5px;
+	color: var(--epix-text-low);
+	line-height: 22px;
+	margin-bottom: 2px;
+}
+
+.FeedList .feed .meta .sep {
+	margin: 0px 6px;
+}
+
+.FeedList .feed .meta .dot {
+	display: none;
+	color: var(--epix-teal);
+	margin-left: 6px;
+	font-size: 150%;
+	line-height: 0px;
+	vertical-align: -3px;
+}
+
+.FeedList .feed.new .meta .dot {
 	display: inline;
 }
 
@@ -2958,25 +3065,21 @@ body:after {
 	margin-top: 10px;
 }
 
-.FeedList .feed .details {
-	position: absolute;
-	font-size: 13px;
-	left: 0px;
-	width: 150px;
-	text-align: right;
-	color: var(--epix-text-low);
+.FeedList .feed .marker .circle {
+	width: 12px;
+	height: 12px;
+	border: 2.5px solid var(--epix-accent);
+	border-radius: 999px;
+	background-color: var(--epix-bg);
+	box-sizing: content-box;
+	/* neutralize the global .circle (sidebar svg widget) offsets */
+	margin: 0px;
+	vertical-align: baseline;
 }
 
-.FeedList .feed .circle {
-	width: 9px;
-	height: 9px;
-	border: 2px solid var(--epix-accent);
-	position: absolute;
-	pointer-events: none;
-	margin-left: -32px;
-	border-radius: 999px;
-	margin-top: 5px;
-	background-color: var(--epix-bg);
+.FeedList .feed.new .marker .circle {
+	background-color: var(--epix-teal);
+	border-color: var(--epix-teal) !important;
 }
 
 .FeedList .feed .title-container {
@@ -2988,25 +3091,27 @@ body:after {
 
 .FeedList .feed .title {
 	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	line-height: 1.4;
 	color: var(--epix-text);
 }
 
-.FeedList .feed .added {
-	font-size: 12px;
-	color: var(--epix-text-low);
-	margin-top: 9px;
+.FeedList .feed .meta .site {
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--epix-text-mid);
 }
 
-.FeedList .feed .site {
-	font-weight: 600;
-	color: var(--epix-text-mid);
+.FeedList .feed .meta .site:hover {
+	color: var(--epix-accent);
 }
 
 .FeedList .feed .body {
 	color: var(--epix-text-mid);
-	line-height: 24px;
-	font-size: 14px;
-	margin-top: 9px;
+	line-height: 1.55;
+	font-size: 14.5px;
+	margin-top: 7px;
 	white-space: pre-line;
 	max-height: 3em;
 	text-overflow: ellipsis;
@@ -3047,6 +3152,15 @@ body:after {
 	background-color: var(--epix-warning-soft);
 	outline: 2px solid var(--epix-warning-soft);
 	color: var(--epix-ink-soft);
+}
+
+body.theme-dark .highlight,
+body.theme-dark .FeedList .feed.mention .type {
+	background-color: rgba(240, 182, 34, 0.16);
+	color: var(--epix-warning);
+	outline: none;
+	border-radius: var(--epix-radius-sm);
+	padding: 0px 4px;
 }
 
 /* Welcome / discover */
@@ -3117,14 +3231,17 @@ body:after {
 	padding: 24px 20px 15px 20px;
 	margin-top: 24px;
 	text-align: left;
-	overflow: hidden;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
 }
 
 .welcome .site {
-	width: 32.3%;
+	width: auto;
 	background-color: var(--epix-surface);
 	border: 1px solid var(--epix-border);
-	height: 200px;
+	min-height: 180px;
+	height: auto;
 	text-align: left;
 	padding: 24px;
 	box-sizing: border-box;
@@ -3825,19 +3942,29 @@ body.changing #PageFiles .files {
 		background-color: var(--epix-surface-2);
 	}
 
-	#Trigger .icon .arrow-right {
-		border: solid currentColor;
-		border-width: 0 3px 3px 0;
-		display: inline-block;
-		padding: 3px;
-		margin-left: -3px;
-		transform: rotate(-45deg);
-		transition: transform 0.25s;
+	#Trigger .icon .icon-drawer {
+		width: 16px;
+		height: 2px;
+		border-radius: 2px;
+		background-color: currentColor;
+		box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor;
 	}
 
-	#Trigger.active .icon .arrow-right {
-		transform: rotate(135deg);
-		margin-left: 3px;
+	#Trigger .icon .badge {
+		position: absolute;
+		top: -3px;
+		right: -3px;
+		min-width: 17px;
+		height: 17px;
+		box-sizing: border-box;
+		padding: 0px 4px;
+		border-radius: 999px;
+		background-color: var(--epix-danger);
+		color: #ffffff;
+		font-size: 10px;
+		font-weight: 700;
+		line-height: 17px;
+		text-align: center;
 	}
 
 	#BodySites #Trigger.active .Trigger-backdrop {
@@ -3890,43 +4017,25 @@ body.changing #PageFiles .files {
 		margin-top: 10px;
 	}
 
-	.feeds-line {
-		border-right: none;
-	}
-
-	.FeedList .feed .circle {
-		display: none;
-	}
-
 	.FeedList .feed {
-		margin: 0px 0px 10px 0px;
-		padding-left: 20px;
-		background: transparent;
+		margin: 0px 0px 12px 0px;
+		padding: 10px 10px 10px 42px;
 	}
 
-	.FeedList .feed .details {
-		position: relative;
-		left: unset;
-		width: 100%;
-		text-align: left;
-		padding-bottom: 5px;
-		margin-bottom: 5px;
-		border-bottom: 1px solid var(--epix-border);
-		box-sizing: border-box;
+	.FeedList .feed .marker {
+		left: 6px;
+		top: 11px;
 	}
 
-	.FeedList .feed:first-child .details {
-		border-top: 0px;
-	}
-
-	.FeedList .feed .added {
-		float: right;
-		margin-top: 5px;
+	.FeedList .feed::before {
+		left: 17px;
+		top: 38px;
+		bottom: -12px;
 	}
 
 	.feeds-filters {
-		margin-top: 15px;
-		margin-left: 15px;
+		margin-top: 12px;
+		scroll-snap-type: x proximity;
 		/* Feed types are dynamic: keep the tabs on one row and let the row
 		   scroll sideways instead of clipping the last tab */
 		display: flex;
@@ -3943,7 +4052,8 @@ body.changing #PageFiles .files {
 
 	.feeds-filter {
 		flex: none;
-		padding: 8px 10px;
+		padding: 12px 14px;
+		scroll-snap-align: start;
 	}
 
 	/* Stats blocks stack */
@@ -4076,14 +4186,26 @@ body.changing #PageFiles .files {
 		justify-content: center;
 		border-radius: 0;
 		border-bottom: none;
-		border-top: 2px solid transparent;
+		border-top: none;
+		position: relative;
 		font-size: 12px;
 	}
 
 	.left #Head .modes .mode.active {
 		color: var(--epix-accent);
-		border-top-color: var(--epix-accent);
 		background-color: transparent;
+	}
+
+	.left #Head .modes .mode.active::after {
+		content: "";
+		position: absolute;
+		top: 0px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 28px;
+		height: 3px;
+		border-radius: 999px;
+		background-color: var(--epix-accent);
 	}
 
 	#BodyFiles .left #Head .modes,

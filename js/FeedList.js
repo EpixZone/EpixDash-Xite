@@ -46,6 +46,9 @@ class FeedList {
     this.date_save_feed_visit = 0;
     this.notification_alerts = [];
     this.notification_alerts_loaded = false;
+    // Addresses whose declared favicon failed to load; they fall back to the
+    // brand-color ring until the page reloads.
+    this.favicon_failed = {};
     Page.on_settings.then(() => {
       this.need_update = true;
       this.queryNotificationAlerts();
@@ -468,6 +471,26 @@ class FeedList {
     }
   }
 
+  // The timeline marker for a feed item: the source xite's favicon when the
+  // site declares one and it loads, else a ring in the site's brand color.
+  renderFeedMarker(site) {
+    var favicon = site.row.content ? site.row.content.favicon : null;
+    var address = site.row.address;
+    if (favicon && !this.favicon_failed[address]) {
+      return h("img.favicon", {
+        src: "/" + address + "/" + favicon,
+        alt: "",
+        onerror: () => {
+          this.favicon_failed[address] = true;
+          return Page.projector.scheduleRender();
+        }
+      });
+    }
+    return h("div.circle", {
+      style: "border-color: " + Text.toBrandColor(address)
+    });
+  }
+
   renderFeed(feed) {
     var classes, err, site, type_formatted;
     if (this.filter && feed.type !== this.filter) {
@@ -486,15 +509,14 @@ class FeedList {
         exitAnimation: this.exitAnimation,
         classes: classes
       }, [
-        h("div.details", [
-          h("span.dot", {
-            title: "new"
-          }, "\u2022"), h("a.site", {
+        h("div.marker", [this.renderFeedMarker(site)]),
+        h("div.meta", [
+          h("a.site", {
             href: site.getHref()
-          }, [site.row.content.title]), h("div.added", [Time.since(feed.date_added)])
-        ]), h("div.circle", {
-          style: "border-color: " + (Text.toColor(feed.type + site.row.address, 55, 55))
-        }), h("div.title-container", [
+          }, [site.row.content.title]), h("span.sep", "\u00B7"), h("span.added", [Time.since(feed.date_added)]), h("span.dot", {
+            title: "new"
+          }, "\u2022")
+        ]), h("div.title-container", [
           type_formatted ? h("span.type", type_formatted) : void 0, h("a.title", {
             href: site.getHref() + feed.url
           }, this.formatTitle(feed.title))
@@ -838,7 +860,7 @@ class FeedList {
           classes: {
             loading: this.loading || this.waiting
           }
-        }, [h("div.feeds-line"), this.feeds.slice(0, +this.limit + 1 || 9e9).map(this.renderFeed)]) : this.renderWelcome()
+        }, [this.feeds.slice(0, +this.limit + 1 || 9e9).map(this.renderFeed)]) : this.renderWelcome()
       ]
     ]);
   }

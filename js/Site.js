@@ -349,7 +349,7 @@ class Site {
         "working": this.isWorking()
       }
     }, h("div.circle", {
-      style: "color: " + (Text.toColor(this.row.address, 55, 55))
+      style: "color: " + (Text.toBrandColor(this.row.address))
     }, ["\u2022"]), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
@@ -363,7 +363,7 @@ class Site {
             collapsed: this.message_collapsed
           }
         }, [this.message]),
-        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.since(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
+        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.sinceShort(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
       ]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
         href: "#Set+limit",
         onclick: this.handleLimitIncreaseClick

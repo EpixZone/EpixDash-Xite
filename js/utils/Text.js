@@ -18,6 +18,19 @@
       return "hsl(" + (hash % 360) + "," + saturation + "%," + lightness + "%)";
     }
 
+    // Deterministic pick from the four Epix brand colors. Used for the site
+    // dots and the feed fallback rings so one address always gets one hue and
+    // every hue is on-palette.
+    toBrandColor(text) {
+      var colors = ["#69E9F5", "#31BDC6", "#5954CD", "#8A4BDB"];
+      var hash = 0;
+      for (var i = 0; i <= text.length - 1; i++) {
+        hash += text.charCodeAt(i) * (i + 7);
+        hash = hash % 100003;
+      }
+      return colors[hash % colors.length];
+    }
+
     renderMarked(text, options) {
       if (options == null) options = {};
       options["gfm"] = true;

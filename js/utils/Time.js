@@ -24,6 +24,16 @@
       return back;
     }
 
+    // Compact variant for tight chrome (site rail): no "on" prefix and the
+    // year is dropped while it is the current one.
+    sinceShort(timestamp) {
+      var back = this.since(timestamp);
+      var year = new Date().getFullYear();
+      back = back.replace(/^on /, "");
+      back = back.replace(new RegExp(",? " + year + "$"), "");
+      return back;
+    }
+
     dateIso(timestamp) {
       if (timestamp == null) timestamp = null;
       if (!timestamp) {
