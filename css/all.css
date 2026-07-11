@@ -683,27 +683,42 @@ body:after {
 }
 
 .SiteList .site .message {
+	display: none;
 	border-radius: 999px;
-	position: absolute;
-	top: 11px;
 	font-size: 10px;
 	font-weight: 600;
-	opacity: 0;
-	transition: all 0.3s ease-in-out;
-	transition-delay: 0.1s;
+	line-height: 16px;
 	white-space: nowrap;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	padding: 5px 0px;
+	padding: 0 8px;
+	margin: 0 6px 0 -6px;
 	background-color: var(--epix-info);
 	color: var(--epix-ink-strong);
-	max-width: 0px;
+	max-width: 140px;
 	overflow: hidden;
-	height: 22px;
-	box-sizing: border-box;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	transition: max-width 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.SiteList .site .message.visible {
 	display: inline-block;
-	margin-left: 5px;
-	z-index: 99;
+	animation: message-in 150ms ease-out;
+}
+
+@keyframes message-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.SiteList .site .message.visible+.modified {
+	display: none;
 }
 
 .SiteList .site.working {
@@ -720,35 +735,28 @@ body:after {
 	color: var(--epix-ink-strong);
 }
 
-.SiteList .site .message.visible {
-	padding: 5px 10px;
-	opacity: 1;
-	max-width: 140px;
-	box-shadow: 0 0 0 3px var(--dash-rail);
-}
-
-.SiteList .site:not(:hover) .message.collapsed {
+/* Collapsed errors stay out of the way: just a bell next to the date, the
+   full message only while the row is hovered. */
+.SiteList .site:not(:hover) .message.visible.collapsed {
 	background-color: transparent;
 	color: transparent;
-	max-width: 15px;
-	box-shadow: none;
+	max-width: 14px;
+	padding: 0;
+	margin-right: 2px;
+}
+
+.SiteList .site:not(:hover) .message.visible.collapsed+.modified {
+	display: inline;
 }
 
 .SiteList .site .message.collapsed:before {
 	content: "\01F514";
-	display: block;
 	color: var(--epix-text-low);
-	margin-top: -2px;
-	margin-left: -3px;
-	position: absolute;
-	transition: all 0.3s ease-in;
-	transition-delay: 0.1s;
 	font-family: Arial, Helvetica, 'Segoe UI Symbol', "Times", "Times New Roman", "serif", "sans-serif", "EmojiSymbols";
 }
 
 .SiteList .site:hover .message.collapsed:before {
-	opacity: 0;
-	transform: scale(2);
+	display: none;
 }
 
 .SiteList .site:hover .settings {
@@ -2889,6 +2897,9 @@ body:after {
 	position: relative;
 	max-width: 720px;
 	overflow: hidden;
+	/* Own stacking context: keeps the feeds-line (z-index -1) above the
+	   column background instead of buried beneath it. */
+	z-index: 0;
 }
 
 .FeedList.loading {
@@ -4177,10 +4188,6 @@ body.changing #PageFiles .files {
 	.SiteList .site .settings {
 		padding: 14px 16px;
 		opacity: 0.6;
-	}
-
-	.SiteList .site .message {
-		z-index: inherit;
 	}
 
 	.left h2 {

@@ -299,7 +299,7 @@ class FeedList {
 
   formatTitle(title) {
     if (this.searching_text && this.searching_text.length > 1) {
-      return Text.highlight(title, this.searching_text);
+      return Text.highlight(title || "", this.searching_text);
     } else {
       if (title) {
         return title;
@@ -347,7 +347,7 @@ class FeedList {
   }
 
   formatBodyHtml(body, type) {
-    body = body.replace(/[\n\r]+/g, "\n");
+    body = (body || "").replace(/[\n\r]+/g, "\n");
     var username_html = "";
     var reply_html = "";
 
@@ -380,7 +380,7 @@ class FeedList {
 
   formatBody(body, type) {
     var username_formatted, username_match, reply_quote;
-    body = body.replace(/[\n\r]+/g, "\n");
+    body = (body || "").replace(/[\n\r]+/g, "\n");
     if (type === "comment" || type === "mention") {
       username_match = body.match(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/);
       if (username_match) {
@@ -762,6 +762,7 @@ class FeedList {
     }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
       h("div.feeds-filters", has_feeds ? [
         h("a.feeds-filter", {
+          key: "all",
           href: "#all",
           classes: {
             active: active_filter === null
@@ -783,6 +784,7 @@ class FeedList {
           return results;
         })(),
         h("a.feeds-filter", {
+          key: "discover",
           href: "#discover",
           classes: {
             active: active_filter === "discover"
@@ -791,6 +793,7 @@ class FeedList {
         }, _("Discover"))
       ] : [
         h("a.feeds-filter", {
+          key: "discover",
           href: "#discover",
           classes: {
             active: true
