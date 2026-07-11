@@ -20,6 +20,14 @@ class Site {
     this.handleUnfavoriteClick = this.handleUnfavoriteClick.bind(this);
     this.handleFavoriteClick = this.handleFavoriteClick.bind(this);
     this.deleted = false;
+    // The declared favicon failed to load; fall back to the brand-color dot.
+    // Bound once: maquette forbids a function property changing identity
+    // across renders.
+    this.favicon_failed = false;
+    this.handleFaviconError = () => {
+      this.favicon_failed = true;
+      return Page.projector.scheduleRender();
+    };
     this.show_errors = false;
     this.message_visible = false;
     this.message = null;
@@ -337,6 +345,20 @@ class Site {
     return false;
   }
 
+  // The rail marker: the xite's declared favicon when it loads, else the
+  // brand-color dot.
+  renderMarker() {
+    var favicon = this.row.content ? this.row.content.favicon : null;
+    if (favicon && !this.favicon_failed) {
+      return h("img.favicon", {
+        src: "/" + this.row.address + "/" + favicon,
+        alt: "",
+        onerror: this.handleFaviconError
+      });
+    }
+    return h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]);
+  }
+
   render() {
     var now, ref;
     now = Date.now() / 1000;
@@ -348,7 +370,7 @@ class Site {
         "disabled": !this.row.settings.serving && !this.row.demo,
         "working": this.isWorking()
       }
-    }, h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]), h("a.inner", {
+    }, this.renderMarker(), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [

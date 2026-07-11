@@ -652,6 +652,29 @@ body:after {
 	line-height: 1;
 }
 
+.SiteList .site img.favicon {
+	pointer-events: none;
+	position: absolute;
+	left: 13px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 18px;
+	height: 18px;
+	border-radius: 4px;
+	border: 1px solid var(--epix-border);
+	background-color: var(--epix-surface);
+	object-fit: cover;
+}
+
+.SiteList .site.disabled img.favicon {
+	opacity: 0.3;
+}
+
+/* The update spinner paints in the marker slot; let it show through. */
+.SiteList .site.working img.favicon {
+	opacity: 0;
+}
+
 .SiteList .site .inner {
 	color: var(--epix-text-mid);
 	text-decoration: none;
@@ -799,18 +822,9 @@ body:after {
 }
 
 .SiteList .site .message.collapsed:before {
-	content: "!";
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 13px;
-	height: 13px;
-	border-radius: 999px;
-	background-color: var(--epix-danger);
-	color: #ffffff;
-	font-size: 9.5px;
-	font-weight: 700;
-	vertical-align: -2px;
+	content: "\01F514";
+	color: var(--epix-text-low);
+	font-family: Arial, Helvetica, 'Segoe UI Symbol', "Times", "Times New Roman", "serif", "sans-serif", "EmojiSymbols";
 }
 
 .SiteList .site:hover .message.collapsed:before {
@@ -2575,17 +2589,6 @@ body:after {
 	transform: translateY(1px);
 }
 
-#Dashboard .status::before {
-	content: "";
-	display: inline-block;
-	width: 7px;
-	height: 7px;
-	border-radius: 999px;
-	background-color: currentColor;
-	margin-right: 6px;
-	vertical-align: 0.5px;
-}
-
 #Dashboard .status-ok {
 	color: var(--dash-ok-ink);
 }
@@ -4105,10 +4108,6 @@ body.changing #PageFiles .files {
 		flex: none;
 		padding: 12px 14px;
 		scroll-snap-align: start;
-	}
-
-	#Dashboard .status::before {
-		margin-left: 4px;
 	}
 
 	/* Stats blocks stack */
