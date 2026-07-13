@@ -204,7 +204,7 @@ class Head {
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
       this.menu_settings.items.push([_("Show data directory"), this.handleBackupClick]);
     }
-    this.menu_settings.items.push([_("Version ") + Page.server_info.version + " (rev" + Page.server_info.rev + ")"]);
+    this.menu_settings.items.push([_("Version ") + Page.server_info.version]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
       this.menu_settings.items.push([_("Shut down EpixNet"), this.handleShutdownEpixNetClick]);
     }
