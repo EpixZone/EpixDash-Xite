@@ -10,13 +10,11 @@ class Dashboard {
     this.handleLogoutClick = this.handleLogoutClick.bind(this);
     this.handleMultiuserClick = this.handleMultiuserClick.bind(this);
     this.handlePortRecheckClick = this.handlePortRecheckClick.bind(this);
-    this.handlePortClick = this.handlePortClick.bind(this);
+    this.handleNetworkClick = this.handleNetworkClick.bind(this);
     this.handleDisableAlwaysTorClick = this.handleDisableAlwaysTorClick.bind(this);
     this.handleEnableAlwaysTorClick = this.handleEnableAlwaysTorClick.bind(this);
-    this.handleTorClick = this.handleTorClick.bind(this);
     this.menu_newversion = new Menu();
-    this.menu_port = new Menu();
-    this.menu_tor = new Menu();
+    this.menu_network = new Menu();
     this.menu_trackers = new Menu();
     this.menu_multiuser = new Menu();
     this.menu_warnings = new Menu();
@@ -43,16 +41,6 @@ class Dashboard {
       this.log("Webgl:", this.has_web_gl);
     }
     return this.has_web_gl;
-  }
-
-  getTorTitle() {
-    var tor_title = Page.server_info.tor_status.replace(/\((.*)\)/, "").trim();
-    if (tor_title === "Disabled") {
-      tor_title = _("Disabled");
-    } else if (tor_title === "Error") {
-      tor_title = _("Error");
-    }
-    return tor_title;
   }
 
   tagTrackersTitle() {
@@ -91,24 +79,6 @@ class Dashboard {
     }
   }
 
-  handleTorClick() {
-    var ref;
-    this.menu_tor.items = [];
-    this.menu_tor.items.push([_("Status: ") + ((ref = Page.server_info) != null ? ref.tor_status : void 0), Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-make-epixnet-work-with-tor-under-linux"]);
-    if (this.getTorTitle() !== "OK") {
-      this.menu_tor.items.push([_("How to make Tor connection work?"), Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-make-epixnet-work-with-tor-under-linux"]);
-    }
-    this.menu_tor.items.push([_("How to use EpixNet in Tor Browser?"), Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-use-epixnet-in-tor-browser"]);
-    this.menu_tor.items.push(["---"]);
-    if (this.isTorAlways()) {
-      this.menu_tor.items.push([_("Disable always Tor mode"), this.handleDisableAlwaysTorClick]);
-    } else {
-      this.menu_tor.items.push([_("Enable Tor for every connection (slower)"), this.handleEnableAlwaysTorClick]);
-    }
-    this.menu_tor.toggle();
-    return false;
-  }
-
   handleEnableAlwaysTorClick() {
     return Page.cmd("configSet", ["tor", "always"], (res) => {
       Page.cmd("wrapperNotification", ["done", "Tor always mode enabled, please restart your EpixNet to make it work.<br>For your privacy switch to Tor browser and start a new profile by renaming the data directory."]);
@@ -128,35 +98,102 @@ class Dashboard {
     });
   }
 
-  handlePortClick() {
-    var format, port_opened;
-    this.menu_port.items = [];
+  // The consolidated Network popup: one row each for Clearnet, Tor and I2P,
+  // driven by server_info.network_status (per-network inbound reachability).
+  networkStatus() {
+    return Page.server_info.network_status || {};
+  }
+
+  netRow(name, badge, detail) {
+    var row = [h("span.net-name", name), badge];
+    if (detail) {
+      row.push(h("span.net-detail", detail));
+    }
+    return row;
+  }
+
+  clearnetBadge(c) {
+    if (!c || !c.enabled) {
+      return h("span.status.status-disabled", _("Disabled"));
+    }
+    if (c.reachable) {
+      return h("span.status.status-ok", _("Open"));
+    }
+    return h("span.status.status-warning", _("Closed"));
+  }
+
+  clearnetDetail(c) {
+    if (!c || !c.enabled) {
+      return null;
+    }
+    return (c.ip ? c.ip : "") + ":" + c.port;
+  }
+
+  torBadge(t) {
+    if (!t || !t.enabled) {
+      return h("span.status.status-disabled", _("Off"));
+    }
+    if (t.reachable) {
+      return h("span.status.status-ok", t.always ? _("Always") : _("Online"));
+    }
+    return h("span.status.status-warning", t.status || _("Connecting"));
+  }
+
+  i2pBadge(p) {
+    if (!p || !p.enabled) {
+      return h("span.status.status-disabled", _("Off"));
+    }
+    if (p.reachable) {
+      return h("span.status.status-ok", _("Online"));
+    }
+    return h("span.status.status-warning", p.phase || _("Connecting"));
+  }
+
+  handleNetworkClick() {
+    var ns = this.networkStatus();
+    var faq = Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened";
+    this.menu_network.items = [];
     if (Page.server_info.offline) {
-      this.menu_port.items.push(["Offline mode, network communication disabled.", "/Config"]);
-    } else if (Page.server_info.ip_external) {
-      this.menu_port.items.push(["Nice! Your port " + Page.server_info.fileserver_port + " is opened.", Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened"]);
-    } else if (this.isTorAlways()) {
-      this.menu_port.items.push(["Good, your port is always closed when using EpixNet in Tor always mode.", Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened"]);
-    } else if (this.getTorTitle() === "OK") {
-      this.menu_port.items.push(["Your port " + Page.server_info.fileserver_port + " is closed, but your Tor gateway is running well.", Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened"]);
+      this.menu_network.items.push(["Offline mode, network communication disabled.", "/Config"]);
+      this.menu_network.toggle();
+      return false;
+    }
+    if (ns.reachable) {
+      this.menu_network.items.push([_("Peers can reach this node."), faq]);
     } else {
-      this.menu_port.items.push(["Your port " + Page.server_info.fileserver_port + " is closed. You are still fine, but for faster experience try open it.", Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened"]);
+      this.menu_network.items.push([_("Peers can't reach this node directly. It still works, but opening a port or enabling Tor/I2P lets peers connect to you."), faq]);
     }
-    if (Page.server_info.port_opened) {
-      this.menu_port.items.push(["---"]);
-      port_opened = Page.server_info.port_opened;
-      format = {
-        "true": h("span.status.status-ok", _("Opened")),
-        "false": h("span.status.status-warning", _("Closed")),
-        "null": h("span.status.status-disabled", _("Unsupported")),
-        undefined: h("span.status.status-disabled", _("Checking..."))
-      };
-      this.menu_port.items.push([["IPv4: ", format[port_opened.ipv4], ", IPv6: ", format[port_opened.ipv6]], null]);
+    this.menu_network.items.push(["---"]);
+    this.menu_network.items.push([this.netRow(_("Clearnet"), this.clearnetBadge(ns.clearnet), this.clearnetDetail(ns.clearnet)), null]);
+    this.menu_network.items.push([this.netRow(_("Tor"), this.torBadge(ns.tor), ns.tor ? ns.tor.address : null), null]);
+    this.menu_network.items.push([this.netRow(_("I2P"), this.i2pBadge(ns.i2p), ns.i2p ? ns.i2p.address : null), null]);
+    this.menu_network.items.push(["---"]);
+    if (this.isTorAlways()) {
+      this.menu_network.items.push([_("Disable always-Tor mode"), this.handleDisableAlwaysTorClick]);
+    } else if (ns.tor && ns.tor.enabled) {
+      this.menu_network.items.push([_("Route every connection through Tor (slower)"), this.handleEnableAlwaysTorClick]);
     }
-    this.menu_port.items.push(["---"]);
-    this.menu_port.items.push([_("Re-check opened port"), this.handlePortRecheckClick]);
-    this.menu_port.toggle();
+    this.menu_network.items.push([_("Re-check reachability"), this.handlePortRecheckClick]);
+    this.menu_network.toggle();
     return false;
+  }
+
+  // The pill value: green when peers can reach us over any network.
+  networkPill() {
+    if (Page.server_info.offline) {
+      return h("span.status.status-warning", _("Offline mode"));
+    }
+    if (this.port_checking) {
+      return h("span.status", _("Checking"));
+    }
+    var ns = Page.server_info.network_status;
+    if (!ns) {
+      return h("span.status", _("Checking"));
+    }
+    if (ns.reachable) {
+      return h("span.status.status-ok", _("Reachable"));
+    }
+    return h("span.status.status-warning", _("Limited"));
   }
 
   handlePortRecheckClick() {
@@ -319,9 +356,8 @@ class Dashboard {
   }
 
   render() {
-    var tor_title, warnings;
+    var warnings;
     if (Page.server_info) {
-      tor_title = this.getTorTitle();
       warnings = this.getWarnings();
       return h("div#Dashboard", warnings.length ? h("a.warnings.dashboard-item", {
         href: "#Warnings",
@@ -347,18 +383,14 @@ class Dashboard {
         href: "#Logout",
         onmousedown: this.handleLogoutClick,
         onclick: Page.returnFalse
-      }, [h("span", _("Logout"))]) : void 0, this.menu_port.render(".menu-port.menu-left"), h("a.dashboard-item.port", {
-        href: "#Port",
+      }, [h("span", _("Logout"))]) : void 0, h("span.dash-net", [this.menu_network.render(".menu-network"), h("a.dashboard-item.network", {
+        href: "#Network",
         classes: {
           bounce: this.port_checking
         },
-        onmousedown: this.handlePortClick,
+        onmousedown: this.handleNetworkClick,
         onclick: Page.returnFalse
-      }, [h("span", _("Port") + ": "), Page.server_info.offline ? h("span.status.status-warning", _("Offline mode")) : this.port_checking ? h("span.status", _("Checking")) : Page.server_info.ip_external === null ? h("span.status", _("Checking")) : Page.server_info.ip_external ? h("span.status.status-ok", _("Opened")) : this.isTorAlways() ? h("span.status.status-ok", _("Closed (Tor)")) : tor_title === "OK" ? h("span.status.status-warning", _("Closed")) : h("span.status.status-bad", _("Closed"))]), h("a.dashboard-item.tor", {
-        href: "#Tor",
-        onmousedown: this.handleTorClick,
-        onclick: Page.returnFalse
-      }, [h("span", _("Tor") + ": "), tor_title === "OK" ? this.isTorAlways() ? h("span.status.status-ok", _("Always")) : h("span.status.status-ok", _("Available")) : h("span.status.status-warning", tor_title)]), this.menu_tor.render(".menu-tor"), Page.announcer_info || Page.announcer_stats ? h("a.dashboard-item.trackers", {
+      }, [h("span", _("Network") + ": "), this.networkPill()])]), Page.announcer_info || Page.announcer_stats ? h("a.dashboard-item.trackers", {
         href: "#Trackers",
         onmousedown: this.handleTrackersClick,
         onclick: Page.returnFalse
