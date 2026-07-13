@@ -354,7 +354,7 @@ class Dashboard {
         },
         onmousedown: this.handlePortClick,
         onclick: Page.returnFalse
-      }, [h("span", _("Port") + ": "), Page.server_info.offline ? h("span.status.status-warning", _("Offline mode")) : this.port_checking ? h("span.status", _("Checking")) : Page.server_info.ip_external === null ? h("span.status", _("Checking")) : Page.server_info.ip_external === true ? h("span.status.status-ok", _("Opened")) : this.isTorAlways() ? h("span.status.status-ok", _("Closed (Tor)")) : tor_title === "OK" ? h("span.status.status-warning", _("Closed")) : h("span.status.status-bad", _("Closed"))]), h("a.dashboard-item.tor", {
+      }, [h("span", _("Port") + ": "), Page.server_info.offline ? h("span.status.status-warning", _("Offline mode")) : this.port_checking ? h("span.status", _("Checking")) : Page.server_info.ip_external === null ? h("span.status", _("Checking")) : Page.server_info.ip_external ? h("span.status.status-ok", _("Opened")) : this.isTorAlways() ? h("span.status.status-ok", _("Closed (Tor)")) : tor_title === "OK" ? h("span.status.status-warning", _("Closed")) : h("span.status.status-bad", _("Closed"))]), h("a.dashboard-item.tor", {
         href: "#Tor",
         onmousedown: this.handleTorClick,
         onclick: Page.returnFalse

@@ -191,7 +191,6 @@ class Head {
     this.menu_settings.items.push(["---"]);
     this.menu_settings.items.push([_("Create new, empty site"), this.handleCreateSiteClick]);
     this.menu_settings.items.push(["---"]);
-    this.menu_settings.items.push([[h("div.icon-mute", ""), _("Manage blocked users and sites")], this.handleManageBlocksClick]);
     if (Page.server_info.plugins.indexOf("UiConfig") >= 0) {
       this.menu_settings.items.push([[h("div.icon-gear.emoji", "\u2699\uFE0E"), _("Configuration")], "/Config"]);
     }
@@ -204,7 +203,6 @@ class Head {
     this.menu_settings.items.push(["---"]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
       this.menu_settings.items.push([_("Show data directory"), this.handleBackupClick]);
-      this.menu_settings.items.push([_("Show console"), this.handleConsoleClick]);
     }
     this.menu_settings.items.push([_("Version ") + Page.server_info.version + " (rev" + Page.server_info.rev + ")"]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
