@@ -168,10 +168,14 @@ class Dashboard {
     this.menu_network.items.push([this.netRow(_("Tor"), this.torBadge(ns.tor), ns.tor ? ns.tor.address : null), null]);
     this.menu_network.items.push([this.netRow(_("I2P"), this.i2pBadge(ns.i2p), ns.i2p ? ns.i2p.address : null), null]);
     this.menu_network.items.push(["---"]);
-    if (this.isTorAlways()) {
-      this.menu_network.items.push([_("Disable always-Tor mode"), this.handleDisableAlwaysTorClick]);
-    } else if (ns.tor && ns.tor.enabled) {
-      this.menu_network.items.push([_("Route every connection through Tor (slower)"), this.handleEnableAlwaysTorClick]);
+    // The Tor-always toggle changes config and restarts the node - a read-only
+    // gateway refuses both, so only offer it off a gateway.
+    if (!Page.server_info.ui_restrict) {
+      if (this.isTorAlways()) {
+        this.menu_network.items.push([_("Disable always-Tor mode"), this.handleDisableAlwaysTorClick]);
+      } else if (ns.tor && ns.tor.enabled) {
+        this.menu_network.items.push([_("Route every connection through Tor (slower)"), this.handleEnableAlwaysTorClick]);
+      }
     }
     this.menu_network.items.push([_("Re-check reachability"), this.handlePortRecheckClick]);
     this.menu_network.toggle();
