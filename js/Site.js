@@ -20,6 +20,14 @@ class Site {
     this.handleUnfavoriteClick = this.handleUnfavoriteClick.bind(this);
     this.handleFavoriteClick = this.handleFavoriteClick.bind(this);
     this.deleted = false;
+    // The declared favicon failed to load; fall back to the brand-color dot.
+    // Bound once: maquette forbids a function property changing identity
+    // across renders.
+    this.favicon_failed = false;
+    this.handleFaviconError = () => {
+      this.favicon_failed = true;
+      return Page.projector.scheduleRender();
+    };
     this.show_errors = false;
     this.message_visible = false;
     this.message = null;
@@ -337,6 +345,20 @@ class Site {
     return false;
   }
 
+  // The rail marker: the xite's declared favicon when it loads, else the
+  // brand-color dot.
+  renderMarker() {
+    var favicon = this.row.content ? this.row.content.favicon : null;
+    if (favicon && !this.favicon_failed) {
+      return h("img.favicon", {
+        src: "/" + this.row.address + "/" + favicon,
+        alt: "",
+        onerror: this.handleFaviconError
+      });
+    }
+    return h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]);
+  }
+
   render() {
     var now, ref;
     now = Date.now() / 1000;
@@ -348,9 +370,7 @@ class Site {
         "disabled": !this.row.settings.serving && !this.row.demo,
         "working": this.isWorking()
       }
-    }, h("div.circle", {
-      style: "color: " + (Text.toColor(this.row.address, 55, 55))
-    }, ["\u2022"]), h("a.inner", {
+    }, this.renderMarker(), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [
@@ -363,7 +383,7 @@ class Site {
             collapsed: this.message_collapsed
           }
         }, [this.message]),
-        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.since(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
+        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.sinceShort(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
       ]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
         href: "#Set+limit",
         onclick: this.handleLimitIncreaseClick

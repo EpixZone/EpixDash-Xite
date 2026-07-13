@@ -34,7 +34,20 @@ class Trigger {
         "href": "#Trigger",
         onclick: this.handleTitleClick,
         ontouchend: ""
-      }, h("div.arrow-right"))
+      }, [
+        h("div.icon-drawer"),
+        (() => {
+          var errors = 0;
+          if (Page.site_list && Page.site_list.item_list) {
+            Page.site_list.item_list.items.forEach((site) => {
+              if (site.message_visible && site.message_class === "error") {
+                errors += 1;
+              }
+            });
+          }
+          return errors > 0 ? h("span.badge", [errors > 9 ? "9+" : String(errors)]) : void 0;
+        })()
+      ])
     ]);
   }
 }
