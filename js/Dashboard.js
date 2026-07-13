@@ -322,7 +322,11 @@ class Dashboard {
         descr: "Internet Explorer is not fully supported browser by EpixNet, please consider switching to Firefox, Chromium or other compatible browser"
       });
     }
-    if (this.isTorAlways() && (!navigator.userAgent.match(/(Firefox)/) || (navigator.maxTouchPoints != null) || (navigator.serviceWorker != null))) {
+    // The Epix Browser routes clearnet through Tor when the extension's
+    // "Clearnet traffic over Tor" box is checked, so it's already safe - skip
+    // the Tor-browser nudge in that case.
+    var browser_safe = Page.server_info.epix_browser && Page.server_info.browser_tor_clearnet;
+    if (this.isTorAlways() && !browser_safe && (!navigator.userAgent.match(/(Firefox)/) || (navigator.maxTouchPoints != null) || (navigator.serviceWorker != null))) {
       warnings.push({
         title: "Your browser is not safe",
         href: Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-use-epixnet-in-tor-browser",
