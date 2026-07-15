@@ -233,6 +233,15 @@ class EpixDash extends EpixFrame {
   onOpenWebsocket(e) {
     this.reloadServerInfo();
     this.reloadServerErrors();
+    // Fetch announcer stats right away, in parallel with the others: the
+    // Trackers pill waits on them, and the node answers from a cached map,
+    // needing nothing from siteInfo or serverInfo. This used to be fetched
+    // from setSiteInfo only when server_info was already set - a race that
+    // left the pill hidden until the node happened to push another siteInfo
+    // event, which in a quiet session can take minutes or never come. (The
+    // pill still cannot render early: the Dashboard render is gated on
+    // server_info, and setSiteInfo keeps refreshing the stats on pushes.)
+    this.reloadAnnouncerStats();
     return this.reloadSiteInfo();
   }
 
