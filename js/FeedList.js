@@ -112,7 +112,15 @@ class FeedList {
         continue;
       }
       if (row_group.type === row.type && row.url === row_group.url && row.site === row_group.site) {
-        if (row_group.body_more == null) {
+        // A NULL body has nothing to show as an extra line; count it under
+        // "+N more" instead of rendering an empty block (and feeding null
+        // into isQuotedIn / the vnode key).
+        if (!row.body) {
+          if (row_group.more == null) {
+            row_group.more = 0;
+          }
+          row_group.more += 1;
+        } else if (row_group.body_more == null) {
           row_group.body_more = [];
           row_group.body_more.push(row.body);
         } else if (row_group.body_more.length < 3) {
@@ -342,6 +350,9 @@ class FeedList {
   }
 
   isQuotedIn(main_body, other_body) {
+    // A feed row's body can be NULL (a site's feed SQL returns whatever its
+    // schema holds); nothing quotes or is quoted then.
+    if (!main_body || !other_body) return false;
     // Check if the main body quotes the other body's text
     var quote_match = main_body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
     if (!quote_match) return false;
