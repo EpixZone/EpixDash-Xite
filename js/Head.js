@@ -205,7 +205,8 @@ class Head {
       this.menu_settings.items.push([_("Show data directory"), this.handleBackupClick]);
     }
     this.menu_settings.items.push([_("Version ") + Page.server_info.version]);
-    if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
+    // A read-only gateway refuses serverShutdown, so don't offer it there.
+    if ((!Page.server_info.multiuser || Page.server_info.multiuser_admin) && !Page.server_info.ui_restrict) {
       this.menu_settings.items.push([_("Shut down EpixNet"), this.handleShutdownEpixNetClick]);
     }
     if (this.menu_settings.visible) {
