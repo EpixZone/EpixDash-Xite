@@ -198,7 +198,7 @@ class Head {
       this.menu_settings.items.push([[h("div.icon-gear.emoji", "\u2B21"), _("Plugins")], "/Plugins"]);
     }
     if (Page.server_info.plugins.indexOf("Stats") >= 0) {
-      this.menu_settings.items.push([_("Stats"), "/Stats"]);
+      this.menu_settings.items.push([[h("div.icon-gear.emoji", "\uD83D\uDCCA\uFE0E"), _("Node Stats")], "/Stats"]);
     }
     this.menu_settings.items.push(["---"]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
