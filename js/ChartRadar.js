@@ -22,7 +22,7 @@ class ChartRadar {
         color: "#5954CD"
       }, {
         id: "site_size",
-        title: "Site size",
+        title: "Xite size",
         color: "#8A4BDB"
       }
     ];
@@ -143,7 +143,7 @@ class ChartRadar {
             pointRadius: 0,
             data: []
           }, {
-            label: "Site size",
+            label: "Xite size",
             backgroundColor: "rgba(138, 75, 219, 0.14)",
             borderColor: "#8A4BDB",
             borderWidth: 2,

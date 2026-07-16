@@ -99,7 +99,7 @@ class NetworkStats {
     this.chart_size.chart_stroke = ["#5954CD", "rgba(105, 233, 245, 0.14)"];
     this.chart_size.type_names = ["size", "size_optional", "optional_limit", "optional_used", "content"];
     this.chart_size.formatValue = function(type_data) {
-      return Text.formatSize(type_data.size) + (" in " + Page.site_list.sites.length + " sites");
+      return Text.formatSize(type_data.size) + (" in " + Page.site_list.sites.length + " xites");
     };
     this.chart_size.formatDetails = function(type_data) {
       var back;

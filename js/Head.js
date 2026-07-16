@@ -162,25 +162,25 @@ class Head {
     }
     orderby = Page.settings.sites_orderby;
     this.menu_settings.items = [];
-    this.menu_settings.items.push([_("Update all sites"), this.handleUpdateAllClick]);
+    this.menu_settings.items.push([_("Update all xites"), this.handleUpdateAllClick]);
     this.menu_settings.items.push(["---"]);
     this.menu_settings.items.push([
-      _("Order sites by peers"), (() => {
+      _("Order xites by peers"), (() => {
         return this.handleOrderbyClick("peers");
       }), orderby === "peers"
     ]);
     this.menu_settings.items.push([
-      _("Order sites by update time"), (() => {
+      _("Order xites by update time"), (() => {
         return this.handleOrderbyClick("modified");
       }), orderby === "modified"
     ]);
     this.menu_settings.items.push([
-      _("Order sites by add time"), (() => {
+      _("Order xites by add time"), (() => {
         return this.handleOrderbyClick("addtime");
       }), orderby === "addtime"
     ]);
     this.menu_settings.items.push([
-      _("Order sites by size"), (() => {
+      _("Order xites by size"), (() => {
         return this.handleOrderbyClick("size");
       }), orderby === "size"
     ]);
@@ -189,7 +189,7 @@ class Head {
     this.menu_settings.items.push(["---"]);
     this.menu_settings.items.push([this.renderMenuLanguage(), null]);
     this.menu_settings.items.push(["---"]);
-    this.menu_settings.items.push([_("Create new, empty site"), this.handleCreateSiteClick]);
+    this.menu_settings.items.push([_("Create new, empty xite"), this.handleCreateSiteClick]);
     this.menu_settings.items.push(["---"]);
     if (Page.server_info.plugins.indexOf("UiConfig") >= 0) {
       this.menu_settings.items.push([[h("div.icon-gear.emoji", "\u2699\uFE0E"), _("Configuration")], "/Config"]);
@@ -286,7 +286,7 @@ class Head {
           active: Page.mode === "Sites"
         },
         onclick: Page.handleLinkClick
-      }, _("Sites")),
+      }, _("Xites")),
       h("a.mode.files", {
         href: "?Files",
         classes: {

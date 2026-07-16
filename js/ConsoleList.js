@@ -59,7 +59,7 @@ class ConsoleList {
           this.logs.push({
             date_added: now - 1,
             level: "INFO",
-            message: "Server info: " + Page.server_info.sites + " sites, " + Page.server_info.connections + " connections",
+            message: "Server info: " + Page.server_info.sites + " xites, " + Page.server_info.connections + " connections",
             time_display: "Now"
           });
 

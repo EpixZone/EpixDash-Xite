@@ -177,7 +177,7 @@ class MuteList {
   renderSiteblocks(siteblocks) {
     return h("div.siteblocks", [
       h("div.mute.mute-head", [
-        h("div.mute-col", "Blocked site"), h("div.mute-col", {
+        h("div.mute-col", "Blocked xite"), h("div.mute-col", {
           style: "width: 66%"
         }, "Why?")
       ]), siteblocks.map((siteblock) => {

@@ -178,7 +178,7 @@ class EpixDash extends EpixFrame {
   loadSettings() {
     return this.on_site_info.then(() => {
       return this.cmd("userGetSettings", [], (res) => {
-        var base1, base2, base3, base4;
+        var base1, base2, base3, base4, base5;
         if (!res || res.error) {
           return this.loadLocalStorage();
         } else {
@@ -195,6 +195,9 @@ class EpixDash extends EpixFrame {
           if ((base4 = this.settings).date_feed_visit == null) {
             base4.date_feed_visit = 1;
           }
+          if ((base5 = this.settings).merged_expanded == null) {
+            base5.merged_expanded = {};
+          }
           this.feed_list.date_feed_visit = this.settings.date_feed_visit;
           return this.on_settings.resolve(this.settings);
         }
@@ -204,7 +207,7 @@ class EpixDash extends EpixFrame {
 
   loadLocalStorage() {
     return this.cmd("wrapperGetLocalStorage", [], (settings) => {
-      var base1, base2;
+      var base1, base2, base3;
       this.settings = settings;
       this.log("Loaded localstorage");
       if (this.settings == null) {
@@ -215,6 +218,9 @@ class EpixDash extends EpixFrame {
       }
       if ((base2 = this.settings).favorite_sites == null) {
         base2.favorite_sites = {};
+      }
+      if ((base3 = this.settings).merged_expanded == null) {
+        base3.merged_expanded = {};
       }
       return this.on_settings.resolve(this.settings);
     });

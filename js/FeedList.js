@@ -684,7 +684,7 @@ class FeedList {
           enterAnimation: Animation.show,
           exitAnimation: Animation.slideUpInout
         }, [
-          "You are serving a blocked site: ", h("a.site", {
+          "You are serving a blocked xite: ", h("a.site", {
             href: siteblock.site.getHref()
           }, siteblock.site.row.content.title), h("span.reason", [h("b", "Reason: "), siteblock.reason]), h("a.hide", {
             href: "#Hide",
@@ -711,7 +711,7 @@ class FeedList {
   }
 
   renderSearchHelp() {
-    return h("div.search-help", ["Tip: Search in specific site using ", h("code", "anything site:SiteName")]);
+    return h("div.search-help", ["Tip: Search in specific xite using ", h("code", "anything site:SiteName")]);
   }
 
   renderDiscoverSite(cssClass, address, title, description, comingSoon) {
@@ -746,19 +746,19 @@ class FeedList {
       h("img", {src: "img/logo.png", height: 150}),
       h("h1", _("Welcome to EpixNet")),
       h("h2", _("Decentralization Without Compromise")),
-      h("div.served", [_("This site currently served by "), h("b.peers", (Page.site_info["peers"] || "n/a")), _(" peers, without any central server.")]),
+      h("div.served", [_("This xite currently served by "), h("b.peers", (Page.site_info["peers"] || "n/a")), _(" peers, without any central server.")]),
       h("div.sites", [
         this.renderDiscoverSite("site-epixtalk", "epix1talk58lw26c0cyrtuu8axptne2p6zf33s7xxwu", "Epix Talk", "Decentralized forum"),
         this.renderDiscoverSite("site-epixblog", "epix18l0gy59ka9ka89wm9mwsspfmkcv9tvf7g0cs6f", "Epix Blog", "Decentralized microblogging"),
         this.renderDiscoverSite("site-epixpost", "epix1p0stmcza0xjkvv0vnjlk0ypr7xsunt4lxkhgcm", "Epix Post", "Decentralized social network"),
         this.renderDiscoverSite("site-epixmail", "epix1pvta40a8d944w3npr9ztqrfh3wec53hh2je4fa", "Epix Mail", "Decentralized encrypted mailing"),
-        this.renderDiscoverSite("site-epixsites", "epix1searchd8hcnyfacvklmszzxwx9ptnf5rde04xf", "Epix Sites", "Decentralized site discovery"),
+        this.renderDiscoverSite("site-epixsites", "epix1searchd8hcnyfacvklmszzxwx9ptnf5rde04xf", "Epix Sites", "Decentralized xite discovery"),
         this.renderDiscoverSite("site-epixwiki", "epix1wkkpkx4ldeuh30e3wnz25ft70j9rj9ns77plwa", "Epix Wiki", "Decentralized wiki")
       ]),
       h("div.utility-section", [
         h("div.utility-header", {onclick: this.onToggleUtility}, [
           h("span.utility-arrow", {classes: {expanded: utilityExpanded}}, "\u25B6"),
-          h("span", _("EpixNet Utility Sites"))
+          h("span", _("EpixNet Utility Xites"))
         ]),
         utilityExpanded ? h("div.utility-sites", [
           this.renderDiscoverSite("site-xid", "epix1xauthduuyn63k6kj54jzgp4l8nnjlhrsyaku8c", "xID", "Decentralized identity & DNS"),
@@ -858,9 +858,9 @@ class FeedList {
           enterAnimation: Animation.show,
           exitAnimation: Animation.hide,
           onclick: this.handleSearchInfoClick
-        }, (this.searching ? this.res.num + " results " : "") + ("from " + this.res.sites + " sites in " + (this.res.taken.toFixed(2)) + "s")) : void 0, h("input", {
+        }, (this.searching ? this.res.num + " results " : "") + ("from " + this.res.sites + " xites in " + (this.res.taken.toFixed(2)) + "s")) : void 0, h("input", {
           type: "text",
-          placeholder: _("Search in connected sites"),
+          placeholder: _("Search in connected xites"),
           value: this.searching,
           onkeyup: this.handleSearchKeyup,
           oninput: this.handleSearchInput,
@@ -868,7 +868,7 @@ class FeedList {
         }), this.show_stats ? h("div.search-info-stats", {
           enterAnimation: Animation.slideDown,
           exitAnimation: Animation.slideUp
-        }, [h("table", [h("tr", h("th", "Site"), h("th", "Feed"), h("th.taken", "Taken")), this.res.stats.map(this.renderSearchStat)])]) : void 0, this.renderSearchHelp(), this.feeds.length === 0 && this.searched ? h("div.search-noresult", {
+        }, [h("table", [h("tr", h("th", "Xite"), h("th", "Feed"), h("th.taken", "Taken")), this.res.stats.map(this.renderSearchStat)])]) : void 0, this.renderSearchHelp(), this.feeds.length === 0 && this.searched ? h("div.search-noresult", {
           enterAnimation: Animation.show
         }, "No results for " + this.searched) : void 0),
         this.feeds.length > 0 ? h("div.FeedList." + this.getClass(), {
