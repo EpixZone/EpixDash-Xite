@@ -4465,6 +4465,12 @@ body.changing #PageFiles .files {
 		white-space: nowrap;
 	}
 
+	#Dashboard .dash-net .menu.menu-network,
+	#Dashboard .dash-net .menu.menu-network.visible {
+		top: 60px;
+		right: 8px;
+	}
+
 	.menu-item {
 		padding: 12px 24px;
 	}

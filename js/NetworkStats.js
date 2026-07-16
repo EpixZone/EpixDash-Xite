@@ -81,7 +81,7 @@ class NetworkStats {
       var back;
       back = [];
       back.push("Onion: " + type_data.peer_onion + " peers (" + (type_data.connection_onion || 0) + " connections)");
-      back.push("Incoming: " + (Math.round(type_data.connection_in / type_data.connection * 100)) + "%");
+      back.push("Incoming: " + (type_data.connection ? Math.round((type_data.connection_in || 0) / type_data.connection * 100) : 0) + "%");
       back.push("Ping avg: " + type_data.connection_ping_avg + "ms (min: " + type_data.connection_ping_min + "ms)");
       return back;
     };
