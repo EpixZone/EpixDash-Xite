@@ -5,6 +5,8 @@ class Site {
     this.item_list = item_list;
     this.renderOptionalStats = this.renderOptionalStats.bind(this);
     this.render = this.render.bind(this);
+    this.renderMergedExpander = this.renderMergedExpander.bind(this);
+    this.handleMergedExpandClick = this.handleMergedExpandClick.bind(this);
     this.handleLimitIncreaseClick = this.handleLimitIncreaseClick.bind(this);
     this.handleHelpsClick = this.handleHelpsClick.bind(this);
     this.handleHelpAllClick = this.handleHelpAllClick.bind(this);
@@ -17,6 +19,11 @@ class Site {
     this.handleResumeClick = this.handleResumeClick.bind(this);
     this.handleCheckfilesClick = this.handleCheckfilesClick.bind(this);
     this.handleUpdateClick = this.handleUpdateClick.bind(this);
+    this.handleUpdateAllClick = this.handleUpdateAllClick.bind(this);
+    this.handlePauseAllClick = this.handlePauseAllClick.bind(this);
+    this.handleResumeAllClick = this.handleResumeAllClick.bind(this);
+    this.handleCheckfilesAllClick = this.handleCheckfilesAllClick.bind(this);
+    this.handleDeleteAllClick = this.handleDeleteAllClick.bind(this);
     this.handleUnfavoriteClick = this.handleUnfavoriteClick.bind(this);
     this.handleFavoriteClick = this.handleFavoriteClick.bind(this);
     this.deleted = false;
@@ -122,8 +129,21 @@ class Site {
     return this.row.tasks > 0 || ((ref = this.row.event) != null ? ref[0] : void 0) === "updating";
   }
 
+  // A merger renders twice (overview row + its line in the sublist), each
+  // copy with its own favorite flag; keep both in sync when either toggles.
+  setFavorite(favorite) {
+    var ref, ref1;
+    this.favorite = favorite;
+    if ((ref = Page.site_list.sites_byaddress[this.row.address]) != null) {
+      ref.favorite = favorite;
+    }
+    if ((ref1 = Page.site_list.merger_dups[this.row.address]) != null) {
+      ref1.favorite = favorite;
+    }
+  }
+
   handleFavoriteClick() {
-    this.favorite = true;
+    this.setFavorite(true);
     this.menu = new Menu();
     Page.settings.favorite_sites[this.row.address] = true;
     Page.saveSettings();
@@ -132,7 +152,7 @@ class Site {
   }
 
   handleUnfavoriteClick() {
-    this.favorite = false;
+    this.setFavorite(false);
     this.menu = new Menu();
     delete Page.settings.favorite_sites[this.row.address];
     Page.saveSettings();
@@ -145,6 +165,133 @@ class Site {
       "address": this.row.address
     });
     this.show_errors = true;
+    return false;
+  }
+
+  // Group actions on the overview row fan the existing single-site commands
+  // out to the parent plus every merged xite. The sublist rows keep the
+  // plain single-site actions. Favorite and Save as .zip stay parent-only
+  // on purpose: favoriting already relocates the whole group, and a zip
+  // fan-out would start N downloads.
+  handleUpdateAllClick() {
+    var i, len, merged_sites, site;
+    Page.cmd("siteUpdate", {
+      "address": this.row.address
+    });
+    this.show_errors = true;
+    merged_sites = this.getMergedSites() || [];
+    for (i = 0, len = merged_sites.length; i < len; i++) {
+      site = merged_sites[i];
+      Page.cmd("siteUpdate", {
+        "address": site.row.address
+      });
+      site.show_errors = true;
+    }
+    return false;
+  }
+
+  handlePauseAllClick() {
+    var i, len, merged_sites, site;
+    Page.cmd("sitePause", {
+      "address": this.row.address
+    });
+    merged_sites = this.getMergedSites() || [];
+    for (i = 0, len = merged_sites.length; i < len; i++) {
+      site = merged_sites[i];
+      Page.cmd("sitePause", {
+        "address": site.row.address
+      });
+    }
+    return false;
+  }
+
+  handleResumeAllClick() {
+    var i, len, merged_sites, site;
+    Page.cmd("siteResume", {
+      "address": this.row.address
+    });
+    merged_sites = this.getMergedSites() || [];
+    for (i = 0, len = merged_sites.length; i < len; i++) {
+      site = merged_sites[i];
+      Page.cmd("siteResume", {
+        "address": site.row.address
+      });
+    }
+    return false;
+  }
+
+  handleCheckfilesAllClick() {
+    var i, len, merged_sites, site;
+    Page.cmd("siteUpdate", {
+      "address": this.row.address,
+      "check_files": true,
+      since: 0
+    });
+    this.show_errors = true;
+    merged_sites = this.getMergedSites() || [];
+    for (i = 0, len = merged_sites.length; i < len; i++) {
+      site = merged_sites[i];
+      Page.cmd("siteUpdate", {
+        "address": site.row.address,
+        "check_files": true,
+        since: 0
+      });
+      site.show_errors = true;
+    }
+    return false;
+  }
+
+  // "Delete all" on a group overview row: one confirm for the whole group,
+  // then the standard delete for every merged xite and the parent last.
+  // No per-site blacklist flow here - that stays on the individual rows.
+  // Owned xites are excluded (they keep their sidebar delete flow).
+  handleDeleteAllClick() {
+    var deletable, i, len, merged_sites, message, owned, site;
+    merged_sites = this.getMergedSites() || [];
+    deletable = [];
+    owned = 0;
+    for (i = 0, len = merged_sites.length; i < len; i++) {
+      site = merged_sites[i];
+      if (site.row.settings.own) {
+        owned += 1;
+      } else {
+        deletable.push(site);
+      }
+    }
+    if (this.row.settings.own) {
+      owned += 1;
+    }
+    message = _("Delete this xite and its ") + merged_sites.length + _(" merged xites?");
+    if (owned > 0) {
+      message += _(" Owned xites are kept.");
+    }
+    Page.cmd("wrapperConfirm", [message, _("Delete all")], (confirmed) => {
+      var j, len1;
+      if (!confirmed) {
+        return;
+      }
+      for (j = 0, len1 = deletable.length; j < len1; j++) {
+        deletable[j].deleteSite();
+      }
+      if (!this.row.settings.own) {
+        return this.deleteSite();
+      }
+    });
+    return false;
+  }
+
+  // Toggle this merger's nested merged xite sublist; the choice persists per
+  // merger address the same way as favorites (userSetSettings).
+  handleMergedExpandClick() {
+    if (Page.settings.merged_expanded == null) {
+      Page.settings.merged_expanded = {};
+    }
+    if (Page.settings.merged_expanded[this.row.address]) {
+      delete Page.settings.merged_expanded[this.row.address];
+    } else {
+      Page.settings.merged_expanded[this.row.address] = true;
+    }
+    Page.saveSettings();
     return false;
   }
 
@@ -180,7 +327,7 @@ class Site {
   }
 
   handleCloneUpgradeClick() {
-    Page.cmd("wrapperConfirm", ["Are you sure?" + (" Any modifications you made on<br><b>" + this.row.content.title + "</b> site's js/css files will be lost."), "Upgrade"], (confirmed) => {
+    Page.cmd("wrapperConfirm", ["Are you sure?" + (" Any modifications you made on<br><b>" + this.row.content.title + "</b> xite's js/css files will be lost."), "Upgrade"], (confirmed) => {
       return Page.cmd("siteClone", {
         "address": this.row.content.cloned_from,
         "root_inner_path": this.row.content.clone_root,
@@ -192,7 +339,7 @@ class Site {
 
   handleDeleteClick() {
     if (this.row.settings.own) {
-      Page.cmd("wrapperConfirm", ["You can delete your site using the site's sidebar.", ["Open site"]], (confirmed) => {
+      Page.cmd("wrapperConfirm", ["You can delete your xite using the xite's sidebar.", ["Open xite"]], (confirmed) => {
         if (confirmed) {
           return window.top.location = this.getHref() + "#EpixNet:OpenSidebar";
         }
@@ -222,31 +369,50 @@ class Site {
     // succeeded, so a refusal (e.g. NoNewSites) leaves the site in place.
     // The node surfaces policy refusals as their own notification.
     Page.cmd("siteDelete", { "address": this.row.address }, (res) => {
+      var ref;
       if (res && res.error) {
         return false; // refused - keep the row; the node showed why
       }
       if (onSuccess) {
         onSuccess();
       }
-      this.item_list.deleteItem(this);
+      // Delete the canonical list item: `this` may be a merger's sublist
+      // copy, which the item list does not hold.
+      this.item_list.deleteItem((ref = this.item_list.items_bykey[this.row.address]) != null ? ref : this);
       return Page.projector.scheduleRender();
     });
     return false;
   }
 
   handleSettingsClick(e) {
+    var merged_sites;
+    // On a group overview row Update / Check files / Pause / Resume / Delete
+    // become their "all" variants and cover the parent + its merged xites.
+    // The Pause<->Resume flip follows the PARENT's serving state, like any
+    // single row. Favorite and Save as .zip stay parent-scoped.
+    merged_sites = this.getMergedSites();
     this.menu.items = [];
     if (this.favorite) {
       this.menu.items.push([_("Unfavorite"), this.handleUnfavoriteClick]);
     } else {
       this.menu.items.push([_("Favorite"), this.handleFavoriteClick]);
     }
-    this.menu.items.push([_("Update"), this.handleUpdateClick]);
-    this.menu.items.push([_("Check files"), this.handleCheckfilesClick]);
-    if (this.row.settings.serving) {
-      this.menu.items.push([_("Pause"), this.handlePauseClick]);
+    if (merged_sites) {
+      this.menu.items.push([_("Update all"), this.handleUpdateAllClick]);
+      this.menu.items.push([_("Check all files"), this.handleCheckfilesAllClick]);
+      if (this.row.settings.serving) {
+        this.menu.items.push([_("Pause all"), this.handlePauseAllClick]);
+      } else {
+        this.menu.items.push([_("Resume all"), this.handleResumeAllClick]);
+      }
     } else {
-      this.menu.items.push([_("Resume"), this.handleResumeClick]);
+      this.menu.items.push([_("Update"), this.handleUpdateClick]);
+      this.menu.items.push([_("Check files"), this.handleCheckfilesClick]);
+      if (this.row.settings.serving) {
+        this.menu.items.push([_("Pause"), this.handlePauseClick]);
+      } else {
+        this.menu.items.push([_("Resume"), this.handleResumeClick]);
+      }
     }
     this.menu.items.push([_("Save as .zip"), "/EpixNet-Internal/Zip?address=" + this.row.address]);
     if (this.row.content.cloneable === true) {
@@ -257,7 +423,11 @@ class Site {
       this.menu.items.push([_("Upgrade code"), this.handleCloneUpgradeClick]);
     }
     this.menu.items.push(["---"]);
-    this.menu.items.push([_("Delete"), this.handleDeleteClick]);
+    if (merged_sites) {
+      this.menu.items.push([_("Delete all"), this.handleDeleteAllClick]);
+    } else {
+      this.menu.items.push([_("Delete"), this.handleDeleteClick]);
+    }
     if (this.menu.visible) {
       this.menu.hide();
     } else {
@@ -336,7 +506,7 @@ class Site {
   handleLimitIncreaseClick() {
     Page.cmd("as", [this.row.address, "siteSetLimit", this.row.need_limit], (res) => {
       if (res === "ok") {
-        Page.cmd("wrapperNotification", ["done", "Site <b>" + this.row.content.title + "</b> storage limit modified to <b>" + this.row.need_limit + "MB</b>", 5000]);
+        Page.cmd("wrapperNotification", ["done", "Xite <b>" + this.row.content.title + "</b> storage limit modified to <b>" + this.row.need_limit + "MB</b>", 5000]);
       } else {
         Page.cmd("wrapperNotification", ["error", res.error]);
       }
@@ -359,22 +529,61 @@ class Site {
     return h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]);
   }
 
+  // The merged xites nested under this row when it is a group overview row;
+  // null for sublist copies (is_merged_child) and ordinary sites.
+  getMergedSites() {
+    var merged_sites, ref, ref1;
+    if (this.is_merged_child) {
+      return null;
+    }
+    merged_sites = (ref = Page.site_list) != null ? (ref1 = ref.merged_children) != null ? ref1[this.row.address] : void 0 : void 0;
+    if (merged_sites && merged_sites.length) {
+      return merged_sites;
+    }
+    return null;
+  }
+
+  // The merger row's expander: chevron + merged xite count, toggles the
+  // nested sublist. A span, not an anchor: it sits inside the row's link.
+  // The merger's own line inside the sublist (is_merged_child) stays a
+  // plain individual row.
+  renderMergedExpander() {
+    var merged_sites, ref;
+    merged_sites = this.getMergedSites();
+    if (!merged_sites) {
+      return void 0;
+    }
+    return h("span.merged-expander", {
+      classes: {
+        expanded: !!((ref = Page.settings.merged_expanded) != null ? ref[this.row.address] : void 0)
+      },
+      title: merged_sites.length + " " + _("merged xites"),
+      onclick: this.handleMergedExpandClick
+    }, [h("div.icon-arrow-down"), h("span.value", ["" + merged_sites.length])]);
+  }
+
   render() {
-    var now, ref;
+    var merged_expander, merged_stats, now, ref;
     now = Date.now() / 1000;
+    merged_expander = this.renderMergedExpander();
+    // A merger's row is the group overview: the newest update time across
+    // the group and everyone's peers summed (own size). Its own numbers show
+    // on its individual line inside the expanded sublist.
+    merged_stats = merged_expander ? this.merged_stats : null;
     return h("div.site", {
       key: this.key,
       "data-key": this.key,
       classes: {
-        "modified-lastday": now - this.row.settings.modified < 60 * 60 * 24,
+        "modified-lastday": now - (merged_stats ? merged_stats.modified : this.row.settings.modified) < 60 * 60 * 24,
         "disabled": !this.row.settings.serving && !this.row.demo,
-        "working": this.isWorking()
+        "working": this.isWorking(),
+        "has-merged": !!merged_expander
       }
     }, this.renderMarker(), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [
-      h("span.title", [this.row.content.title || this.row.address]), h("div.details", [
+      h("span.title", [this.row.content.title || this.row.address]), merged_expander, h("div.details", [
         h("div.message", {
           classes: {
             visible: this.message_visible,
@@ -383,7 +592,7 @@ class Site {
             collapsed: this.message_collapsed
           }
         }, [this.message]),
-        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.sinceShort(this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
+        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.sinceShort(merged_stats ? merged_stats.modified : this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [merged_stats ? merged_stats.peers : Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
       ]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
         href: "#Set+limit",
         onclick: this.handleLimitIncreaseClick
@@ -427,13 +636,13 @@ class Site {
         h("h3.name", h("a", {
           href: this.getHref()
         }, row.content.title)), h("div.size", {
-          title: "Site size limit: " + (Text.formatSize(row.size_limit * 1024 * 1024))
+          title: "Xite size limit: " + (Text.formatSize(row.size_limit * 1024 * 1024))
         }, [
           "" + (Text.formatSize(row.settings.size)), h("div.bar", h("div.bar-active", {
             style: "width: " + (100 * (row.settings.size / (row.size_limit * 1024 * 1024))) + "%"
           }))
         ]), h("div.plus", "+"), h("div.size.size-optional", {
-          title: "Optional files on site: " + (Text.formatSize(row.settings.size_optional))
+          title: "Optional files on xite: " + (Text.formatSize(row.settings.size_optional))
         }, [
           "" + (Text.formatSize(row.settings.optional_downloaded)), h("span.size-title", _("Optional")), h("div.bar", h("div.bar-active", {
             style: "width: " + (100 * (row.settings.optional_downloaded / row.settings.size_optional)) + "%"

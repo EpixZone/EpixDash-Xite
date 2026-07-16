@@ -140,7 +140,7 @@
         }, [
           h("div.tr.thead", [
             h("div.td.pre", "."),
-            this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder("Site", "address")) : void 0,
+            this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder("Xite", "address")) : void 0,
             h("div.td.inner_path", this.renderOrder("Optional file", "is_pinned DESC, inner_path")),
             this.mode === "bigfiles" ? h("div.td.status", "Status") : void 0,
             h("div.td.size", this.renderOrderRight("Size", "size")),

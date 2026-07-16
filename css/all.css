@@ -947,6 +947,89 @@ body:after {
 	background-color: var(--epix-surface-2);
 }
 
+/* ---- merged xite grouping ---- */
+
+/* The merger row's expander: chevron + merged xite count as a chip, in the
+   row flow (never fixed near the viewport corner, so it can't land under
+   the wrapper's floating fixbutton). Same chip recipe as the demo pill. */
+.SiteList .site .merged-expander {
+	/* Compact: chevron + count only, on the same line as the title (which
+	   ellipsizes for it). The full wording lives in the title attribute.
+	   Max 20px tall so the merger row never grows past ordinary rows. */
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	position: relative;
+	cursor: pointer;
+	font-size: 10px;
+	line-height: 16px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	color: var(--epix-text-low);
+	padding: 1px 7px;
+	border-radius: 999px;
+	background-color: var(--dash-chip);
+	border: 1px solid var(--epix-border);
+}
+
+.SiteList .site .merged-expander:hover {
+	color: var(--epix-text);
+	border-color: var(--epix-border-strong);
+	transition: none;
+}
+
+.SiteList .site .merged-expander .icon-arrow-down {
+	width: 10px;
+	height: 10px;
+	vertical-align: 0;
+	margin-left: 0;
+	margin-right: 0;
+	transform: rotate(-90deg);
+	transition: transform 0.2s ease;
+}
+
+.SiteList .site .merged-expander.expanded .icon-arrow-down {
+	transform: rotate(0deg);
+}
+
+/* Nested merged xites under their merger: the normal site rows, indented,
+   with an inset rail line marking the group and a one-step surface tint
+   (dash-chip sits one step off the rail in both themes) so the sublist
+   reads as a nested block. */
+.merged-sub {
+	box-shadow: inset 2px 0 0 var(--dash-rail-line);
+	border-bottom: 1px solid var(--dash-rail-line);
+	background-color: var(--dash-chip);
+}
+
+/* Hover steps past the tint so it stays visible on it, in both themes */
+.merged-sub .site .inner:hover,
+.merged-sub .site.disabled:hover {
+	background-color: var(--epix-border);
+	transition: none;
+}
+
+.merged-sub:last-child {
+	border-bottom: none;
+}
+
+.merged-sub .site .inner {
+	padding-left: 56px;
+}
+
+.merged-sub .site .circle {
+	margin-left: 36px;
+}
+
+.merged-sub .site img.favicon {
+	left: 29px;
+}
+
+.merged-sub .site.working {
+	background-position: 30px center;
+}
+
 
 /* ---- Menu.css ---- */
 
@@ -4401,6 +4484,17 @@ body.changing #PageFiles .files {
 		opacity: 0.6;
 	}
 
+	/* The chip stays small; an invisible overlay grows its hit area to 44px */
+	.SiteList .site .merged-expander::before {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: max(100%, 44px);
+		height: 44px;
+		transform: translate(-50%, -50%);
+	}
+
 	.left h2 {
 		margin-top: 20px;
 	}
@@ -4636,6 +4730,27 @@ body.changing #PageFiles .files {
 
 	.welcome .utility-section {
 		padding: 0 8px 20px 8px;
+	}
+}
+
+/* Narrow phones: the merged sublist keeps a smaller indent (the expander
+   pill is already just chevron + count) */
+
+@media screen and (max-width: 360px) {
+	.merged-sub .site .inner {
+		padding-left: 46px;
+	}
+
+	.merged-sub .site .circle {
+		margin-left: 26px;
+	}
+
+	.merged-sub .site img.favicon {
+		left: 19px;
+	}
+
+	.merged-sub .site.working {
+		background-position: 20px center;
 	}
 }
 
