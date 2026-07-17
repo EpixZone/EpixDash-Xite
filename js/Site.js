@@ -623,15 +623,21 @@ class Site {
   }
 
   renderOptionalStats() {
-    var ratio, ratio_hue, row;
+    var ratio, ratio_value, ratio_hue, row, sent, recv;
     row = this.row;
-    ratio = (row.settings.bytes_sent / row.settings.bytes_recv).toFixed(1);
-    if (ratio >= 100) {
+    // Guard the division: a fresh site (or an older node that doesn't send
+    // the fields) has 0/0 or undefined/undefined, which renders "NaN".
+    // No downloads yet: anything uploaded counts as infinite, else 0.
+    sent = row.settings.bytes_sent || 0;
+    recv = row.settings.bytes_recv || 0;
+    ratio_value = recv > 0 ? sent / recv : (sent > 0 ? 100 : 0);
+    ratio = ratio_value.toFixed(1);
+    if (ratio_value >= 100) {
       ratio = "\u221E";
-    } else if (ratio >= 10) {
-      ratio = (row.settings.bytes_sent / row.settings.bytes_recv).toFixed(0);
+    } else if (ratio_value >= 10) {
+      ratio = ratio_value.toFixed(0);
     }
-    ratio_hue = Math.min(555, (row.settings.bytes_sent / row.settings.bytes_recv) * 50);
+    ratio_hue = Math.min(555, ratio_value * 50);
     return h("div.site", {
       key: this.key
     }, [
@@ -654,7 +660,7 @@ class Site {
           href: "#",
           onmousedown: this.handleHelpsClick,
           onclick: Page.returnFalse
-        }, h("div.icon-share"), this.row.settings.autodownloadoptional ? "\u2661" : this.optional_helps.length, h("div.icon-arrow-down"), this.menu_helps ? this.menu_helps.render() : void 0), this.renderCircle(parseFloat((row.settings.bytes_sent / row.settings.bytes_recv).toFixed(1)), 10), h("div.circle-value", {
+        }, h("div.icon-share"), this.row.settings.autodownloadoptional ? "\u2661" : this.optional_helps.length, h("div.icon-arrow-down"), this.menu_helps ? this.menu_helps.render() : void 0), this.renderCircle(parseFloat(ratio_value.toFixed(1)), 10), h("div.circle-value", {
           classes: {
             negative: ratio < 1
           },
