@@ -449,16 +449,19 @@ class Site {
 
   handleHelpAllClick() {
     if (this.row.settings.autodownloadoptional === true) {
-      return Page.cmd("OptionalHelpAll", [false, this.row.address], () => {
+      Page.cmd("OptionalHelpAll", [false, this.row.address], () => {
         this.row.settings.autodownloadoptional = false;
         return Page.projector.scheduleRender();
       });
     } else {
-      return Page.cmd("OptionalHelpAll", [true, this.row.address], () => {
+      Page.cmd("OptionalHelpAll", [true, this.row.address], () => {
         this.row.settings.autodownloadoptional = true;
         return Page.projector.scheduleRender();
       });
     }
+    // Keep the menu open (like the per-directory hearts) so the toggled
+    // heart is visible instead of the menu vanishing on click.
+    return true;
   }
 
   handleHelpsClick(e) {

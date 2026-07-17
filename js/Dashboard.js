@@ -334,7 +334,7 @@ class Dashboard {
       warnings.push({
         title: "Your browser is not safe",
         href: Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-use-epixnet-in-tor-browser",
-        descr: "To protect your anonymity you should use EpixNet in the Tor browser."
+        descr: "To protect your anonymity you should use EpixNet in the Tor or Epix Browser."
       });
     }
     if (Page.server_info.lib_verify_best === "btctools") {

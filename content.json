@@ -3,7 +3,7 @@
  "address_index": 38156479,
  "description": "Epix Dashboard",
  "domain": "dashboard.epix",
- "epixnet_version": "0.2.4",
+ "epixnet_version": "0.3.10",
  "favicon": "img/favicon.ico",
  "files": {
   "LICENSE": {
@@ -19,8 +19,8 @@
    "size": 208221
   },
   "css/all.css": {
-   "sha512": "38f0c561eb0fa8635ece39d01e7d79f482be0c32ca49fd45788fe6e884ce4729",
-   "size": 88356
+   "sha512": "3bc4aff09a3226269ff102bbb1606d79c2231dbb46cbdc601082c2f9f5734744",
+   "size": 91985
   },
   "img/favicon.ico": {
    "sha512": "86f89bbae2dd2b3be4a09aa24a69dc2ca8c796970a16733a6ab4a27dab67e0f7",
@@ -63,7 +63,7 @@
    "size": 1680
   },
   "js/ChartRadar.js": {
-   "sha512": "70581d3a2beb617bbe1cc5291c2cb333c2f0b82ce4da989058244daf64471ef0",
+   "sha512": "ea4173ebea98222390509b06d8cd70f1a854679ce92767f2c346a7b9205a138d",
    "size": 7913
   },
   "js/ChartTimeline.js": {
@@ -75,52 +75,52 @@
    "size": 3337
   },
   "js/ConsoleList.js": {
-   "sha512": "d21c73231c8af5aeb64ccb32d202368ea8929612f650f9dae96000d9ab2d11e9",
+   "sha512": "074aac5f56493014be393f12def2ddaf515f0cbe959b4a0c91f6192fcd61cf77",
    "size": 6104
   },
   "js/Dashboard.js": {
-   "sha512": "5ce4e4b4779a22dff9f428faaf0fabb93688ee05aa45d4a6663bcb7a9c133cec",
-   "size": 15456
+   "sha512": "65f667b706196878716b1aba2a3005607cfbf50be8149f752ab6faf93ad8d85f",
+   "size": 15194
   },
   "js/EpixDash.js": {
-   "sha512": "edf6fe40ece511a3d27f546036cfcec136b555c9743e3b5c40f400165957ea05",
-   "size": 10747
+   "sha512": "bb8510b724596b7c3e221d8b3888b66e7c7b97daf9117981e47f7334bc4eed92",
+   "size": 11618
   },
   "js/FeedList.js": {
-   "sha512": "f2228c6bea3b20d1e72c8a849fbad32e0cfccc7fa2dc5ada8870f77daf56f5ac",
-   "size": 30208
+   "sha512": "22dd9d13d21f041b12db358129af58b8fd48ee7ef9f862ea7e0616dab7e7fd49",
+   "size": 30733
   },
   "js/FilesResult.js": {
    "sha512": "05bd9d699e2767a7378b607e9bd96753f2cd5b998c22dd59dde3ffce625ec385",
    "size": 2000
   },
   "js/Head.js": {
-   "sha512": "a8aa44b4b3cd7540a11fb48c9fb64c21b57b18843bc0874569dcee51bf07bd9a",
-   "size": 10567
+   "sha512": "ec3ccd71d5ca79d0af0cf0cc3d25a7ac94be7e62912275ebbe0a1553e5c0ae13",
+   "size": 10481
   },
   "js/MuteList.js": {
-   "sha512": "a2c515eaa4f2f833a6ded9130a601c7ffbe2eeb31added9db0a2fe0cb757e597",
+   "sha512": "0207db453747ab134caf22bd7d7d41507e98bfde350019777dbe46482ffaa533",
    "size": 8176
   },
   "js/NetworkStats.js": {
-   "sha512": "ddd6bb8d493e99e1a0667e9dfabfdd1e9c1a4ced103ecf466e90a9a9517ebad2",
-   "size": 7430
+   "sha512": "a25393d04867afd6c0c4defd3ea51467f26a809b7bc54072b42a1c4da9a548fb",
+   "size": 7464
   },
   "js/PageFiles.js": {
    "sha512": "5a4cbf184bd357af09f5abebc36f18e8625167b434e64a6fb783a9e0b4801f54",
    "size": 15071
   },
   "js/Site.js": {
-   "sha512": "442c6c63c0af4590b43ebfde9a6d7403940031d3f3425152b8aeba6998b26b29",
-   "size": 16608
+   "sha512": "cee540f69afe91eb88d077977fe18e66ec7623036f3b307297b5a132ae2cdae4",
+   "size": 24412
   },
   "js/SiteFiles.js": {
-   "sha512": "ee4a75876b29e27c7341f9c776b13e186507d560b84e9663430ac437e6ddd36b",
+   "sha512": "e4c8f1c87914e2f513a679fd61cf52919506d3b9df7c12826dac1373857ecf5d",
    "size": 9624
   },
   "js/SiteList.js": {
-   "sha512": "609857e3a37ae7b61015be030ce1a21c314726d0e5d17c79fa837cf7336a33ad",
-   "size": 8926
+   "sha512": "ede5d93a879b41f610ab15f4fd0c2837280ef6842798b8b4c6e8b7078a45fd49",
+   "size": 12870
   },
   "js/StatList.js": {
    "sha512": "ea9e56ef0450da4ae3ce869cc11985dec8c55b016f140cce39c6d7af2394da50",
@@ -163,8 +163,8 @@
    "size": 607
   },
   "js/utils/Menu.js": {
-   "sha512": "054fbd2d7560844eac12b0c01a7d84776460b2d9a8d1875a3baf480dd2344f0a",
-   "size": 4622
+   "sha512": "75773b636febedb4a2d49779f03c67950c21de131fd677fc0699a702766dd62c",
+   "size": 7869
   },
   "js/utils/Prototypes.js": {
    "sha512": "a7aec1bf6b24ae2217d08b734b57a0be0b80861a06368ea65a1bdacaa362a376",
@@ -191,92 +191,92 @@
    "size": 1087
   },
   "languages/ar.json": {
-   "sha512": "bffd2699055f353aed03d3ac3803595a211145078c3a071b9ff7becce401c9f1",
-   "size": 6449
+   "sha512": "d8e19c50f3f54d200ac5f5eb527bc7be6251352ba9eb3009599ba367545a620c",
+   "size": 6861
   },
   "languages/da.json": {
-   "sha512": "a2b3e32555d40bcaec2e26ea8a25d1b51daf6b8900a9ba17e2e54b3b5cf91b84",
-   "size": 5111
+   "sha512": "485d5a18b0a0095bf550e17f0d0c729c768a791f74794f4d60f90252e0f20e49",
+   "size": 5453
   },
   "languages/de.json": {
-   "sha512": "74275426085b817ef0f64f3915d4225668d19ceffb64c5d80d3ab09f968e3cfe",
-   "size": 5704
+   "sha512": "312bb1422bc575866aad2a3a510b3ef1196db96fcea403deabfa270bf90c03ad",
+   "size": 6098
   },
   "languages/en.json": {
-   "sha512": "27c74670adb75075fad058d5ceaf7b20c4e7786c83bae8a32f626f9782af34c9",
-   "size": 2
+   "sha512": "e3f999b85c90359c960e397700c580fcc666fbc75acdeb9f40def27cbbed0151",
+   "size": 337
   },
   "languages/es.json": {
-   "sha512": "37f1861babc48ee8be0777e66808f402af87f7a7f9c6228510ca649adc2c140d",
-   "size": 5601
+   "sha512": "5118fb72c8219a9097afcfc4c562762108f490c38d33cd6264079fc909e10102",
+   "size": 5972
   },
   "languages/fa.json": {
-   "sha512": "cf92d9fb7018b4cab907603032117dd3e67dd2dd93942d57dd85a72103fe4861",
-   "size": 13168
+   "sha512": "605da37701f7ce85382c4e519d6e5fb4767c70fe7cfbf2b6460f6239db5ece2b",
+   "size": 13535
   },
   "languages/fr.json": {
-   "sha512": "a740d4bee2efe201706175c9c8788da4da0790c42719b0001afe15baa33f6052",
-   "size": 5596
+   "sha512": "ebcc17320565b7eff4e19878596d92a2e75ca7a80f02083598be3c6f3a69466d",
+   "size": 5990
   },
   "languages/hu.json": {
-   "sha512": "8f944dde32adca93df5726f22fe7ce73776e76a3bc7a4ccfaca633d9c3601fb5",
-   "size": 5699
+   "sha512": "adc4320cf7f278e5f321f491f6fe6fb470647d361099162da1549b6fac40c7c0",
+   "size": 6121
   },
   "languages/it.json": {
-   "sha512": "9086127278edbcabbe8a8611e9faff90671232f6d8192ed251bdb56c85e60a30",
-   "size": 5754
+   "sha512": "d3f4ba90923a067bbbd309d24be7349a63f98a568bebbecd12d07a5644153c9f",
+   "size": 6147
   },
   "languages/jp.json": {
-   "sha512": "38e0b6b78d18012df93ba539af54134fe613fbca0fa130d0bae9cfa673c1917a",
-   "size": 12134
+   "sha512": "7f10af0a07a50a1710276d1323de04fbc24350ef1348c1edc7f1d7d0e091660f",
+   "size": 12471
   },
   "languages/kr.json": {
-   "sha512": "50acf64b8aff1133cd96959f51a234a36a898dbcbfdaaeeced7ddffbac1a3d52",
-   "size": 5819
+   "sha512": "fe0cbf26524059ac4b98e7d964bcb6b3601f8c1a3e98b5ffa4b4561bf5824948",
+   "size": 6175
   },
   "languages/nl.json": {
-   "sha512": "e1525234c4c7fc3d70f2e4e6bc350bec4717bf3c3758a4bb1b9c68f631a92f0c",
-   "size": 5418
+   "sha512": "a3719a910c83add436d5c63d21d3248b06340416e538f1a064d0530da095b75a",
+   "size": 5810
   },
   "languages/pl.json": {
-   "sha512": "3e8ef423a8d734d506974b64bc9389d8ddfa10c6f272cb4a80ab86ea8c372094",
-   "size": 5739
+   "sha512": "b72bb061cb2a0d2ae7a9d752e64eee01961c97fc84fcec2fc43d114d144a91fa",
+   "size": 6122
   },
   "languages/pt-br.json": {
-   "sha512": "ae085c29e1158d2329439e64ebf585be395d9d84f7549a3cf7ce06570bd167aa",
-   "size": 9469
+   "sha512": "e021584b1ac6bea3c3402867399903859865d9981165603c8153f3eb12559e2c",
+   "size": 9850
   },
   "languages/pt.json": {
-   "sha512": "7c2e92962a268d0250310656522a910d5bb412a2a683b285815db5d6e98731d7",
-   "size": 5555
+   "sha512": "054a7473f4c1c48a55158973cec24e2dc71b2f045d29968eb3bc957bb479d5bc",
+   "size": 5942
   },
   "languages/ru.json": {
-   "sha512": "5a1dd7f89786da0a1fa786a072bbbf16fe119acd016357ca2f23cb0e69bdb2d5",
-   "size": 7069
+   "sha512": "956793ce84167690c9cddc132f352b8311018bfc0f16c48a9007d880274f9f59",
+   "size": 7495
   },
   "languages/sk.json": {
-   "sha512": "bd981ab3f761c0387e0e13624665cde52afe1d1d5dbd000ea68458b3cd8175af",
-   "size": 7080
+   "sha512": "906f64a5c30709b512ce89113f67602069de8863b8a6a8fa9d91113cbe6ec18c",
+   "size": 7444
   },
   "languages/sl.json": {
-   "sha512": "0881727b506b7e3ce0f22cdd00121c1f27fb23c9804b757b841ddcf70df184fb",
-   "size": 5441
+   "sha512": "3aa674e45e8888ea77fe3ca469ac2fa7aee1195f4c1b42b8d771ebd6c12946f6",
+   "size": 5793
   },
   "languages/tr.json": {
-   "sha512": "0ccbbd5cc06c978b1f2ae88e0b2030c1c774084cc0e595a2b44e21494ad3f0d7",
-   "size": 5525
+   "sha512": "905b1ca2ae32c5c306c80dea7ec6af760ca78db914202839b96202887e92e9c1",
+   "size": 5935
   },
   "languages/uk.json": {
-   "sha512": "ec9b399557bd247a6c08232c2ec66f59a850548d74c4c54782ca437fef125a13",
-   "size": 8849
+   "sha512": "ca0851003d69b8a5d6c8ec5fc4579badfda9bab6410f830dfa6b71bfb8fcea95",
+   "size": 9254
   },
   "languages/zh-tw.json": {
-   "sha512": "fb15a94bd4045d6c989dec5c629d1ca011bf69eceb8f96168c6a379ddf14368f",
-   "size": 7520
+   "sha512": "f6b3f53d0c4af9f71cb4a1d7e7bc965f0d6ffee88e192e1b4b63cdb1e65bd2c0",
+   "size": 7841
   },
   "languages/zh.json": {
-   "sha512": "6a6d69953a1355d42bdbfc87e36bdc8b23e5500b4f2866e4425c97c05b53a6c3",
-   "size": 9523
+   "sha512": "ead14040729b1484e689c27a7afa1c6d4fa4f894f9e56cb661e5147b5f2b588b",
+   "size": 9832
   },
   "template-new/index.html": {
    "sha512": "0f4cc28fbba694c17b1bc37b123b34110ad6abe687ed69b9dc82ff97fc294b40",
@@ -285,10 +285,10 @@
  },
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1783903344,
+ "modified": 1784317733,
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashanwfts3qcflekhmkvcz66ss4kxz2tr2k6g": "G7wDeaD5mG2FsaFwqrOAq/poI4KUyJ9b9zXlnlYjPFCdN/8H2wfS3sBFIhsHlyLNOn/+uLGHc1vhu7V6F2n/kms="},
+ "signs": {"epix1dashanwfts3qcflekhmkvcz66ss4kxz2tr2k6g": "HJyh7rdyOOcDETu3qHtN1Mqe+SdsvSvR5FOXkBbj7daiCqX8PXSV+E7Ynu1LX0bG6hKUo8Cut00eE55APv3yNgc="},
  "signs_required": 1,
  "title": "Dashboard"
 }
