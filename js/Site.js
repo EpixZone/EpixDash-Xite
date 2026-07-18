@@ -668,9 +668,9 @@ class Site {
         }, ratio), h("div.transfers", [
           h("div.up", {
             "title": _("Uploaded")
-          }, "\u22F0 \u00A0" + (Text.formatSize(row.settings.bytes_sent))), h("div.down", {
+          }, "\u22F0 \u00A0" + (Text.formatSize(sent) || "0 KB")), h("div.down", {
             "title": _("Downloaded")
-          }, "\u22F1 \u00A0" + (Text.formatSize(row.settings.bytes_recv)))
+          }, "\u22F1 \u00A0" + (Text.formatSize(recv) || "0 KB"))
         ])
       ]), this.files.render()
     ]);
