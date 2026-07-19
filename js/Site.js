@@ -605,7 +605,9 @@ class Site {
       tabIndex: -1,
       onmousedown: this.handleSettingsClick,
       onclick: Page.returnFalse
-    }, ["\u22EE"]), this.menu.render());
+    }, ["\u22EE"]), this.menu.render(), (Page.notification_counts && Page.notification_counts[this.row.address] > 0)
+      ? h("span.site-unread-badge", {key: "unread"}, Page.notification_counts[this.row.address] > 99 ? "99+" : String(Page.notification_counts[this.row.address]))
+      : null);
   }
 
   renderCircle(value, max) {

@@ -60,6 +60,9 @@ class FeedList {
     Page.on_settings.then(() => {
       this.need_update = true;
       this.queryNotificationAlerts();
+      // Refresh unread counts on a light timer so tile badges update even
+      // when no file_done event fires. queryNotificationAlerts is bound above.
+      this.notification_timer = setInterval(this.queryNotificationAlerts, 30000);
       return document.body.onscroll = () => {
         return RateLimit(300, () => {
           return this.checkScroll();
@@ -608,14 +611,21 @@ class FeedList {
         try {
           if (!res || res.error || res.muted) {
             this.notification_alerts = [];
+            Page.notification_counts = {};
           } else {
             this.notification_alerts = (res.results || []).filter(function(r) {
               return r.count > 0;
             });
+            var counts = {};
+            (res && res.results ? res.results : []).forEach(function(r) {
+              if (r && r.count > 0) counts[r.site] = (counts[r.site] || 0) + r.count;
+            });
+            Page.notification_counts = counts;
           }
         } catch(e) {
           console.log("notificationQuery callback error:", e);
           this.notification_alerts = [];
+          Page.notification_counts = {};
         }
         this.notification_alerts_loaded = true;
         Page.projector.scheduleRender();
@@ -728,7 +738,10 @@ class FeedList {
     return h("a.site." + cssClass, {href: href, classes: {installed: !!installed}}, [
       h("div.title", [title]),
       h("div.description", [_(description)]),
-      h("div.visit", [visitText])
+      h("div.visit", [visitText]),
+      (Page.notification_counts && Page.notification_counts[address] > 0)
+        ? h("span.site-unread-badge", {key: "unread"}, Page.notification_counts[address] > 99 ? "99+" : String(Page.notification_counts[address]))
+        : null
     ]);
   }
 

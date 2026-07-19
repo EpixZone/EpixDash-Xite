@@ -3449,6 +3449,34 @@ body:after {
 	cursor: default;
 }
 
+/* Unread-count pill on an app tile. Modeled on the Trigger error badge; the
+   parent .site is position:relative in both the rail and the welcome grid. */
+.site-unread-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 17px;
+	height: 17px;
+	box-sizing: border-box;
+	padding: 0 4px;
+	border-radius: 999px;
+	background-color: var(--epix-danger);
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 17px;
+	text-align: center;
+	z-index: 5;
+	pointer-events: none;
+	box-shadow: 0 0 0 2px var(--epix-surface);
+}
+
+/* The welcome tiles clip overflow, so anchor the badge inside the padding. */
+.welcome .site .site-unread-badge {
+	top: 12px;
+	right: 12px;
+}
+
 .welcome .site:hover {
 	box-shadow: var(--epix-shadow);
 	transform: translateY(-2px);
