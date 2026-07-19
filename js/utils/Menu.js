@@ -16,6 +16,15 @@
       this.node = null;
       this.height = 0;
       this.direction = "bottom";
+      // When the menu lives inside a scroll/overflow container (the dashboard
+      // site list sits in `.left`, which is `overflow-y: auto`), an absolutely
+      // positioned menu is clipped by that container - its lower items (Delete)
+      // get chopped off. In that case we position it `fixed` to the viewport,
+      // anchored to its button, so it escapes the clip. `anchor` is the element
+      // it opens from (the "⋮" button), measured fresh each open.
+      this.clipped = false;
+      this.anchor = null;
+      this.onScrollHide = this.onScrollHide.bind(this);
     }
 
     show() {
@@ -24,11 +33,58 @@
       }
       this.visible = true;
       window.visible_menu = this;
+      this.measure();
       this.direction = this.getDirection();
+      // A fixed menu detaches from its button when the page scrolls, so close
+      // it on any scroll (capture: catches scrolling ancestors too).
+      window.addEventListener("scroll", this.onScrollHide, true);
     }
 
     hide() {
       this.visible = false;
+      window.removeEventListener("scroll", this.onScrollHide, true);
+    }
+
+    onScrollHide() {
+      if (this.visible) {
+        this.hide();
+        Page.projector.scheduleRender();
+      }
+    }
+
+    // Measure the menu's full height and decide whether it needs to escape a
+    // clipping ancestor. Safe to call before the node exists (no-op then).
+    measure() {
+      if (!this.node) {
+        return;
+      }
+      this.node.style.maxHeight = "none";
+      this.height = this.node.offsetHeight;
+      this.node.style.maxHeight = "";
+      this.clipped = this.detectClip();
+      // The "⋮" button the menu renders right after; fall back to the row.
+      this.anchor = this.node.previousElementSibling || this.node.parentNode;
+    }
+
+    // Only the dashboard site-list row menus are clipped (they live in `.left`,
+    // an overflow scroll container); other menus - Dashboard/network, Head -
+    // are positioned deliberately and must keep their absolute behavior. Bail
+    // if a transform/perspective/will-change on an ancestor would trap
+    // `position: fixed` (it would be positioned relative to that box, not the
+    // viewport, so the escape wouldn't work).
+    detectClip() {
+      if (!this.node || !this.node.closest || !this.node.closest(".SiteList")) {
+        return false;
+      }
+      var el = this.node.parentNode;
+      while (el && el.nodeType === 1 && el !== document.body) {
+        var cs = window.getComputedStyle(el);
+        if (cs.transform !== "none" || cs.perspective !== "none" || cs.willChange === "transform") {
+          return false;
+        }
+        el = el.parentNode;
+      }
+      return true;
     }
 
     toggle() {
@@ -52,19 +108,28 @@
       if (this.visible) {
         node.className = node.className.replace("visible", "");
         var self = this;
+        this.measure();
+        this.direction = this.getDirection();
+        node.style.maxHeight = "0px";
         setTimeout(function() {
           node.className += " visible";
           node.attributes.style.value = self.getStyle();
         }, 20);
-        node.style.maxHeight = "none";
-        this.height = node.offsetHeight;
-        node.style.maxHeight = "0px";
-        this.direction = this.getDirection();
       }
     }
 
     getDirection() {
-      if (this.node && this.node.parentNode.getBoundingClientRect().top + this.height + 60 > document.body.clientHeight && this.node.parentNode.getBoundingClientRect().top - this.height > 0) {
+      if (!this.node || !this.anchor) {
+        return "bottom";
+      }
+      // Flip the menu upward when opening downward would run it past the bottom
+      // of the VISIBLE viewport - and only if there's room above. Uses the
+      // anchor (the button) so it's correct whether the menu is absolute or
+      // fixed; window.innerHeight (not body.clientHeight, which is the tall
+      // scroll container) is what actually bounds the visible area.
+      var rect = this.anchor.getBoundingClientRect();
+      var viewport = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.bottom + this.height + 20 > viewport && rect.top - this.height > 0) {
         return "top";
       } else {
         return "bottom";
@@ -124,17 +189,19 @@
     }
 
     getStyle() {
-      var max_height;
-      if (this.visible) {
-        max_height = this.height;
-      } else {
-        max_height = 0;
-      }
+      var max_height = this.visible ? this.height : 0;
       var style = "max-height: " + max_height + "px";
       if (this.direction === "top") {
         style += ";margin-top: " + (0 - this.height - 50) + "px";
       } else {
         style += ";margin-top: 0px";
+      }
+      // Escape a clipping ancestor by pinning to the viewport at the button's
+      // position (the CSS `left: 99%` / transforms still align it leftward from
+      // the anchor's right edge, so it looks identical - just un-clipped).
+      if (this.clipped && this.anchor) {
+        var rect = this.anchor.getBoundingClientRect();
+        style += ";position: fixed;left: " + rect.right + "px;top: " + rect.bottom + "px";
       }
       return style;
     }
