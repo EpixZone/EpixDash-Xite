@@ -45,11 +45,21 @@
       window.removeEventListener("scroll", this.onScrollHide, true);
     }
 
-    onScrollHide() {
-      if (this.visible) {
-        this.hide();
-        Page.projector.scheduleRender();
+    onScrollHide(e) {
+      if (!this.visible) {
+        return;
       }
+      // Scrolling INSIDE the menu itself must not dismiss it: a tall menu (many
+      // items + Theme + Language) is `overflow-y: auto` and the user needs to
+      // scroll it. Only an outside page/ancestor scroll should close it, since
+      // that's what detaches a `fixed`-positioned menu from its button. This is
+      // a capture listener on `window`, so `e.target` is whatever scrolled.
+      var target = e != null ? e.target : null;
+      if (target && this.node && target.nodeType === 1 && (target === this.node || (this.node.contains && this.node.contains(target)))) {
+        return;
+      }
+      this.hide();
+      Page.projector.scheduleRender();
     }
 
     // Measure the menu's full height and decide whether it needs to escape a
