@@ -123,6 +123,8 @@ class EpixDash extends EpixFrame {
       this.page_stats.need_update = true;
     } else if (this.mode === "Files") {
       this.page_files.need_update = true;
+    } else if ((this.params.url || "").toLowerCase() === "discover") {
+      this.feed_list.filter = "discover";
     }
     return this.projector.scheduleRender();
   }

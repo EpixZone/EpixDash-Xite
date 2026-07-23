@@ -304,6 +304,12 @@ class FeedList {
     if (this.filter === "all") {
       this.filter = null;
     }
+    // Keep the address bar shareable: ?Discover deep-links to the welcome tab
+    if (this.filter === "discover") {
+      Page.setUrl("?Discover");
+    } else if ((Page.params.url || "").toLowerCase() === "discover") {
+      Page.setUrl("?");
+    }
     Page.projector.scheduleRender();
     return false;
   }
