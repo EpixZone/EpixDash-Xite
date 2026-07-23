@@ -200,6 +200,13 @@ class Head {
     if (Page.server_info.plugins.indexOf("Stats") >= 0) {
       this.menu_settings.items.push([[h("div.icon-gear.emoji", "\uD83D\uDCCA\uFE0E"), _("Node Stats")], "/Stats"]);
     }
+    // The backend refuses /Backup on a restricted gateway or a NoNewSites
+    // node, so don't offer it there.
+    if (Page.server_info.plugins.indexOf("UiBackup") >= 0 && !Page.server_info.ui_restrict &&
+        Page.server_info.plugins.indexOf("NoNewSites") < 0 &&
+        (!Page.server_info.multiuser || Page.server_info.multiuser_admin)) {
+      this.menu_settings.items.push([[h("div.icon-gear.emoji", "\uD83D\uDCBE\uFE0E"), _("Backup & Restore")], "/Backup"]);
+    }
     this.menu_settings.items.push(["---"]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
       this.menu_settings.items.push([_("Show data directory"), this.handleBackupClick]);
