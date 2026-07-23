@@ -155,6 +155,19 @@ class Head {
     return Page.cmd("wrapperNotification", ["info", "Backup <b>users.json</b> file to keep your identity safe."]);
   }
 
+  // Whether a dotted version string like "0.3.25" is newer than `min`.
+  // Non-numeric parts count as 0; equal versions are NOT newer.
+  isVersionNewerThan(version, min) {
+    var a = String(version || "").split(".");
+    var b = String(min).split(".");
+    for (var i = 0; i < Math.max(a.length, b.length); i++) {
+      var x = parseInt(a[i], 10) || 0;
+      var y = parseInt(b[i], 10) || 0;
+      if (x !== y) { return x > y; }
+    }
+    return false;
+  }
+
   handleSettingsClick() {
     var base, orderby;
     if ((base = Page.settings).sites_orderby == null) {
@@ -199,6 +212,16 @@ class Head {
     }
     if (Page.server_info.plugins.indexOf("Stats") >= 0) {
       this.menu_settings.items.push([[h("div.icon-gear.emoji", "\uD83D\uDCCA\uFE0E"), _("Node Stats")], "/Stats"]);
+    }
+    // The backend refuses /Backup on a restricted gateway or a NoNewSites
+    // node, so don't offer it there. Clients on v0.3.24 or older have no
+    // /Backup page at all (their plugin list has no UiBackup either, but the
+    // version check makes the cutoff explicit).
+    if (Page.server_info.plugins.indexOf("UiBackup") >= 0 && !Page.server_info.ui_restrict &&
+        this.isVersionNewerThan(Page.server_info.version, "0.3.24") &&
+        Page.server_info.plugins.indexOf("NoNewSites") < 0 &&
+        (!Page.server_info.multiuser || Page.server_info.multiuser_admin)) {
+      this.menu_settings.items.push([[h("div.icon-gear.emoji", "\uD83D\uDCBE\uFE0E"), _("Backup & Restore")], "/Backup"]);
     }
     this.menu_settings.items.push(["---"]);
     if (!Page.server_info.multiuser || Page.server_info.multiuser_admin) {
