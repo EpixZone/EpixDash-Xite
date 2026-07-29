@@ -16,6 +16,12 @@
   }
  },
  "description": "Epix Dashboard",
+ "distribution": {
+  "default": {
+   "retention": "complete",
+   "unit": "package"
+  }
+ },
  "domain": "dashboard.epix",
  "edx": 1,
  "epixnet_version": "0.3.28",
@@ -507,9 +513,59 @@
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
  "modified": 1785266261,
+ "order_policy": {
+  "first_paint": [
+   "index.html",
+   "css/all.css",
+   "js/lib/maquette.js",
+   "js/lib/marked.min.js",
+   "js/lib/epixframe.js",
+   "js/utils/LogMixin.js",
+   "js/utils/Deferred.js",
+   "js/utils/Dollar.js",
+   "js/utils/Prototypes.js",
+   "js/utils/Animation.js",
+   "js/utils/ItemList.js",
+   "js/utils/Menu.js",
+   "js/utils/RateLimit.js",
+   "js/utils/RateLimitCb.js",
+   "js/utils/Text.js",
+   "js/utils/Time.js",
+   "js/utils/Translate.js",
+   "js/SiteFiles.js",
+   "js/Bigfiles.js",
+   "js/FilesResult.js",
+   "js/PageFiles.js",
+   "js/Site.js",
+   "js/SiteList.js",
+   "js/Dashboard.js",
+   "js/FeedList.js",
+   "js/MuteList.js",
+   "js/ConsoleList.js",
+   "js/Trigger.js",
+   "js/Chart.js",
+   "js/ChartBig.js",
+   "js/ChartLegend.js",
+   "js/ChartRadar.js",
+   "js/ChartTimeline.js",
+   "js/ChartWorld.js",
+   "js/NetworkStats.js",
+   "js/StatList.js",
+   "js/Head.js",
+   "js/EpixDash.js"
+  ],
+  "prefetch": [
+   "chartjs/chart.bundle.min.js",
+   "img/logo.png",
+   "img/world.png",
+   "img/favicon.ico"
+  ]
+ },
  "postmessage_nonce_security": true,
  "signers_sign": "GzDAK33cGtqcui0MibSu9pXLKGGn0aFtufH0GhOlQ77JH0pmwH+DoqQm2YlDHgrNNCthR0XVbVxpLTC73aRjMi8=",
- "signs": {"epix1dashanwfts3qcflekhmkvcz66ss4kxz2tr2k6g": "G8BxbW21IbqZymkXqzLq2+d1DUpyKqZ/+HjQ1HZb/pPZNx51GjsXog7mbNhE49b2d2ckH4MnIU2tTo1pP5trecI="},
+ "signs": {
+  "epix1dashanwfts3qcflekhmkvcz66ss4kxz2tr2k6g": "G8BxbW21IbqZymkXqzLq2+d1DUpyKqZ/+HjQ1HZb/pPZNx51GjsXog7mbNhE49b2d2ckH4MnIU2tTo1pP5trecI="
+ },
  "signs_required": 1,
  "title": "Dashboard"
 }
