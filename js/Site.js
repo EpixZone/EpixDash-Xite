@@ -67,10 +67,10 @@ class Site {
     }
     if (((ref = row.event) != null ? ref[0] : void 0) === "updated" && row.content_updated !== false) {
       this.setMessage(_("Updated!"), "done");
-    } else if (((ref1 = row.event) != null ? ref1[0] : void 0) === "updating") {
-      this.setMessage(_("Updating..."));
     } else if (row.tasks > 0) {
       this.setMessage(_("Updating: ") + (Math.max(row.tasks, row.bad_files)) + _(" left"));
+    } else if (((ref1 = row.event) != null ? ref1[0] : void 0) === "updating") {
+      this.setMessage(_("Updating..."));
     } else if (row.bad_files > 0) {
       if (row.peers <= 1) {
         this.setMessage(_("No peers"), "error");

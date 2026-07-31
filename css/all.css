@@ -795,8 +795,27 @@ body:after {
 	display: none;
 }
 
-.SiteList .site.working {
-	background: transparent url(../img/loading-circle.gif) no-repeat 14px center;
+/* The update spinner: a CSS ring drawn in the marker slot. Replaces the old
+   16px loading-circle.gif, which rendered blurry on hidpi screens. */
+.SiteList .site.working::before {
+	content: "";
+	position: absolute;
+	left: 14px;
+	top: 50%;
+	width: 16px;
+	height: 16px;
+	margin-top: -8px;
+	box-sizing: border-box;
+	border: 2px solid var(--epix-accent-soft);
+	border-top-color: var(--epix-accent);
+	border-radius: 50%;
+	animation: working-spin 0.7s linear infinite;
+}
+
+@keyframes working-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .SiteList .site .message.done {
@@ -1028,8 +1047,8 @@ body:after {
 	left: 29px;
 }
 
-.merged-sub .site.working {
-	background-position: 30px center;
+.merged-sub .site.working::before {
+	left: 30px;
 }
 
 
@@ -4785,8 +4804,8 @@ body.changing #PageFiles .files {
 		left: 19px;
 	}
 
-	.merged-sub .site.working {
-		background-position: 20px center;
+	.merged-sub .site.working::before {
+		left: 20px;
 	}
 }
 
