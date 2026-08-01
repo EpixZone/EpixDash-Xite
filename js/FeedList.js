@@ -654,7 +654,7 @@ class FeedList {
   }
 
   renderFeed(feed) {
-    var classes, err, site, type_formatted;
+    var classes, err, href, site, type_formatted;
     if (this.filter && feed.type !== this.filter) {
       return null;
     }
@@ -665,6 +665,11 @@ class FeedList {
       if (this.date_feed_visit && feed.date_added > this.date_feed_visit) {
         classes["new"] = true;
       }
+      // Everything that points at this item - the headline and the excerpt's
+      // "more" - goes to the item itself when its xite gives us a permalink.
+      // Only "+N more", which means "the rest of the thread", stays on the
+      // page the item lives on.
+      href = site.getHref() + (feed.permalink || feed.url);
       return h("div.feed." + feed.type, {
         key: feed.key,
         enterAnimation: this.enterAnimation,
@@ -680,12 +685,12 @@ class FeedList {
           }, "\u2022")
         ]), h("div.title-container", [
           type_formatted ? h("span.type", type_formatted) : void 0, h("a.title", {
-            href: site.getHref() + feed.url
+            href: href
           }, this.formatTitle(feed.title))
         ]), h("div.body", {
           key: feed.body,
           innerHTML: this.formatBodyHtml(feed.body, feed.type, {
-            href: site.getHref() + (feed.permalink || feed.url),
+            href: href,
             author: feed.author
           }),
           afterCreate: this.updateBodyOverflow,
