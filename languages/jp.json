@@ -220,5 +220,6 @@
 	"Delete all": "すべて削除",
 	"Delete this xite and its ": "このXiteと ",
 	" merged xites?": " 件の統合Xiteを削除しますか？",
-	" Owned xites are kept.": " 自分のXiteは保持されます。"
+	" Owned xites are kept.": " 自分のXiteは保持されます。",
+	"more": "続き"
 }

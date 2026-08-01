@@ -3307,45 +3307,92 @@ body:after {
 	color: var(--epix-accent);
 }
 
+/* The body is a container now: the quote and the reply each clamp on their
+   own, so a long quote can never eat the reply's two lines. */
 .FeedList .feed .body {
 	color: var(--epix-text-mid);
 	line-height: 1.55;
 	font-size: 14.5px;
 	margin-top: 7px;
-	white-space: pre-line;
-	max-height: 3em;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	position: relative;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	display: -webkit-box;
 }
 
 .FeedList .feed .body b {
 	color: var(--epix-text);
 }
 
-.FeedList .feed .body:has(.reply-quote) {
-	-webkit-line-clamp: 4;
-	max-height: 6.5em;
+.FeedList .feed .body .body-text {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
+.FeedList .feed .body .body-author {
+	color: var(--epix-text);
+	font-weight: 600;
+}
+
+.FeedList .feed .body code {
+	font-size: 92%;
+	padding: 0px 4px;
+	border-radius: var(--epix-radius-sm);
+	background-color: var(--epix-surface-2);
+}
+
+/* What the reply is answering: one line, unmistakably a citation rather
+   than the first sentence of the reply. */
 .FeedList .feed .body .reply-quote {
-	display: block;
-	margin-top: 4px;
-	padding: 3px 8px;
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	margin-bottom: 5px;
+	padding: 1px 0px 1px 9px;
 	border-left: 2px solid var(--epix-border-strong);
 	color: var(--epix-text-low);
 	font-size: 13px;
-	font-style: italic;
-	white-space: normal;
 }
 
 .FeedList .feed .body .reply-quote .reply-user {
-	font-style: normal;
+	flex: none;
 	font-weight: 600;
 	color: var(--epix-text-mid);
+}
+
+.FeedList .feed .body .reply-quote .reply-user::after {
+	content: ":";
+}
+
+.FeedList .feed .body .reply-quote .reply-text {
+	min-width: 0px;
+	font-style: italic;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* The excerpt's continuation. It sits outside the clamped text so it stays
+   visible however the line clamp falls. */
+.FeedList .feed .body .read-more {
+	display: inline-block;
+	margin-top: 3px;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--epix-link);
+}
+
+/* Rendered but not shown: revealed only if the clamp actually cut the text
+   (see updateBodyOverflow). */
+.FeedList .feed .body .read-more.is-hidden {
+	display: none;
+}
+
+/* Follow-up comments folded into the same feed item are other people
+   talking, not more paragraphs from the first one. */
+.FeedList .feed .body-more {
+	margin-top: 9px;
+	padding-top: 9px;
+	border-top: 1px solid var(--epix-border);
+	font-size: 14px;
 }
 
 .highlight,

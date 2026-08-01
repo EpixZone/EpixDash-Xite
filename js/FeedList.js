@@ -23,6 +23,7 @@ class FeedList {
     this.handleSearchKeyup = this.handleSearchKeyup.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.storeNodeSearch = this.storeNodeSearch.bind(this);
+    this.updateBodyOverflow = this.updateBodyOverflow.bind(this);
     this.search = this.search.bind(this);
     this.update = this.update.bind(this);
     this.displayRows = this.displayRows.bind(this);
@@ -95,6 +96,13 @@ class FeedList {
     }
   }
 
+  // Rows folded into an existing feed item keep the fields the item needs to
+  // render and link them individually - they are separate comments, each with
+  // its own author and permalink.
+  groupedRow(row) {
+    return { body: row.body, author: row.author, permalink: row.permalink || row.url };
+  }
+
   displayRows(rows, search) {
     var i, last_row, len, row, row_group;
     this.feeds = [];
@@ -125,9 +133,9 @@ class FeedList {
           row_group.more += 1;
         } else if (row_group.body_more == null) {
           row_group.body_more = [];
-          row_group.body_more.push(row.body);
+          row_group.body_more.push(this.groupedRow(row));
         } else if (row_group.body_more.length < 3) {
-          row_group.body_more.push(row.body);
+          row_group.body_more.push(this.groupedRow(row));
         } else {
           if (row_group.more == null) {
             row_group.more = 0;
@@ -358,115 +366,245 @@ class FeedList {
     }
   }
 
+  // Cut on a word boundary rather than mid-word: a feed line ending in
+  // "your BLAKE3 ha" reads as a rendering bug, not as an excerpt.
+  truncateWords(text, limit) {
+    text = (text || "").trim();
+    if (text.length <= limit) {
+      return { text: text, cut: false };
+    }
+    var cut = text.slice(0, limit);
+    var space = cut.lastIndexOf(" ");
+    if (space > limit * 0.6) {
+      cut = cut.slice(0, space);
+    }
+    return { text: cut.replace(/[\s,.;:!?\-\u2013\u2014]+$/, ""), cut: true };
+  }
+
+  // Truncating raw markdown can orphan a delimiter ("**v0.4.3" with no
+  // closer swallows the rest of the line once marked parses it).
+  balanceMarkdown(text) {
+    var pairs = [/\*\*/g, /`/g, /~~/g];
+    for (var i = 0; i < pairs.length; i++) {
+      var found = text.match(pairs[i]);
+      if (found && found.length % 2 === 1) {
+        var last = text.lastIndexOf(found[0]);
+        text = text.slice(0, last) + text.slice(last + found[0].length);
+      }
+    }
+    // A dangling "[label](half-a-url" never closes either. Only a started
+    // link counts: prose may hold a lone "[" with no parenthesis after it.
+    var link = text.lastIndexOf("](");
+    if (link !== -1 && text.indexOf(")", link) === -1) {
+      var open = text.lastIndexOf("[", link);
+      text = text.slice(0, open === -1 ? link : open);
+    }
+    var bracket = text.lastIndexOf("[");
+    if (bracket !== -1 && text.indexOf("]", bracket) === -1) {
+      text = text.slice(0, bracket);
+    }
+    return text.replace(/\s+$/, "");
+  }
+
+  // Highlight the search term in already-rendered html, skipping tags so a
+  // match inside an href or a class name can't break the markup.
+  highlightHtml(html, search) {
+    if (!search || search.length < 2) {
+      return html;
+    }
+    var pattern;
+    try {
+      pattern = new RegExp("(" + search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+    } catch (e) {
+      return html;
+    }
+    return html.split(/(<[^>]*>)/).map(function(part) {
+      if (part[0] === "<") {
+        return part;
+      }
+      return part.replace(pattern, '<span class="highlight">$1</span>');
+    }).join("");
+  }
+
+  // Split a comment body into the ordered quote / reply segments the author
+  // actually wrote. A reply with two quoted questions has four segments; the
+  // old "grab the first quote, delete every > line, join the rest" collapsed
+  // them into one run-on paragraph.
+  parseCommentBody(body) {
+    var author = null;
+    var segments = [];
+    var current = null;
+    body = (body || "").replace(/\r\n?/g, "\n");
+    var author_match = body.match(/^[ ]*(?:([a-zA-Z0-9._\-]+)@[a-zA-Z0-9._\-]+|@([^\s:]+))[ ]*:/);
+    if (author_match) {
+      author = author_match[1] || author_match[2];
+      body = body.slice(author_match[0].length);
+    }
+    body.split("\n").forEach(function(line) {
+      var quote_match = line.match(/^[ ]*>[ ]*(?:\[([^\]]*)\](?:\([^)]*\))?[: ]*)?(.*)$/);
+      if (quote_match) {
+        var user = quote_match[1] || null;
+        var text = quote_match[2] || "";
+        if (current && current.type === "quote" && !user) {
+          current.text += " " + text;
+        } else {
+          current = { type: "quote", user: user, text: text };
+          segments.push(current);
+        }
+      } else if (line.trim() === "") {
+        current = null;
+      } else if (current && current.type === "text") {
+        current.text += " " + line.trim();
+      } else {
+        current = { type: "text", text: line.trim() };
+        segments.push(current);
+      }
+    });
+    segments = segments.filter(function(segment) {
+      segment.text = segment.text.replace(/\s+/g, " ").trim();
+      return segment.text.length > 0;
+    });
+    return { author: author, segments: segments };
+  }
+
   isQuotedIn(main_body, other_body) {
     // A feed row's body can be NULL (a site's feed SQL returns whatever its
     // schema holds); nothing quotes or is quoted then.
     if (!main_body || !other_body) return false;
-    // Check if the main body quotes the other body's text
-    var quote_match = main_body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
-    if (!quote_match) return false;
-    var quote_text = quote_match[2].replace(/^\s+/, "").slice(0, 80).trim();
-    if (!quote_text) return false;
-    // Strip username prefix from the other body
-    var stripped = other_body.replace(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/, "");
-    stripped = stripped.replace(/[\n\r>]+/g, " ").trim();
-    return stripped.length > 0 && quote_text.indexOf(stripped.slice(0, 80)) === 0;
+    var normalize = function(text) {
+      return text.replace(/\s+/g, " ").trim().toLowerCase();
+    };
+    var other = normalize(this.parseCommentBody(other_body).segments.filter(function(segment) {
+      return segment.type === "text";
+    }).map(function(segment) {
+      return segment.text;
+    }).join(" "));
+    if (other.length < 12) return false;
+    // Every quote counts, not just the first: a multi-quote reply answers
+    // several of the grouped comments, and a quote is usually an excerpt of
+    // the comment rather than the whole of it, so containment goes both ways.
+    return this.parseCommentBody(main_body).segments.some(function(segment) {
+      if (segment.type !== "quote") return false;
+      var quote = normalize(segment.text);
+      if (quote.length < 12) return false;
+      return other.indexOf(quote.slice(0, 60)) !== -1 || quote.indexOf(other.slice(0, 60)) !== -1;
+    });
   }
 
   escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  formatBodyHtml(body, type) {
-    body = (body || "").replace(/[\n\r]+/g, "\n");
-    var username_html = "";
-    var reply_html = "";
-
-    if (type === "comment" || type === "mention") {
-      // Extract username prefix
-      var username_match = body.match(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/);
-      if (username_match) {
-        var username = username_match[2] || username_match[3];
-        username_html = "<b>" + this.escapeHtml(username) + " \u203A </b>";
-        body = body.replace(username_match[0], "");
-      }
-      // Extract reply quote: > [user](#anchor): quoted text
-      var quote_match = body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
-      if (quote_match) {
-        var quote_user = quote_match[1];
-        var quote_text = quote_match[2].replace(/^\s+/, "");
-        if (quote_text) {
-          reply_html = '<div class="reply-quote"><span class="reply-user">' +
-            this.escapeHtml(quote_user) + ": </span>" +
-            this.escapeHtml(quote_text.slice(0, 80)) + "</div>";
-        }
-      }
-      // Remove all blockquote lines from body
-      body = body.replace(/^[ ]*>.*$/gm, "");
+  // Returns {html, cut} - the caller needs to know whether anything was left
+  // behind, to decide if the excerpt earns a "more" link.
+  renderExcerpt(text, limit, continues) {
+    var excerpt = this.truncateWords(text, limit);
+    var body = excerpt.text;
+    var cut = excerpt.cut || !!continues;
+    if (cut) {
+      // "ran into.\u2026" reads as a typo; the ellipsis replaces the stop.
+      body = body.replace(/[\s.,;:]+$/, "");
     }
-
-    var text = body.replace(/\n/g, " ").trim().slice(0, 201);
-    return reply_html + username_html + this.inlineMarkdown(text);
+    var html = this.inlineMarkdown(this.balanceMarkdown(body));
+    if (cut && html) {
+      html += "\u2026";
+    }
+    return { html: this.highlightHtml(html, this.searching_text), cut: cut && !!html };
   }
 
-  formatBody(body, type) {
-    var username_formatted, username_match, reply_quote;
-    body = (body || "").replace(/[\n\r]+/g, "\n");
-    if (type === "comment" || type === "mention") {
-      username_match = body.match(/^(([a-zA-Z0-9\.]+)@[a-zA-Z0-9\.]+|@(.*?)):/);
-      if (username_match) {
-        if (username_match[2]) {
-          username_formatted = username_match[2] + " \u203A ";
-        } else {
-          username_formatted = username_match[3] + " \u203A ";
-        }
-        body = body.replace(username_match[0], "");
-      } else {
-        username_formatted = "";
-      }
-      // Extract reply quote: > [user](#anchor): quoted text
-      reply_quote = null;
-      var quote_match = body.match(/^[ ]*> \[([^\]]*)\](?:\([^)]*\))?[: ]*(.*)/m);
-      if (quote_match) {
-        var quote_user = quote_match[1];
-        var quote_text = quote_match[2].replace(/^\s+/, "");
-        if (quote_text) {
-          reply_quote = {user: quote_user, text: quote_text.slice(0, 80)};
-        }
-      }
-      // Remove all blockquote lines from body
-      body = body.replace(/^[ ]*>.*$/gm, "");
-      body = body.replace(/\n/g, " ");
-      body = body.trim();
-      if (this.searching_text && this.searching_text.length > 1) {
-        body = Text.highlight(body, this.searching_text);
-        if (body[0].length > 60 && body.length > 1) {
-          body[0] = "..." + body[0].slice(body[0].length - 50, +(body[0].length - 1) + 1 || 9e9);
-        }
-        return [h("b", Text.highlight(username_formatted, this.searching_text)), body];
-      } else {
-        body = body.slice(0, 201);
-        var result = [h("b", [username_formatted]), body];
-        if (reply_quote) {
-          result.push(h("div.reply-quote", [
-            h("span.reply-user", reply_quote.user + ": "),
-            reply_quote.text
-          ]));
-        }
-        return result;
-      }
-    } else {
-      body = body.replace(/\n/g, " ");
-      if (this.searching_text && this.searching_text.length > 1) {
-        body = Text.highlight(body, this.searching_text);
-        if (body[0].length > 60) {
-          body[0] = "..." + body[0].slice(body[0].length - 50, +(body[0].length - 1) + 1 || 9e9);
-        }
-      } else {
-        body = body.slice(0, 201);
-      }
-      return body;
+  renderExcerptHtml(text, limit, continues) {
+    return this.renderExcerpt(text, limit, continues).html;
+  }
+
+  // The link the excerpt's "more" points at. A xite whose feed query supplies
+  // a `permalink` lands on the item itself; anything else falls back to the
+  // page it lives on. `hidden` emits it for the overflow check below to
+  // reveal - the text may still be cut by the css line clamp.
+  renderMoreLink(href, hidden) {
+    if (!href) {
+      return "";
     }
+    return '<a class="read-more' + (hidden ? " is-hidden" : "") + '" href="' +
+      this.escapeHtml(href) + '">' + _("more") + " \u203a</a>";
+  }
+
+  // Whether the excerpt got cut is only half a css decision: the 2-line clamp
+  // depends on the rendered width, so a body the truncator left whole can
+  // still be clipped. Measure it and reveal the link that was rendered hidden.
+  updateBodyOverflow(element) {
+    var text = element.querySelector(".body-text");
+    var link = element.querySelector(".read-more");
+    if (!text || !link) {
+      return;
+    }
+    if (text.scrollHeight > text.clientHeight + 1) {
+      link.classList.remove("is-hidden");
+    }
+  }
+
+  formatBodyHtml(body, type, opts) {
+    if (opts == null) opts = {};
+    var is_more = opts.more;
+    if (type !== "comment" && type !== "mention") {
+      var plain = this.renderExcerpt((body || "").replace(/\s+/g, " "), 220);
+      if (!plain.html) {
+        return "";
+      }
+      return '<div class="body-text">' + plain.html + "</div>" +
+        this.renderMoreLink(opts.href, !plain.cut);
+    }
+
+    var parsed = this.parseCommentBody(body);
+    var segments = parsed.segments;
+    var html = "";
+
+    // The quote a reply opens with is context for the answer, so it leads.
+    // A grouped follow-up line has no room for both, and the answer is the
+    // part the reader has not seen yet, so there the quote is dropped.
+    var index = 0;
+    var quote_shown = false;
+    if (!is_more && segments[0] && segments[0].type === "quote") {
+      var quote = segments[0];
+      index = 1;
+      quote_shown = true;
+      html += '<div class="reply-quote">' +
+        (quote.user ? '<span class="reply-user">' + this.escapeHtml(quote.user) + "</span>" : "") +
+        '<span class="reply-text">' + this.renderExcerptHtml(quote.text, 110) + "</span></div>";
+    } else if (is_more) {
+      while (segments[index] && segments[index].type === "quote") {
+        index += 1;
+      }
+    }
+
+    // Take the reply that answers that quote, and stop at the next quote:
+    // pairing is what makes a multi-quote reply readable.
+    var texts = [];
+    while (segments[index] && segments[index].type === "text") {
+      texts.push(segments[index].text);
+      index += 1;
+    }
+    if (!texts.length) {
+      // Nothing but quotes \u2014 show those rather than an empty line.
+      texts = segments.slice(quote_shown ? 1 : 0).map(function(segment) {
+        return segment.text;
+      });
+      index = segments.length;
+    }
+
+    var excerpt = this.renderExcerpt(texts.join(" "), is_more ? 160 : 200, index < segments.length);
+    // The feed row's own author column wins: a follow query selects the
+    // commenter directly, while the "user@site:" body prefix only exists on
+    // the feeds that build one.
+    var author = opts.author || parsed.author;
+    if (excerpt.html) {
+      html += '<div class="body-text">' +
+        (author ? '<b class="body-author">' + this.escapeHtml(author) + " \u203A </b>" : "") +
+        excerpt.html + "</div>";
+    }
+    // Outside .body-text on purpose: inside the line clamp it would be the
+    // first thing cut off.
+    html += this.renderMoreLink(opts.href, !excerpt.cut);
+    return html;
   }
 
   formatType(type, title) {
@@ -546,16 +684,27 @@ class FeedList {
           }, this.formatTitle(feed.title))
         ]), h("div.body", {
           key: feed.body,
-          innerHTML: this.formatBodyHtml(feed.body, feed.type),
+          innerHTML: this.formatBodyHtml(feed.body, feed.type, {
+            href: site.getHref() + (feed.permalink || feed.url),
+            author: feed.author
+          }),
+          afterCreate: this.updateBodyOverflow,
+          afterUpdate: this.updateBodyOverflow,
           enterAnimation: this.enterAnimation,
           exitAnimation: this.exitAnimation
         }), feed.body_more ? feed.body_more.map((body_more) => {
-          if (this.isQuotedIn(feed.body, body_more)) {
+          if (this.isQuotedIn(feed.body, body_more.body)) {
             return null;
           }
-          return h("div.body", {
-            key: body_more,
-            innerHTML: this.formatBodyHtml(body_more, feed.type),
+          return h("div.body.body-more", {
+            key: body_more.body,
+            innerHTML: this.formatBodyHtml(body_more.body, feed.type, {
+              more: true,
+              href: site.getHref() + body_more.permalink,
+              author: body_more.author
+            }),
+            afterCreate: this.updateBodyOverflow,
+            afterUpdate: this.updateBodyOverflow,
             enterAnimation: this.enterAnimation,
             exitAnimation: this.exitAnimation
           });
