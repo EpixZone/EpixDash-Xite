@@ -256,6 +256,7 @@
         limit: this.limit + 1,
         orderby: orderby
       }, (res) => {
+        res = Page.rows(res);
         this.items = res.slice(0, this.limit);
         this.loaded = true;
         this.has_more = res.length > this.limit;

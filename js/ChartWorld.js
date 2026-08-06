@@ -35,6 +35,7 @@ class ChartWorld {
         return false
      */
     return Page.cmd("chartGetPeerLocations", [], (res) => {
+      res = Page.rows(res);
       var country, country_db, i, item, items, j, len, len1, name, num, num_others, point, ref, ref1;
       this.points = res;
       country_db = {};

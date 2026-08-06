@@ -130,6 +130,7 @@ class NetworkStats {
 
   update() {
     Page.cmd("chartDbQuery", "SELECT * FROM type", (res) => {
+      res = Page.rows(res);
       var i, len, results, row;
       this.type_id_db = {};
       this.type_name_db = {};
@@ -142,6 +143,7 @@ class NetworkStats {
       return results;
     });
     return Page.cmd("chartDbQuery", "SELECT * FROM site", (res) => {
+      res = Page.rows(res);
       var i, len, row, sites;
       sites = {};
       this.sites_by_id = {};

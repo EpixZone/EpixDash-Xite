@@ -46,6 +46,7 @@ class ChartRadar {
         type_ids: type_ids
       }
     ], (res) => {
+      res = Page.rows(res);
       var address, data, i, j, k, len, len1, max_site_bw, max_site_size, ref, row, site, stat;
       this.logStart("Parse result");
       data = {};
