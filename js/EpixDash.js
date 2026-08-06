@@ -16,6 +16,16 @@ class EpixDash extends EpixFrame {
     this.handleLinkClick = this.handleLinkClick.bind(this);
   }
 
+  // A ws command answers an array of rows, or an object carrying an error
+  // (permission denied, db not ready). Every list view goes through here so
+  // one failing command shows an empty list instead of crashing the whole
+  // dashboard render to a white page partway through.
+  rows(res) {
+    if (Array.isArray(res)) return res;
+    if (res && res.error) this.log("command failed:", res.error);
+    return [];
+  }
+
   init() {
     this.history_state = {};
     this.params = {};
