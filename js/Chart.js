@@ -29,7 +29,6 @@ class Chart {
   update() {
     var query_type_data, type_name;
     Page.cmd("chartDbQuery", this.getChartQuery(), (res) => {
-      res = Page.rows(res);
       var j, len, row;
       this.line_data = [];
       for (j = 0, len = res.length; j < len; j++) {
@@ -54,7 +53,6 @@ class Chart {
         })()
       }
     ], (res) => {
-      res = Page.rows(res);
       var j, len, row, type_data;
       type_data = {};
       for (j = 0, len = res.length; j < len; j++) {

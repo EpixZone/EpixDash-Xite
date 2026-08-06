@@ -26,7 +26,6 @@
         limit: this.files.limit + 1,
         orderby: orderby
       }, (res) => {
-        res = Page.rows(res);
         for (var i = 0, len = res.length; i < len; i++) {
           var row = res[i];
           row.site = Page.site_list.sites_byaddress[row.address];

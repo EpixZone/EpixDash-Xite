@@ -112,7 +112,6 @@ class ChartTimeline {
         date_added_to: date_added_to
       }
     ], (res) => {
-      res = Page.rows(res);
       var data_date_added, data_from, data_to, day_data, day_from, day_name, day_string, day_to, group_step_data, i, j, k, l, len, m, n, ref, row, x;
       this.logStart("Parse result");
       this.line_data = [];

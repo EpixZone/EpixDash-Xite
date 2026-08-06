@@ -52,7 +52,6 @@ class ChartBig {
         date_added_to: date_added_to
       }
     ], (res) => {
-      res = Page.rows(res);
       var data_date_added, data_found, data_value, dataset, i, j, k, l, len, len1, len2, len3, len4, m, n, row, type_id, type_name;
       this.logStart("Parse result");
       this.data = {
