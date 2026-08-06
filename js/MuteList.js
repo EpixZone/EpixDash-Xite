@@ -28,6 +28,7 @@ class MuteList {
   update() {
     this.need_update = false;
     Page.cmd("MuteList", [], (res) => {
+      if (!res || res.error) res = {};
       var auth_address, mute;
       this.mutes = [];
       for (auth_address in res) {
@@ -53,6 +54,7 @@ class MuteList {
       all_sites: true,
       filters: true
     }, (res) => {
+      res = Page.rows(res);
       var address, auth_address, i, include, len, mute, mutes, ref, ref1, siteblock, siteblocks;
       this.siteblocks_serving = [];
       this.includes = [];
