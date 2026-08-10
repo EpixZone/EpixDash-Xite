@@ -328,9 +328,11 @@ class Site {
 
   handleCloneUpgradeClick() {
     Page.cmd("wrapperConfirm", ["Are you sure?" + (" Any modifications you made on<br><b>" + this.row.content.title + "</b> xite's js/css files will be lost."), "Upgrade"], (confirmed) => {
+      var root = this.row.content.clone_root;
+      if (!root || root === "." || root === "./") root = "";
       return Page.cmd("siteClone", {
         "address": this.row.content.cloned_from,
-        "root_inner_path": this.row.content.clone_root,
+        "root_inner_path": root,
         "target_address": this.row.address
       });
     });
