@@ -3257,11 +3257,15 @@ code {
 /* Filter chips: 44px pills, one row, sideways scroll on overflow */
 
 .feeds-filters {
-	max-width: 720px;
+	/* Full pane width, same span as the Discover grid, so the track never
+	   sits off-center above the wide welcome view. The reading column
+	   (search + posts) centers beneath it. */
 	box-sizing: border-box;
 	margin: 12px auto 0 auto;
 	display: flex;
-	gap: 6px;
+	background-color: var(--epix-surface-2);
+	border-radius: var(--epix-radius-lg);
+	padding: 2px;
 	overflow-x: auto;
 	scrollbar-width: none;
 	-webkit-overflow-scrolling: touch;
@@ -3274,41 +3278,39 @@ code {
 }
 
 .feeds-filter {
-	flex: none;
+	/* Equal segments spanning the search bar's width; min-width keeps a
+	   label from crushing, and the track scrolls if a xite ever registers
+	   more feed types than fit. */
+	flex: 1 1 0;
+	min-width: max-content;
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	min-height: 44px;
 	box-sizing: border-box;
-	padding: 4px 16px;
+	padding: 4px 18px;
 	color: var(--epix-text-mid);
-	/* Feed types arrive lowercase from the data ("post", "topic"), so the row
-	   read as a mix of cases next to All / Discover. Uppercasing in CSS keeps
-	   the underlying strings (which are translation keys) untouched. */
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	font-size: 12px;
-	font-weight: 600;
+	/* Feed types arrive lowercase from the data ("post", "topic") -
+	   capitalizing in css evens the row out next to All / Discover without
+	   touching the underlying strings (which are translation keys). */
+	text-transform: capitalize;
+	font-size: 13.5px;
+	font-weight: 500;
 	text-decoration: none;
-	border-radius: 999px;
-	border: 1px solid var(--epix-border);
+	border-radius: 10px;
 	scroll-snap-align: start;
 	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .feeds-filter:hover {
 	color: var(--epix-text);
-	border-color: var(--epix-border-strong);
 }
 
 .feeds-filter.active {
-	background-color: var(--epix-text);
-	color: var(--epix-bg);
-	border-color: var(--epix-text);
+	background-color: var(--epix-surface);
+	color: var(--epix-text);
 	font-weight: 600;
-}
-
-.feeds-filter.active:hover {
-	color: var(--epix-bg);
+	box-shadow: var(--epix-shadow-sm);
 }
 
 /* Feed items: card-lite rows — marker, meta line, title, clamped body */
@@ -5750,11 +5752,6 @@ code {
 		display: none;
 	}
 
-	.FeedList,
-	.feeds-search,
-	.feeds-filters {
-		margin-left: 0;
-	}
 }
 
 /* ---- responsive: <=1024 single column + segmented ---- */
