@@ -12,12 +12,9 @@
       this.renderSelectbar = this.renderSelectbar.bind(this);
       this.renderTotalbar = this.renderTotalbar.bind(this);
       this.handleLimitInput = this.handleLimitInput.bind(this);
-      this.handleTotalbarMenu = this.handleTotalbarMenu.bind(this);
       this.handleLimitSetClick = this.handleLimitSetClick.bind(this);
       this.handleLimitCancelClick = this.handleLimitCancelClick.bind(this);
       this.handleEditlimitClick = this.handleEditlimitClick.bind(this);
-      this.handleTotalbarOut = this.handleTotalbarOut.bind(this);
-      this.handleTotalbarOver = this.handleTotalbarOver.bind(this);
       this.handleSelectbarDelete = this.handleSelectbarDelete.bind(this);
       this.handleSelectbarUnpin = this.handleSelectbarUnpin.bind(this);
       this.handleSelectbarPin = this.handleSelectbarPin.bind(this);
@@ -32,8 +29,6 @@
         used: "0"
       };
       this.updateOptionalStats();
-      this.hover_totalbar = false;
-      this.menu_totalbar = new Menu();
       this.editing_limit = false;
       this.limit = "";
       this.selected_files_num = 0;
@@ -43,6 +38,19 @@
       this.result = new FilesResult();
       this.display_limit = 0;
       this.filtering = "";
+      // Esc clears the selection (same path as the bulk bar's Cancel). Inputs
+      // keep their own Esc behavior (the search box clears itself).
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape" || Page.mode !== "Files") {
+          return;
+        }
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+          return;
+        }
+        if (this.selected_files_num > 0) {
+          this.handleSelectbarCancel();
+        }
+      });
     }
 
     getSites() {
@@ -157,16 +165,6 @@
       return this.handleSelectbarCancel();
     }
 
-    handleTotalbarOver() {
-      this.hover_totalbar = true;
-      Page.projector.scheduleRender();
-    }
-
-    handleTotalbarOut() {
-      this.hover_totalbar = false;
-      Page.projector.scheduleRender();
-    }
-
     handleEditlimitClick() {
       this.editing_limit = true;
       return false;
@@ -187,19 +185,15 @@
         limit = parseFloat(this.limit).toString();
       }
       this.optional_stats.limit = limit;
-      Page.cmd("optionalLimitSet", limit);
+      Page.cmd("optionalLimitSet", limit, (res) => {
+        if (res && res.error) {
+          // Restricted gateways reject the write half of the limit commands:
+          // undo the optimistic set from the node's stats and show the error.
+          Page.cmd("wrapperNotification", ["error", res.error]);
+          this.updateOptionalStats();
+        }
+      });
       this.editing_limit = false;
-      return false;
-    }
-
-    handleTotalbarMenu() {
-      this.menu_totalbar.items = [];
-      this.menu_totalbar.items.push([_("Edit optional files limit"), this.handleEditlimitClick]);
-      if (this.menu_totalbar.visible) {
-        this.menu_totalbar.hide();
-      } else {
-        this.menu_totalbar.show();
-      }
       return false;
     }
 
@@ -207,85 +201,107 @@
       this.limit = e.target.value;
     }
 
+    // How many optional-bearing xites this node auto-seeds, plus how many
+    // directory commitments stand - the storage panel's honest replacement
+    // for the old heart-count glyph.
+    seedingCounts() {
+      var auto = 0, total = 0, dirs = 0;
+      var sites = Page.site_list.sites || [];
+      for (var i = 0, len = sites.length; i < len; i++) {
+        var site = sites[i];
+        if (!site.row.settings.size_optional) {
+          continue;
+        }
+        total += 1;
+        if (site.row.settings.autodownloadoptional) {
+          auto += 1;
+        }
+        dirs += site.optional_helps.length;
+      }
+      return {auto: auto, total: total, dirs: dirs};
+    }
+
+    // The storage panel: plabel + "used of limit" + a visible Edit control
+    // that swaps the header area for the input row directly - the old path
+    // hid this behind a chevron opening a one-item dropdown.
     renderTotalbar() {
-      var limit, percent_limit, percent_optional_downloaded, percent_optional_used, total_space_limited;
-      if (this.editing_limit && parseFloat(this.limit) > 0) {
-        if (this.limit.indexOf("M") > 0 || this.limit.indexOf("m") > 0) {
-          limit = (parseFloat(this.limit) / 1024) + "GB";
-        } else {
-          limit = this.limit;
-        }
-      } else {
-        limit = this.optional_stats.limit;
+      var limit_bytes, limit_label, pct, seeding, optional_total;
+      limit_label = this.optional_stats.limit;
+      if (limit_label && !("" + limit_label).endsWith("%")) {
+        limit_label = limit_label + " GB";
       }
-      if (limit.endsWith("%")) {
-        limit = this.optional_stats.free * (parseFloat(limit) / 100);
+      if (("" + this.optional_stats.limit).endsWith("%")) {
+        limit_bytes = this.optional_stats.free * (parseFloat(this.optional_stats.limit) / 100);
       } else {
-        limit = parseFloat(limit) * 1024 * 1024 * 1024;
+        limit_bytes = parseFloat(this.optional_stats.limit) * 1024 * 1024 * 1024;
       }
-      if (this.optional_stats.free > limit * 1.8 && !this.hover_totalbar) {
-        total_space_limited = limit * 1.8;
-      } else {
-        total_space_limited = this.optional_stats.free;
-      }
-      percent_optional_downloaded = (this.optional_stats.used / limit) * 100;
-      percent_optional_used = percent_optional_downloaded * (limit / total_space_limited);
-      percent_limit = (limit / total_space_limited) * 100;
-      return h("div#PageFilesDashboard", {
-        classes: {
-          editing: this.editing_limit
-        }
+      pct = limit_bytes > 0 ? Math.min(100, Math.round(this.optional_stats.used / limit_bytes * 100)) : 0;
+      optional_total = 0;
+      (Page.site_list.sites || []).map((site) => {
+        optional_total += site.row.settings.size_optional || 0;
+      });
+      seeding = this.seedingCounts();
+      return h("div.spanel.p-storage", {
+        key: "storage"
       }, [
-        h("div.totalbar-edit", [
-          h("span.title", _("Optional files limit:")),
-          h("input", {
-            type: "text",
-            value: this.limit,
-            oninput: this.handleLimitInput
-          }),
-          h("a.set", {
-            href: "#",
-            onclick: this.handleLimitSetClick
-          }, _("Set")),
-          h("a.cancel", {
-            href: "#",
-            onclick: this.handleLimitCancelClick
-          }, _("Cancel"))
+        h("div.phead", [
+          h("span.plabel", _("Storage")),
+          this.editing_limit ? h("span.limit-edit", [
+            h("span.le-label", _("Optional files limit:")),
+            h("input.le-input", {
+              type: "text",
+              value: this.limit,
+              oninput: this.handleLimitInput
+            }),
+            h("a.le-set", {
+              href: "#Set",
+              onclick: this.handleLimitSetClick
+            }, _("Set")),
+            h("a.le-cancel", {
+              href: "#Cancel",
+              onclick: this.handleLimitCancelClick
+            }, _("Cancel"))
+          ]) : h("span.storage-right", [
+            h("span.pval", (Text.formatSize(this.optional_stats.used) || "0 MB") + " " + _("of") + " " + (Text.formatSize(limit_bytes) || "0 MB") + " " + _("used")),
+            h("a.le-edit", {
+              href: "#Edit+limit",
+              onclick: this.handleEditlimitClick
+            }, _("Edit limit"))
+          ])
         ]),
-        h("a.totalbar-title", {
-          href: "#",
-          title: _("Space current used by optional files"),
-          onclick: this.handleTotalbarMenu
-        }, _("Used: ") + (Text.formatSize(this.optional_stats.used)) + " / " + (Text.formatSize(limit)) + " (" + (Math.round(percent_optional_downloaded)) + "%)",
-          h("div.icon-arrow-down")
-        ),
-        this.menu_totalbar.render(),
-        h("div.totalbar", {
-          onmouseover: this.handleTotalbarOver,
-          onmouseout: this.handleTotalbarOut
-        },
-          h("div.totalbar-used", {
-            style: "width: " + percent_optional_used + "%"
-          }),
-          h("div.totalbar-limitbar", {
-            style: "width: " + percent_limit + "%"
-          }),
-          h("div.totalbar-limit", {
-            style: "margin-left: " + percent_limit + "%"
-          }, h("span", {
-            title: "Space allowed to used by optional files"
-          }, Text.formatSize(limit))),
-          h("div.totalbar-hddfree",
-            h("span", {
-              title: "Total free space on your storage"
-            }, [
-              Text.formatSize(this.optional_stats.free),
-              h("div.arrow", {
-                style: this.optional_stats.free > total_space_limited ? "width: 10px" : "width: 0px"
-              }, " \u25B6")
-            ])
-          )
-        )
+        h("div.meter", {
+          title: pct + "% " + _("of the optional-file limit used")
+        }, [
+          h("span.meter-fill", {
+            styles: {
+              width: Math.max(pct > 0 ? 1 : 0, pct) + "%"
+            }
+          })
+        ]),
+        h("div.pfacts", [
+          h("span.fact", {key: "used"}, [
+            h("span.kdot.kd-in", {"aria-hidden": "true"}),
+            h("span.fact-label", _("Used")),
+            h("span.fact-value", Text.formatSize(this.optional_stats.used) || "0 MB")
+          ]),
+          h("span.fact", {key: "limit"}, [
+            h("span.fact-label", _("Limit")),
+            h("span.fact-value", limit_label || "–")
+          ]),
+          h("span.fact", {key: "free"}, [
+            h("span.fact-label", _("Free on disk")),
+            h("span.fact-value", Text.formatSize(this.optional_stats.free) || "–")
+          ]),
+          optional_total > 0 ? h("span.fact", {key: "opt"}, [
+            h("span.fact-label", _("Optional available")),
+            h("span.fact-value", Text.formatSize(optional_total) || "0 MB")
+          ]) : void 0,
+          seeding.total > 0 ? h("span.fact", {key: "seeding", classes: {"fact-ok": seeding.auto > 0}}, [
+            seeding.auto > 0 ? h("span.fact-dot", {"aria-hidden": "true"}) : void 0,
+            h("span.fact-label", _("Seeding")),
+            h("span.fact-value", seeding.auto + " " + _("of") + " " + seeding.total + " " + _("xites") + (seeding.dirs ? " · " + seeding.dirs + " " + _("folders") : ""))
+          ]) : void 0
+        ])
       ]);
     }
 
@@ -345,9 +361,9 @@
     }
 
     renderFilter() {
-      return h("div.filter", [
+      return h("div.filter.searchbar", [
         h("input.text", {
-          placeholder: "Filter: File name",
+          placeholder: _("Search files"),
           spellcheck: false,
           oninput: this.handleFilterInput,
           onkeyup: this.handleFilterKeyup,
@@ -358,15 +374,24 @@
 
     updateOptionalStats() {
       Page.cmd("optionalLimitStats", [], (res) => {
+        if (!res || res.error || res.limit == null) {
+          return;
+        }
         this.limit = res.limit;
         if (!this.limit.endsWith("%")) {
           this.limit += " GB";
         }
         this.optional_stats = res;
+        if (Page.projector) {
+          Page.projector.scheduleRender();
+        }
       });
     }
 
     updateAllFiles() {
+      // The storage numbers move with every delete/download; refresh them on
+      // the same beat as the tables instead of only at boot.
+      this.updateOptionalStats();
       this.updating_files = 0;
       var used = 0;
       Page.site_list.sites.map((site) => {
@@ -408,12 +433,16 @@
       }
       if (sites.length === 0) {
         document.body.classList.add("loaded");
+        // The filter renders here too: it is the only entry point to the
+        // node-side filter_inner_path search, so a newcomer can reach it.
         return h("div#PageFiles",
           this.renderSelectbar(),
           this.renderTotalbar(),
-          h("div.empty", [
-            h("h4", "Hello newcomer!"),
-            h("small", "You have not downloaded any optional files yet")
+          this.renderFilter(),
+          this.result.filter_inner_path ? this.result.render() : h("div.spanel.p-empty", [
+            h("div.phead", [h("span.plabel", _("Optional files"))]),
+            h("div.empty-title", _("No optional files yet")),
+            h("div.empty-hint", _("Xites can offer large files - videos, images, archives - that download on demand instead of with the page. Files you open land here, where you can pin, seed or delete them."))
           ])
         );
       }
@@ -427,7 +456,7 @@
         this.renderSelectbar(),
         this.renderTotalbar(),
         this.renderFilter(),
-        this.result.filter_inner_path ? this.result.render() : (
+        this.result.filter_inner_path ? this.result.render() : [
           this.bigfiles.render(),
           sites_favorited.slice(0, this.display_limit + 1).map((site) => {
             return site.renderOptionalStats();
@@ -435,7 +464,7 @@
           sites_connected.slice(0, this.display_limit + 1).map((site) => {
             return site.renderOptionalStats();
           })
-        )
+        ]
       ]);
     }
 

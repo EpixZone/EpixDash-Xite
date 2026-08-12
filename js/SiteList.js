@@ -13,6 +13,10 @@ class SiteList {
     this.reorder = this.reorder.bind(this);
     this.sortRows = this.sortRows.bind(this);
     this.reorderTimer = this.reorderTimer.bind(this);
+    this.closeRowActions = this.closeRowActions.bind(this);
+    // The Site instance whose inline action strip is open; one strip open
+    // app-wide. The panel and the health screen fold it via closeRowActions.
+    this.open_actions_site = null;
     this.item_list = new ItemList(Site, "address");
     this.sites = this.item_list.items;
     this.sites_byaddress = this.item_list.items_bykey;
@@ -48,10 +52,23 @@ class SiteList {
     if (!this.schedule_reorder) {
       return;
     }
-    if (!document.querySelector('.left:hover') && !document.querySelector(".working") && !Page.mode === "Files") {
+    // Defer while the pointer hovers the list (rows must not jump under the
+    // cursor), while anything is updating, and while another mode covers the
+    // list anyway.
+    if (!document.querySelector('#SiteList:hover') && !document.querySelector(".working") && Page.mode !== "Files") {
       this.reorder();
       return this.schedule_reorder = false;
     }
+  }
+
+  // Fold the open row-action strip (one strip open app-wide). Called by the
+  // panel and the health screen when they open; safe to call any time.
+  closeRowActions() {
+    if (!this.open_actions_site) {
+      return;
+    }
+    this.open_actions_site = null;
+    Page.projector.scheduleRender();
   }
 
   sortRows(rows) {
@@ -256,7 +273,13 @@ class SiteList {
   render() {
     var filter_base, i, len, num_found, ref, ref1, ref2, site;
     if (!this.loaded) {
-      return h("div#SiteList");
+      // Same props shape as the loaded return: maquette throws if a node's
+      // properties appear only on a later render.
+      return h("div#SiteList", {
+        classes: {
+          compact: false
+        }
+      }, []);
     }
     this.sites_needaction = [];
     this.sites_favorited = [];
@@ -294,7 +317,14 @@ class SiteList {
       num_found += 1;
     }
     this.groupMergedSites([this.sites_needaction, this.sites_favorited, this.sites_owned, this.sites_recent, this.sites_connected.slice(0, +(this.limit - 1) + 1 || 9e9), this.sites_connecting]);
-    return h("div#SiteList", [
+    return h("div#SiteList", {
+      // Same threshold that shows the filter box: once the list is long
+      // enough to need searching, rows tighten to one line each so more
+      // xites fit on screen without scrolling.
+      classes: {
+        compact: this.sites.length > 10
+      }
+    }, [
       this.sites.length > 10 ? h("input.site-filter", {
         placeholder: "Filter: Xite name",
         spellcheck: false,

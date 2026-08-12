@@ -16,29 +16,29 @@
 
     <div id="Trigger"></div>
 
-    <!-- Left -->
-
-    <div class="left" id="left">
+    <div class="shell">
         <div id="Head"></div>
-
-        <div class="PageFiles-container">
-            <div class="PageFiles" id="PageFiles"></div>
-        </div>
-        <div class="NetworkStats-container">
-            <div class="NetworkStats" id="NetworkStats"></div>
-        </div>
-        <div class="SiteList" id="SiteList"></div>
-
-    </div>
-
-
-    <!-- Right -->
-
-    <div class="right">
         <div id="Dashboard"></div>
-        <div id="MuteList"></div>
-        <div id="ConsoleList"></div>
-        <div class="FeedList" id="FeedList"></div>
+        <div class="content">
+            <div class="pane pane-sites">
+                <div class="SiteList" id="SiteList"></div>
+            </div>
+            <div class="pane pane-feed">
+                <div id="MuteList"></div>
+                <div id="ConsoleList"></div>
+                <div class="FeedList" id="FeedList"></div>
+            </div>
+            <div class="pane pane-files">
+                <div class="PageFiles-container">
+                    <div class="PageFiles" id="PageFiles"></div>
+                </div>
+            </div>
+            <div class="pane pane-stats">
+                <div class="NetworkStats-container">
+                    <div class="NetworkStats" id="NetworkStats"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Libraries -->
@@ -58,6 +58,7 @@
     <script type="text/javascript" src="js/utils/RateLimitCb.js"></script>
     <script type="text/javascript" src="js/utils/Text.js"></script>
     <script type="text/javascript" src="js/utils/Time.js"></script>
+    <script type="text/javascript" src="js/utils/Viz.js"></script>
     <script type="text/javascript" src="js/utils/Translate.js?lang={lang}"></script>
 
     <!-- PageFiles -->
@@ -78,8 +79,7 @@
     <!-- NetworkStats -->
     <script type="text/javascript" src="js/Chart.js"></script>
     <script type="text/javascript" src="js/ChartBig.js"></script>
-    <script type="text/javascript" src="js/ChartLegend.js"></script>
-    <script type="text/javascript" src="js/ChartRadar.js"></script>
+    <script type="text/javascript" src="js/XiteRank.js"></script>
     <script type="text/javascript" src="js/ChartTimeline.js"></script>
     <script type="text/javascript" src="js/ChartWorld.js"></script>
     <script type="text/javascript" src="js/NetworkStats.js"></script>

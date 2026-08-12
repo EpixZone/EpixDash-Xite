@@ -16,6 +16,11 @@ class ChartBig {
 
   update(cb) {
     var date_added_from, date_added_to, interval, query, query_group, query_select, step, type, type_ids;
+    if (this.configuration == null) {
+      // A theme flip nulls the config so the next build re-reads the viz
+      // tokens; the async callback below writes into it, so rebuild first.
+      this.configuration = this.getChartConfiguration();
+    }
     if (Page.params.interval === "1w") {
       interval = 60 * 60 * 24 * 7;
       step = 60 * 60;
@@ -55,6 +60,12 @@ class ChartBig {
       res = Page.rows(res);
       var data_date_added, data_found, data_value, dataset, i, j, k, l, len, len1, len2, len3, len4, m, n, row, type_id, type_name;
       this.logStart("Parse result");
+      if (this.configuration == null) {
+        // A theme flip nulled the config while this query was in flight;
+        // rebuild before writing into it (the chart itself was destroyed, so
+        // initChart below recreates it against this fresh config).
+        this.configuration = this.getChartConfiguration();
+      }
       this.data = {
         labels: []
       };
@@ -73,12 +84,18 @@ class ChartBig {
         this.data_max[type_name] = Math.max(row.value, this.data_max[type_name]);
         this.data_total[type_name] += row.value;
       }
+      // Mirrored axes, kept by request: upload plots up, download down, and
+      // the request lanes ride the same split on the hidden right axis. Tick
+      // labels stay absolute values so both halves read as magnitudes.
       this.configuration.options.scales.yAxes[0].ticks.suggestedMax = Math.max(this.data_max["file_bytes_sent"], this.data_max["file_bytes_recv"]);
       this.configuration.options.scales.yAxes[0].ticks.suggestedMin = 0 - this.configuration.options.scales.yAxes[0].ticks.suggestedMax;
       this.configuration.options.scales.yAxes[1].ticks.suggestedMax = Math.max(this.data_max["request_num_sent"], this.data_max["request_num_recv"]);
       this.configuration.options.scales.yAxes[1].ticks.suggestedMin = 0 - this.configuration.options.scales.yAxes[1].ticks.suggestedMax;
       for (i = l = 0, len2 = type_ids.length; l < len2; i = ++l) {
         type_id = type_ids[i];
+        if (this.types[i].dataset_id == null) {
+          continue;
+        }
         dataset = this.configuration.data.datasets[this.types[i].dataset_id];
         dataset.data.length = 0;
         dataset.data_i = 0;
@@ -102,10 +119,12 @@ class ChartBig {
         }
         for (i = n = 0, len4 = type_ids.length; n < len4; i = ++n) {
           type_id = type_ids[i];
+          if (this.types[i].dataset_id == null) {
+            continue;
+          }
           data_value = this.data[type_id][data_date_added];
           dataset = this.configuration.data.datasets[this.types[i].dataset_id];
-          type = this.types[i];
-          if (type.negative) {
+          if (this.types[i].negative && data_value != null) {
             data_value = 0 - data_value;
           }
           dataset.data[dataset.data_i] = data_value;
@@ -141,19 +160,34 @@ class ChartBig {
   }
 
   initChart() {
-    var timer_resize;
     this.log("initChart");
     this.chart = new Chart(this.ctx, this.configuration);
     setTimeout((() => {
       return this.chart_node.parentNode.style.height = "";
     }), 100);
-    timer_resize = null;
-    return window.addEventListener("resize", () => {
-      clearInterval(timer_resize);
-      return setTimeout((() => {
-        return this.chart.resize();
-      }), 300);
-    });
+    // One listener for the object's lifetime (this used to add a fresh
+    // listener on every init - interval switches piled them up), debounced
+    // with the timer actually cleared.
+    if (!this.resize_bound) {
+      this.resize_bound = true;
+      window.addEventListener("resize", () => {
+        clearTimeout(this.timer_resize);
+        return this.timer_resize = setTimeout((() => {
+          return this.chart ? this.chart.resize() : void 0;
+        }), 300);
+      });
+    }
+  }
+
+  // Repaint in the new theme's ink: drop the chart + config (tokens are read
+  // at config build) and refetch on the next render.
+  onThemeChange() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+    this.configuration = null;
+    this.need_update = true;
   }
 
   testDataAddition() {
@@ -182,14 +216,12 @@ class ChartBig {
     }), 5000);
   }
 
+  // Colors come from the --viz-* tokens at build time; NetworkStats rebuilds
+  // this config (and the chart) when the theme flips, so the canvas follows.
   getChartConfiguration() {
-    var color_down, color_recv, color_sent, color_up, configuration, fill_down, fill_up;
-    color_up = "#31BDC6";
-    color_down = "#8A4BDB";
-    color_sent = "#5954CD";
-    color_recv = "#72747B";
-    fill_up = "rgba(49, 189, 198, 0.14)";
-    fill_down = "rgba(138, 75, 219, 0.14)";
+    var color_up, color_down, configuration;
+    color_up = Viz.color("out");
+    color_down = Viz.color("in");
     configuration = {
       type: 'line',
       data: {
@@ -203,11 +235,11 @@ class ChartBig {
             pointBackgroundColor: color_up,
             pointHoverBackgroundColor: color_up,
             pointHoverBorderColor: color_up,
-            pointHoverRadius: 2,
+            pointHoverRadius: 3,
             pointRadius: 0,
             steppedLine: true,
             fill: true,
-            backgroundColor: fill_up,
+            backgroundColor: Viz.alpha("out", 0.10),
             borderWidth: 2,
             lineTension: 0,
             data: []
@@ -219,24 +251,24 @@ class ChartBig {
             pointBackgroundColor: color_down,
             pointHoverBackgroundColor: color_down,
             pointHoverBorderColor: color_down,
-            pointHoverRadius: 2,
+            pointHoverRadius: 3,
             pointRadius: 0,
             steppedLine: true,
             fill: true,
-            backgroundColor: fill_down,
+            backgroundColor: Viz.alpha("in", 0.10),
             borderWidth: 2,
             lineTension: 0,
             data: []
           }, {
             type: 'line',
             label: 'Sent',
-            borderColor: color_sent,
+            borderColor: Viz.color("mag"),
             backgroundColor: "rgba(255,255,255,0.0)",
             pointRadius: 0,
             borderWidth: 1,
-            pointHoverRadius: 2,
-            pointHoverBackgroundColor: color_sent,
-            pointHoverBorderColor: color_sent,
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: Viz.color("mag"),
+            pointHoverBorderColor: Viz.color("mag"),
             fill: true,
             yAxisID: 'Request',
             steppedLine: true,
@@ -245,13 +277,13 @@ class ChartBig {
           }, {
             type: 'line',
             label: 'Received',
-            borderColor: color_recv,
+            borderColor: Viz.color("ink"),
             backgroundColor: "rgba(255,255,255,0.0)",
             pointRadius: 0,
             borderWidth: 1,
-            pointHoverRadius: 2,
-            pointHoverBackgroundColor: color_recv,
-            pointHoverBorderColor: color_recv,
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: Viz.color("ink"),
+            pointHoverBorderColor: Viz.color("ink"),
             fill: true,
             yAxisID: 'Request',
             steppedLine: true,
@@ -263,14 +295,10 @@ class ChartBig {
       options: {
         animation: {
           easing: "easeOutExpo",
-          duration: 2000
+          duration: 800
         },
         legend: {
-          display: false,
-          position: "top",
-          labels: {
-            fontColor: "#72747B"
-          }
+          display: false
         },
         title: {
           display: false
@@ -278,12 +306,16 @@ class ChartBig {
         tooltips: {
           mode: "index",
           intersect: false,
-          displayColors: false,
-          xPadding: 10,
+          displayColors: true,
+          xPadding: 12,
           yPadding: 10,
-          cornerRadius: 0,
+          cornerRadius: 8,
           caretPadding: 10,
-          bodyFontColor: "#DCDCE3",
+          backgroundColor: Viz.color("tip-bg"),
+          titleFontColor: Viz.color("tip-ink"),
+          bodyFontColor: Viz.color("tip-ink"),
+          borderColor: Viz.color("grid"),
+          borderWidth: 1,
           callbacks: {
             title: function(tootlip_items, data) {
               return Time.date(tootlip_items[0].xLabel, "long").replace(/:00$/, "");
@@ -291,9 +323,8 @@ class ChartBig {
             label: function(tootlip_items, data) {
               if (data.datasets[tootlip_items.datasetIndex].yAxisID === "Request") {
                 return data.datasets[tootlip_items.datasetIndex].label + ": " + Math.abs(tootlip_items.yLabel) + " requests";
-              } else {
-                return data.datasets[tootlip_items.datasetIndex].label + ": " + Text.formatSize(Math.abs(tootlip_items.yLabel));
               }
+              return data.datasets[tootlip_items.datasetIndex].label + ": " + Text.formatSize(Math.abs(tootlip_items.yLabel));
             }
           }
         },
@@ -306,25 +337,23 @@ class ChartBig {
             {
               id: 'Transfer',
               ticks: {
-                fontColor: "#72747B",
-                fontStyle: "bold",
+                fontColor: Viz.color("ink"),
                 beginAtZero: true,
                 suggestedMax: 30000000,
                 suggestedMin: -30000000,
+                maxTicksLimit: 7,
                 display: true,
-                padding: 30,
+                padding: 10,
                 callback: function(value) {
                   return Text.formatSize(Math.abs(value));
                 }
               },
               gridLines: {
-                drawTicks: true,
+                drawTicks: false,
                 drawBorder: false,
                 display: true,
-                zeroLineColor: "rgba(114, 116, 123, 0.35)",
-                tickMarkLength: 20,
-                zeroLineBorderDashOffset: 100,
-                color: "rgba(114, 116, 123, 0.18)"
+                zeroLineColor: Viz.color("zero"),
+                color: Viz.color("grid")
               }
             }, {
               id: 'Request',
@@ -347,15 +376,14 @@ class ChartBig {
             {
               type: "time",
               gridLines: {
-                color: "rgba(114, 116, 123, 0.18)",
+                color: Viz.color("grid"),
                 display: false,
                 offsetGridLines: true,
                 drawBorder: false
               },
               ticks: {
-                padding: 15,
-                fontColor: "#72747B",
-                fontStyle: "bold",
+                padding: 12,
+                fontColor: Viz.color("ink"),
                 callback: ((data_label, index) => {
                   var back, parts;
                   if (this.last_data_label == null) {

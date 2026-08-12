@@ -53,13 +53,16 @@
         return [];
       }
       if (!this.files.items.length) {
-        return h("div.empty", [
-          h("h4", "Filter result: " + this.filter_inner_path),
-          h("small", "No files found")
+        return h("div.spanel.p-empty", [
+          h("div.phead", [h("span.plabel", _("Search results"))]),
+          h("div.empty-title", _("No files match") + " \u201C" + this.filter_inner_path + "\u201D")
         ]);
       }
-      return h("div.site", [
-        h("div.title", [h("h3.name", "Filter result: " + this.filter_inner_path)]),
+      return h("div.site.spanel.fpanel.site-result", [
+        h("div.phead", [
+          h("span.plabel", _("Search results")),
+          h("span.pval", this.files.items.length + (this.files.has_more ? "+" : "") + " " + _("matches"))
+        ]),
         this.files.render()
       ]);
     }

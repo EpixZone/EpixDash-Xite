@@ -5,7 +5,16 @@
 
   window.loadLanguage = function(lang) {
     if (!lang || lang === "en" || lang === "english") {
-      return;  // English is the default, no translation file needed
+      // English is the default, no translation file needed - but switching
+      // BACK to English must clear the previously loaded dictionary.
+      current_language = "en";
+      if (!isEmpty(translations)) {
+        translations = {};
+        if (window.Page && Page.projector) {
+          Page.projector.scheduleRender();
+        }
+      }
+      return;
     }
     if (lang === current_language && !isEmpty(translations)) {
       return;

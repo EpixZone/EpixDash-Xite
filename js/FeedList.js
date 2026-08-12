@@ -265,7 +265,9 @@ class FeedList {
     if (e.target.value === "") {
       delay = 1;
     }
-    if (e.keyCode === 13) {
+    // Enter searches immediately. The event arrives here relayed from
+    // handleSearchKeyup (input events carry no key), so read e.key.
+    if (e.key === "Enter") {
       delay = 1;
     }
     clearInterval(this.input_timer);
@@ -640,7 +642,8 @@ class FeedList {
   // The timeline marker for a feed item: the source xite's favicon when the
   // site declares one and it loads, else a ring in the site's brand color.
   renderFeedMarker(site) {
-    var favicon = site.row.content ? site.row.content.favicon : null;
+    var content = site.row.content || {};
+    var favicon = content.favicon;
     var address = site.row.address;
     if (favicon && !this.favicon_failed[address]) {
       return h("img.favicon", {
@@ -650,7 +653,12 @@ class FeedList {
         onerror: this.handleFaviconError
       });
     }
-    return h("div.circle." + Text.toBrandClass(address));
+    // Same letter tile the xites list uses (brand bucket + first letter with
+    // the "Epix " prefix skipped), so rows without a favicon match the rest.
+    var name = content.title || address;
+    var m = /^Epix\s*(.)/.exec(name);
+    var letter = ((m ? m[1] : name.charAt(0)) || "?").toUpperCase();
+    return h("div.tile." + Text.toBrandClass(address), {"aria-hidden": "true"}, [letter]);
   }
 
   renderFeed(feed) {
@@ -905,16 +913,7 @@ class FeedList {
     ]);
   }
 
-  toggleUtilitySection() {
-    this.utility_section_expanded = !this.utility_section_expanded;
-    Page.projector.scheduleRender();
-  }
-
   renderWelcome() {
-    if (!this.onToggleUtility) {
-      this.onToggleUtility = this.toggleUtilitySection.bind(this);
-    }
-    var utilityExpanded = this.utility_section_expanded || false;
     return h("div.welcome", [
       h("img", {src: "img/logo.png", height: 150}),
       h("h1", _("Welcome to EpixNet")),
@@ -928,16 +927,16 @@ class FeedList {
         this.renderDiscoverSite("site-epixsites", "epix1searchd8hcnyfacvklmszzxwx9ptnf5rde04xf", "Epix Sites", "Decentralized xite discovery"),
         this.renderDiscoverSite("site-epixwiki", "epix1wkkpkx4ldeuh30e3wnz25ft70j9rj9ns77plwa", "Epix Wiki", "Decentralized wiki")
       ]),
+      // The heading stays as an explanation; the tiles are always visible.
       h("div.utility-section", [
-        h("div.utility-header", {onclick: this.onToggleUtility}, [
-          h("span.utility-arrow", {classes: {expanded: utilityExpanded}}, "\u25B6"),
+        h("div.utility-header", [
           h("span", _("EpixNet Utility Xites"))
         ]),
-        utilityExpanded ? h("div.utility-sites", [
+        h("div.utility-sites", [
           this.renderDiscoverSite("site-xid", "epix1xauthduuyn63k6kj54jzgp4l8nnjlhrsyaku8c", "xID", "Decentralized identity & DNS"),
           this.renderDiscoverSite("site-explorer", "epix1epxrwflutk4j2saxuy84wvv52tdepuep8yqcqk", "Explorer", "Decentralized Epix blockchain explorer"),
           this.renderDiscoverSite("site-vrfdebugger", "epix1k2332529z7kvtneswpure2ewakzrynm6uakrtu", "VRF Debugger", "Decentralized VRF beacon debugger")
-        ]) : null
+        ])
       ])
     ]);
   }
@@ -967,10 +966,10 @@ class FeedList {
     }
     return h("div#FeedList.FeedContainer", {
       classes: {
-        faded: Page.mute_list.visible
+        faded: Page.mute_list.visible || (Page.console_list && Page.console_list.visible)
       }
     }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
-      h("div.feeds-filters", has_feeds ? [
+      has_feeds ? h("div.feeds-filters", [
         h("a.feeds-filter", {
           key: "all",
           href: "#all",
@@ -1001,16 +1000,9 @@ class FeedList {
           },
           onclick: this.handleFilterClick
         }, _("Discover"))
-      ] : [
-        h("a.feeds-filter", {
-          key: "discover",
-          href: "#discover",
-          classes: {
-            active: true
-          },
-          onclick: this.handleFilterClick
-        }, _("Discover"))
-      ]),
+      // With no feeds there is nothing to filter between, and the welcome
+      // view is already what shows - a lone "Discover" pill is just noise.
+      ]) : void 0,
       active_filter === "discover" ? this.renderWelcome() : [
         h("div.feeds-search", {
           classes: {
