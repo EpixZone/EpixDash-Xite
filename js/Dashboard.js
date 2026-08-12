@@ -1,5 +1,12 @@
 (function() {
 
+// Trackers answering that make the node healthy whatever the share says.
+// Peer discovery needs a working handful, not a good ratio, and public
+// tracker lists carry entries that have been dead for years: without this a
+// node with 8 of 17 answering reads Degraded forever over a list it does not
+// control. Below the floor the percentage bands decide.
+var HEALTHY_TRACKER_FLOOR = 5;
+
 class Dashboard {
   constructor() {
     this.render = this.render.bind(this);
@@ -134,16 +141,17 @@ class Dashboard {
     // The same bands the individual tracker rows use, applied to the share of
     // trackers answering: under 10% bad, under 75% degraded, the rest healthy.
     // Rounded before it is judged so the verdict agrees with the count the
-    // chip and the card header both show.
+    // chip and the card header both show. Enough trackers answering outright
+    // is healthy whatever the share works out to - see HEALTHY_TRACKER_FLOOR.
     percent = Math.round((counts.ok / counts.total) * 100);
+    if (counts.ok >= HEALTHY_TRACKER_FLOOR || percent >= 75) {
+      return {ink: "ok", icon: "check", label: _("Healthy"), cause: null};
+    }
     answering = counts.ok + _(" of ") + counts.total + _(" trackers answering");
     if (percent < 10) {
       return {ink: "bad", icon: "err", label: _("Bad"), cause: answering};
     }
-    if (percent < 75) {
-      return {ink: "warn", icon: "warn", label: _("Degraded"), cause: answering};
-    }
-    return {ink: "ok", icon: "check", label: _("Healthy"), cause: null};
+    return {ink: "warn", icon: "warn", label: _("Degraded"), cause: answering};
   }
 
   handleEnableAlwaysTorClick() {
