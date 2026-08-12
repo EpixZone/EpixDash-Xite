@@ -3,7 +3,7 @@
 // Inline stroke icons for the row-action strip and row accents (per the
 // design language: new icons are inline SVG, 1.5-2px stroke, currentColor).
 var ICON_PATHS = {
-  dots: '<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+  dots: '<circle cx="12" cy="5" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.7" fill="currentColor" stroke="none"/>',
   star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
   starF: '<path fill="currentColor" stroke="none" d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
   refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7M20 3.8v4.4h-4.4"/>',
@@ -14,6 +14,8 @@ var ICON_PATHS = {
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/>',
   upgrade: '<path d="M12 19V5M5 12l7-7 7 7"/>',
   chevronUp: '<path d="M6 14.5l6-6 6 6"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  person: '<circle cx="12" cy="8" r="3.4"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/>',
   trash: '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l.9 13h9.2l.9-13M10 11v5.5M14 11v5.5"/>'
 };
 
@@ -24,6 +26,20 @@ var MESSAGE_FADE_MS = 260;
 var actionIcon = function(name, size) {
   size = size || 18;
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_PATHS[name] || "") + '</svg>';
+};
+
+// The row's peer figure, capped so the fixed-width column never grows:
+// exact up to 999, then floored magnitude tiers - 1k+ ... 999k+, 1m+ ...
+// 99m+ (the ceiling). "999k+" is the widest output; the .peers column
+// width in css is sized to it. The exact count stays in the hover title.
+var formatPeers = function(n) {
+  if (n <= 999) {
+    return String(n);
+  }
+  if (n < 1000000) {
+    return Math.floor(n / 1000) + "k+";
+  }
+  return Math.min(99, Math.floor(n / 1000000)) + "m+";
 };
 
 class Site {
@@ -798,13 +814,20 @@ class Site {
           : void 0,
         merged_expander
       ]), h("div.details", [
-        // The meta trio is one collapsible unit: display:contents normally
+        // The meta pair is one collapsible unit: display:contents normally
         // (layout as if unwrapped), a shrinkable ellipsizing block in the
-        // compact list so it gives way to the pill as a whole.
+        // compact list so it gives way to the pill as a whole. Old-dashboard
+        // icon treatment: clock + date, person + count - the word "peers"
+        // was the space hog on every row.
         h("span.dmeta", [
-          h("span.peers", [peers_value + _(" peers")]),
-          h("span.sep", "\u00B7"),
-          h("span.modified", [stat_value])
+          h("span.modified", [
+            h("span.mic", {innerHTML: actionIcon("clock", 12)}),
+            stat_value
+          ]),
+          h("span.peers", {title: peers_value + _(" peers")}, [
+            formatPeers(peers_value),
+            h("span.mic", {innerHTML: actionIcon("person", 12)})
+          ])
         ]),
         // The message pill is pushed flush right on the meta line (margin-left:
         // auto) so it sits opposite the date instead of on top of it. It

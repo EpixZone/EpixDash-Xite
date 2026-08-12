@@ -925,7 +925,9 @@ class FeedList {
         this.renderDiscoverSite("site-epixpost", "epix1p0stmcza0xjkvv0vnjlk0ypr7xsunt4lxkhgcm", "Epix Post", "Decentralized social network"),
         this.renderDiscoverSite("site-epixmail", "epix1pvta40a8d944w3npr9ztqrfh3wec53hh2je4fa", "Epix Mail", "Decentralized encrypted mailing"),
         this.renderDiscoverSite("site-epixsites", "epix1searchd8hcnyfacvklmszzxwx9ptnf5rde04xf", "Epix Sites", "Decentralized xite discovery"),
-        this.renderDiscoverSite("site-epixwiki", "epix1wkkpkx4ldeuh30e3wnz25ft70j9rj9ns77plwa", "Epix Wiki", "Decentralized wiki")
+        this.renderDiscoverSite("site-epixwiki", "epix1wkkpkx4ldeuh30e3wnz25ft70j9rj9ns77plwa", "Epix Wiki", "Decentralized wiki"),
+        this.renderDiscoverSite("site-deflix", "epix1jaahfehr280m9uqlf44vtkrz9hjkvq8fewz68v", "DeFlix", "Decentralized video streaming"),
+        this.renderDiscoverSite("site-epixdocs", "epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety", "Epix Documentation", "EpixNet guides & documentation")
       ]),
       // The heading stays as an explanation; the tiles are always visible.
       h("div.utility-section", [

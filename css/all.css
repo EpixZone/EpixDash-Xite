@@ -728,6 +728,48 @@ code {
 	white-space: nowrap;
 }
 
+/* Desktop page tabs beside the title: the hamburger panel's three nav
+   links, promoted so switching pages needs no panel. Full-height so the
+   active underline sits on the header's bottom edge like a real tab.
+   Mobile keeps the hamburger + segmented control instead. */
+
+.head-tabs {
+	display: none;
+}
+
+@media screen and (min-width: 1025px) {
+	.head-tabs {
+		display: flex;
+		align-items: stretch;
+		align-self: stretch;
+		gap: 2px;
+		margin-left: 14px;
+		flex: none;
+	}
+
+	.head-tabs a {
+		display: inline-flex;
+		align-items: center;
+		padding: 0 13px;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--epix-text-mid);
+		text-decoration: none;
+		white-space: nowrap;
+		transition: color 0.15s ease;
+	}
+
+	.head-tabs a:hover {
+		color: var(--epix-text);
+		transition: none;
+	}
+
+	.head-tabs a.active {
+		color: var(--epix-text);
+		box-shadow: inset 0 -2px 0 var(--epix-accent);
+	}
+}
+
 /* Segmented control (Sites mode, single-column widths only): Xites | Feed.
    48px track with a 2px inset keeps the buttons at 44px. */
 
@@ -2219,7 +2261,7 @@ code {
 	display: block;
 	box-sizing: border-box;
 	min-height: 64px;
-	padding: 11px 52px 11px 52px;
+	padding: 11px 40px 11px 52px;
 	transition: background-color 0.15s ease;
 	white-space: normal;
 }
@@ -2282,19 +2324,41 @@ code {
 .SiteList .site .inner .details .peers,
 .SiteList .site .inner .details .modified {
 	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-variant-numeric: tabular-nums;
 }
 
-.SiteList .site .inner .details .sep {
-	padding: 0 4px;
-	opacity: 0.8;
+/* The tiny clock / person glyphs that replaced "peers" and the dot: quieter
+   than the numbers they label. */
+
+.SiteList .site .inner .details .mic {
+	display: inline-flex;
+	opacity: 0.65;
+}
+
+.SiteList .site .inner .details .mic svg {
+	display: block;
 }
 
 /* The right margin is the pill's minimum breathing room: once the row is too
    narrow for margin-left:auto to leave any slack, this is the only gap left. */
 
+.SiteList .site .inner .details .peers {
+	margin-left: 12px;
+	margin-right: 10px;
+	/* Fixed column: wide enough for the person glyph plus "999k+" (the
+	   formatter's widest output). Number and glyph pack right - the icon
+	   sits at a fixed right position with the count against it, so the
+	   column's slack hides on the left instead of gapping in the middle,
+	   and the date column's endpoint stays put. */
+	width: 50px;
+	justify-content: flex-end;
+}
+
 .SiteList .site .inner .details .modified {
 	opacity: 0.85;
-	margin-right: 10px;
 }
 
 .SiteList .site.modified-lastday .inner .details .modified {
@@ -2504,7 +2568,7 @@ code {
 	align-items: center;
 	gap: 10px;
 	min-height: 42px;
-	padding: 5px 48px 5px 38px;
+	padding: 5px 36px 5px 38px;
 }
 
 #SiteList.compact .site .inner .title-line {
@@ -2544,6 +2608,9 @@ code {
 	min-width: 128px;
 	margin-top: 0;
 	font-size: 12px;
+	/* The icon meta is often narrower than the 128px floor; without this it
+	   packs left inside the floor and the rows' right edges go ragged. */
+	justify-content: flex-end;
 }
 
 #SiteList.compact .site .inner .details .dmeta {
@@ -2560,6 +2627,13 @@ code {
 	flex: none;
 	/* Interlocked with the .details 128px floor above. */
 	max-width: 118px;
+}
+
+/* The pill rides first here, so the peers group's pill breathing room from
+   the two-line view is just a stray gap - drop it. */
+
+#SiteList.compact .site .inner .details .peers {
+	margin-right: 0;
 }
 
 #SiteList.compact .site .inner .details .message.visible {
@@ -2632,7 +2706,9 @@ code {
 	position: absolute;
 	right: 0px;
 	top: 10px;
-	width: 44px;
+	/* Narrow toggle for the vertical ⋮ - the height keeps the 44px hit
+	   target, the width gives its slack back to the row. */
+	width: 32px;
 	height: 44px;
 	display: flex;
 	align-items: center;
@@ -3546,13 +3622,19 @@ code {
 	padding: 16px 0px 12px 0px;
 	margin-top: 12px;
 	text-align: left;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	/* Wrapping flex instead of grid: every row stretches edge to edge,
+	   including a partial last one - so the three utility tiles below a
+	   four-tile row widen to span the same width, at any resolution. */
+	display: flex;
+	flex-wrap: wrap;
 	gap: 12px;
 }
 
 .welcome .site {
 	width: auto;
+	/* 260px comfortable minimum, then grow to split the row evenly. */
+	flex: 1 1 260px;
+	min-width: 0;
 	background-color: var(--epix-surface);
 	border: 1px solid var(--epix-border);
 	min-height: 160px;
@@ -3584,6 +3666,8 @@ code {
 .welcome .site-epixwiki { border-top-color: var(--epix-warning); }
 .welcome .site-vrfdebugger { border-top-color: var(--epix-success); }
 .welcome .site-explorer { border-top-color: var(--epix-teal); }
+.welcome .site-deflix { border-top-color: var(--epix-danger); }
+.welcome .site-epixdocs { border-top-color: var(--epix-success); }
 
 .welcome .site.coming-soon {
 	opacity: 0.6;
@@ -3660,8 +3744,9 @@ code {
 .welcome .utility-sites {
 	text-align: left;
 	padding-bottom: 10px;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	/* Same fill-the-row behavior as .sites above. */
+	display: flex;
+	flex-wrap: wrap;
 	gap: 12px;
 }
 
@@ -5603,11 +5688,13 @@ code {
 @media screen and (min-width: 1025px) {
 	.content {
 		display: grid;
-		/* Rail stays put at the left; the reading column grows to a cap and
-		   any leftover width becomes margin on the right. */
+		/* The reading column grows to a cap; past that the leftover width
+		   used to pile up on the right, pinning everything to the left on
+		   big monitors. Centering the track pair splits it evenly instead. */
 		grid-template-columns: minmax(380px, 420px) minmax(0, var(--read-max));
 		column-gap: 40px;
 		align-items: start;
+		justify-content: center;
 	}
 
 	.pane-files,
@@ -5946,10 +6033,6 @@ code {
 		font-size: 26px;
 	}
 
-	.welcome .sites,
-	.welcome .utility-sites {
-		grid-template-columns: 1fr;
-	}
 }
 
 /* ---- responsive: <=360 tight ---- */

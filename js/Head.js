@@ -462,6 +462,29 @@ class Head {
     return h("div#Head", [
       h("div.eyebrow", [
         h("span.apptitle", [this.modeTitle()]),
+        // Desktop page tabs: the panel's three nav links promoted into the
+        // header so switching pages costs zero clicks of overhead. Hidden
+        // by css on mobile, where the hamburger + segmented control rule.
+        h("nav.head-tabs", {"aria-label": _("Pages")}, [
+          h("a", {
+            href: "?",
+            classes: {active: Page.mode === "Sites"},
+            "aria-current": Page.mode === "Sites" ? "page" : "false",
+            onclick: this.handleNavSitesClick
+          }, [_("Xites")]),
+          h("a", {
+            href: "?Files",
+            classes: {active: Page.mode === "Files"},
+            "aria-current": Page.mode === "Files" ? "page" : "false",
+            onclick: this.handleNavFilesClick
+          }, [_("Files")]),
+          h("a", {
+            href: "?Stats",
+            classes: {active: Page.mode === "Stats"},
+            "aria-current": Page.mode === "Stats" ? "page" : "false",
+            onclick: this.handleNavStatsClick
+          }, [_("Stats")])
+        ]),
         // Node health rides the header line instead of taking a row below it.
         Page.dashboard ? Page.dashboard.renderHeaderHealth() : null
       ]),
