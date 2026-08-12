@@ -966,6 +966,14 @@ class FeedList {
     if (!has_feeds && active_filter !== "discover") {
       active_filter = "discover";
     }
+    // A filter that cannot change the result is noise: with only one feed
+    // type, "Feed" and that type's tab are the same set, so the type
+    // segments only render when there are at least two. If the hidden lone
+    // type was the active filter, Feed lights up instead - same rows.
+    var type_count = Object.keys(this.feed_types).length;
+    if (type_count < 2 && active_filter !== "discover") {
+      active_filter = null;
+    }
     return h("div#FeedList.FeedContainer", {
       classes: {
         faded: Page.mute_list.visible || (Page.console_list && Page.console_list.visible)
@@ -979,9 +987,16 @@ class FeedList {
             active: active_filter === null
           },
           onclick: this.handleFilterClick
-        }, _("All")), (() => {
+          // "Latest", not "All" or "Feed": All implied Discover was
+          // included, and the pane itself is already named Feed (the
+          // mobile Xites|Feed switch), so a Feed tab inside it collided.
+          // Latest = the unfiltered stream; the type tabs are its slices.
+        }, _("Latest")), (() => {
           var results;
           results = [];
+          if (type_count < 2) {
+            return results;
+          }
           for (feed_type in this.feed_types) {
             results.push(h("a.feeds-filter", {
               key: feed_type,
