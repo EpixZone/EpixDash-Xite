@@ -117,7 +117,7 @@ class Dashboard {
 
   // Worst-of ranking: offline > checking > unreachable > tracker trouble > ok.
   healthState() {
-    var counts, failing;
+    var counts, percent, answering;
     if (Page.server_info.offline) {
       return {ink: "warn", icon: "warn", label: _("Offline mode"), cause: _("network disabled")};
     }
@@ -131,18 +131,17 @@ class Dashboard {
     if (counts.total === 0) {
       return {ink: "", icon: "loader", label: _("Waiting for trackers…"), cause: null};
     }
-    // Peer discovery needs a handful of working trackers, not a majority of
-    // the configured list - public tracker lists always carry dead entries.
-    // So a failing majority only reads as degraded when the working set is
-    // small too.
-    if (counts.ok < 5 && counts.ok <= counts.total / 2) {
-      failing = counts.total - counts.ok;
-      return {
-        ink: "warn",
-        icon: "warn",
-        label: _("Degraded"),
-        cause: failing === 1 ? failing + _(" tracker failing") : failing + _(" trackers failing")
-      };
+    // The same bands the individual tracker rows use, applied to the share of
+    // trackers answering: under 10% bad, under 75% degraded, the rest healthy.
+    // Rounded before it is judged so the verdict agrees with the count the
+    // chip and the card header both show.
+    percent = Math.round((counts.ok / counts.total) * 100);
+    answering = counts.ok + _(" of ") + counts.total + _(" trackers answering");
+    if (percent < 10) {
+      return {ink: "bad", icon: "err", label: _("Bad"), cause: answering};
+    }
+    if (percent < 75) {
+      return {ink: "warn", icon: "warn", label: _("Degraded"), cause: answering};
     }
     return {ink: "ok", icon: "check", label: _("Healthy"), cause: null};
   }
@@ -544,9 +543,12 @@ class Dashboard {
       tracker_display = tracker_name.substring(0, 32) + "...";
     }
 
-    // Round first and judge the rounded number, so the label never disagrees
+    // The rate is rounded before it is judged, so the label never disagrees
     // with the percentage printed next to it.
-    success_percent = stat.num_request ? Math.round((stat.num_success / stat.num_request) * 100) : "?";
+    success_percent = this.trackerRate(stat);
+    if (success_percent < 0) {
+      success_percent = "?";
+    }
     // The node reports the announce's own duration as `latency` (seconds,
     // fractional). This used to subtract time_status from time_request, but
     // the node never sets time_status, so the timing here and the average in
@@ -592,15 +594,27 @@ class Dashboard {
     ]);
   }
 
+  // Success rate as a number the list can sort on. Trackers nothing has been
+  // asked of yet have no rate: -1 parks them below the rated ones instead of
+  // ranking them alongside trackers that actually failed.
+  trackerRate(stat) {
+    return stat.num_request ? Math.round((stat.num_success / stat.num_request) * 100) : -1;
+  }
+
   renderTrackers() {
-    var stats, counts, rows, announce_times, avg, tracker_url;
+    var stats, counts, rows, announce_times, avg, order;
     stats = this.trackerStats();
     counts = this.trackerCounts();
-    rows = [];
     announce_times = [];
-    for (tracker_url in stats) {
-      rows.push(this.renderTrackerRow(tracker_url, stats[tracker_url], announce_times));
-    }
+    // Best health first, so the trackers actually carrying the node are at the
+    // top and the dead weight sinks. Ties break on the url, which keeps the
+    // order steady across refreshes rather than reshuffling equal rows.
+    order = Object.keys(stats).sort((a, b) => {
+      return (this.trackerRate(stats[b]) - this.trackerRate(stats[a])) || a.localeCompare(b);
+    });
+    rows = order.map((tracker_url) => {
+      return this.renderTrackerRow(tracker_url, stats[tracker_url], announce_times);
+    });
     avg = null;
     if (announce_times.length) {
       avg = announce_times.reduce(function(a, b) { return a + b; }, 0) / announce_times.length;
