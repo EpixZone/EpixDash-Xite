@@ -289,6 +289,13 @@ class EpixDash extends EpixFrame {
   }
 
   onOpenWebsocket(e) {
+    // Subscribe to the node's server and announcer pushes. Without these the
+    // health chip only ever showed the state it read at page load: the node
+    // pushes setServerInfo on serverChanged (port check, tor/i2p phase, new
+    // errors) and setAnnouncerInfo on announcerChanged (tracker announces),
+    // and both were dropped because the dashboard had joined siteChanged only.
+    // Joined here rather than at construction so a reconnect re-subscribes.
+    this.cmd("channelJoin", {"channels": ["serverChanged", "announcerChanged"]});
     this.reloadServerInfo();
     this.reloadServerErrors();
     // Fetch announcer stats right away, in parallel with the others: the
@@ -347,6 +354,8 @@ class EpixDash extends EpixFrame {
       return this.setServerInfo(params);
     } else if (cmd === "setAnnouncerInfo") {
       return this.setAnnouncerInfo(params);
+    } else if (cmd === "setServerErrors") {
+      return this.setServerErrors(params);
     } else {
       return this.log("Unknown command", params);
     }
@@ -415,6 +424,13 @@ class EpixDash extends EpixFrame {
 
   setAnnouncerInfo(announcer_info) {
     this.announcer_info = announcer_info.stats;
+    // The pushed stats come from the same source as the announcerStats
+    // command, and the tracker readouts prefer announcer_stats - so keep it in
+    // step or the pushes leave the counts on whatever the last poll returned.
+    // Empty means the node blanked them (non-admin xite); keep what we have.
+    if (announcer_info.stats && Object.keys(announcer_info.stats).length) {
+      this.announcer_stats = announcer_info.stats;
+    }
     return this.projector.scheduleRender();
   }
 
