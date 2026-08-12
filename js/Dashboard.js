@@ -515,71 +515,91 @@ class Dashboard {
     ]);
   }
 
+  // A tracker's row state is its success rate over time, not how the last
+  // round happened to end. Public tracker lists are full of entries that fail
+  // intermittently, and judging on the last round alone painted a tracker that
+  // works most of the time red the moment it missed once. The last error still
+  // shows in the row's meta line either way. "?" means nothing has been asked
+  // of it yet, which is not a verdict.
+  trackerState(success_percent) {
+    if (success_percent === "?") {
+      return {ink: "", icon: "loader", label: _("Waiting")};
+    }
+    if (success_percent < 10) {
+      return {ink: "bad", icon: "err", label: _("Bad")};
+    }
+    if (success_percent < 75) {
+      return {ink: "warn", icon: "warn", label: _("Degraded")};
+    }
+    return {ink: "ok", icon: "check", label: _("Healthy")};
+  }
+
+  renderTrackerRow(tracker_url, stat, announce_times) {
+    var tracker_name, tracker_display, success_percent, request_taken, title_text, state, width, meta;
+    tracker_name = tracker_url.replace(/(.*:\/\/.*?)[\/#].*/, "$1").replace(/:[0-9]+$/, "");
+
+    // Create a truncated display name for long URLs
+    tracker_display = tracker_name;
+    if (tracker_name.length > 35) {
+      tracker_display = tracker_name.substring(0, 32) + "...";
+    }
+
+    // Round first and judge the rounded number, so the label never disagrees
+    // with the percentage printed next to it.
+    success_percent = stat.num_request ? Math.round((stat.num_success / stat.num_request) * 100) : "?";
+    // The node reports the announce's own duration as `latency` (seconds,
+    // fractional). This used to subtract time_status from time_request, but
+    // the node never sets time_status, so the timing here and the average in
+    // the card header have both been missing all along.
+    request_taken = null;
+    if (stat.status === "announced" && typeof stat.latency === "number") {
+      request_taken = stat.latency;
+      announce_times.push(request_taken);
+    }
+    state = this.trackerState(success_percent);
+
+    title_text = "Full URL: " + tracker_name + "\nRequests: " + stat.num_request +
+      "\nSucceeded: " + stat.num_success + "\nLast announce: " + stat.status;
+    if (stat.last_error) {
+      title_text += "\nLast error: " + stat.last_error + " (" + (Time.since(stat.time_last_error)) + ")";
+    }
+
+    width = success_percent === "?" ? 0 : success_percent;
+    meta = success_percent + "%";
+    if (request_taken !== null) {
+      meta += " · " + request_taken.toFixed(2) + "s";
+    }
+    if (stat.last_error) {
+      meta += " · " + stat.last_error + " (" + Time.since(stat.time_last_error) + ")";
+    }
+
+    return h("div.trrow", {key: tracker_url, title: title_text}, [
+      h("div.trtop", [
+        h("span.trname.mono", [h("span.th", tracker_display)]),
+        h("span.trstat", {classes: this.inkClasses(state.ink)}, [this.icon(state.icon, 13), state.label])
+      ]),
+      h("div.trbot", [
+        h("span.track", [
+          h("span.tfill", {
+            styles: {
+              width: width + "%",
+              background: state.ink ? "var(--dash-" + state.ink + "-ink)" : "var(--epix-text-mid)"
+            }
+          })
+        ]),
+        h("span.trmeta", meta)
+      ])
+    ]);
+  }
+
   renderTrackers() {
-    var stats, counts, rows, announce_times, avg, tracker_url, stat, tracker_name, tracker_display,
-      success_percent, status, request_taken, title_text, ink, icon_name, width, meta;
+    var stats, counts, rows, announce_times, avg, tracker_url;
     stats = this.trackerStats();
     counts = this.trackerCounts();
     rows = [];
     announce_times = [];
     for (tracker_url in stats) {
-      stat = stats[tracker_url];
-      tracker_name = tracker_url.replace(/(.*:\/\/.*?)[\/#].*/, "$1").replace(/:[0-9]+$/, "");
-
-      // Create a truncated display name for long URLs
-      tracker_display = tracker_name;
-      if (tracker_name.length > 35) {
-        tracker_display = tracker_name.substring(0, 32) + "...";
-      }
-
-      success_percent = parseInt((stat.num_success / stat.num_request) * 100);
-      if (isNaN(success_percent)) {
-        success_percent = "?";
-      }
-      status = stat.status.capitalize();
-      if (status === "Announced" && stat.time_request && stat.time_status) {
-        request_taken = stat.time_status - stat.time_request;
-        status += " in " + (request_taken.toFixed(2)) + "s";
-        announce_times.push(request_taken);
-      }
-      title_text = "Full URL: " + tracker_name + "\nRequests: " + stat.num_request;
-      if (stat.last_error) {
-        title_text += "\nLast error: " + stat.last_error + " (" + (Time.since(stat.time_last_error)) + ")";
-      }
-
-      if (stat.status === "announced") {
-        ink = "ok";
-        icon_name = "check";
-      } else if (stat.status === "error") {
-        ink = "bad";
-        icon_name = "err";
-      } else {
-        ink = "warn";
-        icon_name = "loader";
-      }
-      width = success_percent === "?" ? 0 : success_percent;
-      meta = success_percent + "%";
-      if (stat.last_error) {
-        meta += " · " + stat.last_error + " (" + Time.since(stat.time_last_error) + ")";
-      }
-
-      rows.push(h("div.trrow", {key: tracker_url, title: title_text}, [
-        h("div.trtop", [
-          h("span.trname.mono", [h("span.th", tracker_display)]),
-          h("span.trstat", {classes: this.inkClasses(ink)}, [this.icon(icon_name, 13), status])
-        ]),
-        h("div.trbot", [
-          h("span.track", [
-            h("span.tfill", {
-              styles: {
-                width: width + "%",
-                background: "var(--dash-" + ink + "-ink)"
-              }
-            })
-          ]),
-          h("span.trmeta", meta)
-        ])
-      ]));
+      rows.push(this.renderTrackerRow(tracker_url, stats[tracker_url], announce_times));
     }
     avg = null;
     if (announce_times.length) {
