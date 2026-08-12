@@ -7,8 +7,6 @@ class MuteList {
     this.renderIncludes = this.renderIncludes.bind(this);
     this.renderSiteblocks = this.renderSiteblocks.bind(this);
     this.renderMutes = this.renderMutes.bind(this);
-    this.storeNode = this.storeNode.bind(this);
-    this.afterUpdate = this.afterUpdate.bind(this);
     this.handleIncludeRemoveClick = this.handleIncludeRemoveClick.bind(this);
     this.handleMuteRemoveClick = this.handleMuteRemoveClick.bind(this);
     this.handleHideClick = this.handleHideClick.bind(this);
@@ -17,7 +15,6 @@ class MuteList {
     this.mutes = null;
     this.includes = null;
     this.visible = false;
-    this.max_height = 0;
     this.updated = false;
     this.siteblocks_serving = [];
     Page.site_list.on_loaded.then(() => {
@@ -27,7 +24,7 @@ class MuteList {
 
   update() {
     this.need_update = false;
-    Page.cmd("MuteList", [], (res) => {
+    Page.cmd("muteList", [], (res) => {
       if (!res || res.error) res = {};
       var auth_address, mute;
       this.mutes = [];
@@ -40,9 +37,6 @@ class MuteList {
       this.mutes.sort(function(a, b) {
         return b.date_added - a.date_added;
       });
-      if (!this.max_height) {
-        this.max_height = 100;
-      }
       this.updated = true;
       return Page.projector.scheduleRender();
     });
@@ -50,7 +44,7 @@ class MuteList {
   }
 
   updateFilterIncludes() {
-    return Page.cmd("FilterIncludeList", {
+    return Page.cmd("filterIncludeList", {
       all_sites: true,
       filters: true
     }, (res) => {
@@ -100,7 +94,6 @@ class MuteList {
     setTimeout((() => {
       return this.updateFilterIncludes();
     }), 1000);
-    this.max_height = 0;
     Page.projector.scheduleRender();
     return false;
   }
@@ -132,27 +125,13 @@ class MuteList {
     return false;
   }
 
-  afterUpdate() {
-    this.updated = false;
-    if (this.node && this.visible) {
-      this.max_height = this.node.offsetHeight + 100;
-      return Page.projector.scheduleRender();
-    }
-  }
-
-  storeNode(node) {
-    return this.node = node;
-  }
-
   renderMutes(mutes, mode) {
     if (mode == null) {
       mode = "mutes";
     }
     return h("div.mutes", [
       h("div.mute.mute-head", [
-        h("div.mute-col", "Muted user"), h("div.mute-col", {
-          style: "width: 66%"
-        }, "Why?")
+        h("div.mute-col.mute-col-who", "Muted user"), h("div.mute-col.mute-col-reason", "Why?")
       ]), mutes.map((mute) => {
         return h("div.mute", {
           key: mute.auth_address,
@@ -160,9 +139,7 @@ class MuteList {
             removed: mute.removed
           }
         }, [
-          h("div.mute-col", [h("div.cert_user_id", mute.cert_user_id), h("div.auth_address", mute.auth_address)]), h("div.mute-col", {
-            style: "width: 66%"
-          }, [
+          h("div.mute-col.mute-col-who", [h("div.cert_user_id", mute.cert_user_id), h("div.auth_address", mute.auth_address)]), h("div.mute-col.mute-col-reason", [
             h("div.source", mute.site != null ? mute.site.row.content.title : mute.source), h("div.reason", {
               innerHTML: Text.renderMarked(mute.reason)
             }), h("div.date_added", " \u2500 " + Time.since(mute.date_added))
@@ -179,9 +156,7 @@ class MuteList {
   renderSiteblocks(siteblocks) {
     return h("div.siteblocks", [
       h("div.mute.mute-head", [
-        h("div.mute-col", "Blocked xite"), h("div.mute-col", {
-          style: "width: 66%"
-        }, "Why?")
+        h("div.mute-col.mute-col-who", "Blocked xite"), h("div.mute-col.mute-col-reason", "Why?")
       ]), siteblocks.map((siteblock) => {
         return h("div.mute", {
           key: siteblock.address,
@@ -189,9 +164,7 @@ class MuteList {
             removed: siteblock.removed
           }
         }, [
-          h("div.mute-col", [h("div.cert_user_id", siteblock.name), h("div.auth_address", siteblock.address)]), h("div.mute-col", {
-            style: "width: 66%"
-          }, [
+          h("div.mute-col.mute-col-who", [h("div.cert_user_id", siteblock.name), h("div.auth_address", siteblock.address)]), h("div.mute-col.mute-col-reason", [
             h("div.reason", {
               innerHTML: Text.renderMarked(siteblock.reason)
             }), h("div.date_added", " \u2500 " + Time.since(siteblock.date_added))
@@ -238,19 +211,15 @@ class MuteList {
     }
     if (this.updated) {
       this.updated = false;
-      setTimeout(this.afterUpdate);
     }
     return h("div#MuteList", {
       classes: {
         visible: this.visible
-      },
-      style: "max-height: " + this.max_height + "px"
+      }
     }, [
       h("a.mute-hide", {
         onclick: this.handleHideClick
-      }, "\u2039 Back to feed"), ((ref = this.mutes) != null ? ref.length : void 0) === 0 && ((ref1 = this.includes) != null ? ref1.length : void 0) === 0 ? h("div.mute-empty", "Your mute list is empty! :)") : h("div", {
-        afterCreate: this.storeNode
-      }, [this.mutes.length > 0 ? this.renderMutes(this.mutes) : void 0, this.includes ? this.renderIncludes() : void 0])
+      }, "\u2039 Back to feed"), ((ref = this.mutes) != null ? ref.length : void 0) === 0 && ((ref1 = this.includes) != null ? ref1.length : void 0) === 0 ? h("div.mute-empty", "Your mute list is empty! :)") : h("div.mute-content", [this.mutes.length > 0 ? this.renderMutes(this.mutes) : void 0, this.includes ? this.renderIncludes() : void 0])
     ]);
   }
 

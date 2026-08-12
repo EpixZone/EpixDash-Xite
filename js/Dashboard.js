@@ -4,21 +4,22 @@ class Dashboard {
   constructor() {
     this.render = this.render.bind(this);
     this.getWarnings = this.getWarnings.bind(this);
-    this.handleWarningsClick = this.handleWarningsClick.bind(this);
-    this.handleTrackersClick = this.handleTrackersClick.bind(this);
     this.handleNewversionClick = this.handleNewversionClick.bind(this);
     this.handleLogoutClick = this.handleLogoutClick.bind(this);
     this.handleMultiuserClick = this.handleMultiuserClick.bind(this);
     this.handlePortRecheckClick = this.handlePortRecheckClick.bind(this);
-    this.handleNetworkClick = this.handleNetworkClick.bind(this);
     this.handleDisableAlwaysTorClick = this.handleDisableAlwaysTorClick.bind(this);
     this.handleEnableAlwaysTorClick = this.handleEnableAlwaysTorClick.bind(this);
+    this.handleStripClick = this.handleStripClick.bind(this);
+    this.handleBackClick = this.handleBackClick.bind(this);
+    this.handleTorToggleClick = this.handleTorToggleClick.bind(this);
+    this.openHealth = this.openHealth.bind(this);
+    this.handleRestartClick = this.handleRestartClick.bind(this);
+    this.closeHealth = this.closeHealth.bind(this);
     this.menu_newversion = new Menu();
-    this.menu_network = new Menu();
-    this.menu_trackers = new Menu();
     this.menu_multiuser = new Menu();
-    this.menu_warnings = new Menu();
     this.port_checking = false;
+    this.health_open = false;
     this.has_web_gl = null;
     Page.cmd('wrapperPermissionAdd', 'ADMIN', () => {
       Page.reloadServerInfo();
@@ -43,23 +44,61 @@ class Dashboard {
     return this.has_web_gl;
   }
 
-  tagTrackersTitle() {
-    var key, num_ok, num_total, stats, status_db, title, val;
-    if (Page.server_info.offline) {
-      return h("span.status.status-warning", "n/a");
+  networkStatus() {
+    return Page.server_info.network_status || {};
+  }
+
+  // Inline stroke icons (mockup set). Keyed by name so a state change swaps
+  // the whole svg instead of maquette trying to morph mismatched children.
+  icon(name, size) {
+    var shapes = {
+      check: [h("circle", {cx: "12", cy: "12", r: "9"}), h("path", {d: "M8.2 12.4l2.6 2.6 5-5.4"})],
+      warn: [h("path", {d: "M12 3.6 21.4 20H2.6L12 3.6Z"}), h("path", {d: "M12 10v4"}), h("path", {d: "M12 16.8h.01"})],
+      err: [h("circle", {cx: "12", cy: "12", r: "9"}), h("path", {d: "M9 9l6 6M15 9l-6 6"})],
+      wifi: [h("path", {d: "M2.5 9.7a14.2 14.2 0 0 1 19 0"}), h("path", {d: "M5.6 13.2a9.6 9.6 0 0 1 12.8 0"}), h("path", {d: "M8.8 16.6a5.1 5.1 0 0 1 6.4 0"}), h("path", {d: "M12 19.8h.01"})],
+      loader: [h("path", {d: "M12 3a9 9 0 0 1 9 9"}), h("circle", {cx: "12", cy: "12", r: "9", opacity: ".25"})],
+      off: [h("circle", {cx: "12", cy: "12", r: "9"}), h("path", {d: "M8 12h8"})],
+      refresh: [h("path", {d: "M20 12a8 8 0 1 1-2.4-5.7M20 3.8v4.4h-4.4"})],
+      chevR: [h("path", {d: "M9 6l6 6-6 6"})],
+      chevL: [h("path", {d: "M15 6l-6 6 6 6"})]
+    };
+    return h("svg.ic", {
+      key: name,
+      width: "" + size,
+      height: "" + size,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "1.8",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "aria-hidden": "true"
+    }, shapes[name]);
+  }
+
+  inkClasses(ink) {
+    return {
+      "ok-ink": ink === "ok",
+      "warn-ink": ink === "warn",
+      "bad-ink": ink === "bad"
+    };
+  }
+
+  // announcer_stats is preferred, announcer_info is the fallback (same rule
+  // the old Trackers pill used).
+  trackerStats() {
+    if (Page.announcer_stats) {
+      return Page.announcer_stats;
+    } else {
+      return Page.announcer_info;
     }
+  }
+
+  trackerCounts() {
+    var key, val, stats, num_ok, num_total;
     num_ok = 0;
     num_total = 0;
-    status_db = {
-      announcing: [],
-      error: [],
-      announced: []
-    };
-    if (Page.announcer_stats) {
-      stats = Page.announcer_stats;
-    } else {
-      stats = Page.announcer_info;
-    }
+    stats = this.trackerStats();
     for (key in stats) {
       val = stats[key];
       if (val.status === "announced") {
@@ -67,16 +106,39 @@ class Dashboard {
       }
       num_total += 1;
     }
-    title = num_ok + "/" + num_total;
-    if (num_total === 0) {
-      return h("span.status", "Waiting...");
-    } else if (num_ok > num_total / 2) {
-      return h("span.status.status-ok", title);
-    } else if (num_ok > 0) {
-      return h("span.status.status-warning", title);
-    } else {
-      return h("span.status.status-error", title);
+    return {ok: num_ok, total: num_total};
+  }
+
+  // Worst-of ranking: offline > checking > unreachable > tracker trouble > ok.
+  healthState() {
+    var counts, failing;
+    if (Page.server_info.offline) {
+      return {ink: "warn", icon: "warn", label: _("Offline mode"), cause: _("network disabled")};
     }
+    if (this.port_checking || !Page.server_info.network_status) {
+      return {ink: "", icon: "loader", label: _("Checking…"), cause: null};
+    }
+    if (!Page.server_info.network_status.reachable) {
+      return {ink: "warn", icon: "warn", label: _("Limited"), cause: _("peers can't reach you")};
+    }
+    counts = this.trackerCounts();
+    if (counts.total === 0) {
+      return {ink: "", icon: "loader", label: _("Waiting for trackers…"), cause: null};
+    }
+    // Peer discovery needs a handful of working trackers, not a majority of
+    // the configured list - public tracker lists always carry dead entries.
+    // So a failing majority only reads as degraded when the working set is
+    // small too.
+    if (counts.ok < 5 && counts.ok <= counts.total / 2) {
+      failing = counts.total - counts.ok;
+      return {
+        ink: "warn",
+        icon: "warn",
+        label: _("Degraded"),
+        cause: failing === 1 ? failing + _(" tracker failing") : failing + _(" trackers failing")
+      };
+    }
+    return {ink: "ok", icon: "check", label: _("Healthy"), cause: null};
   }
 
   handleEnableAlwaysTorClick() {
@@ -98,114 +160,65 @@ class Dashboard {
     });
   }
 
-  // The consolidated Network popup: one row each for Clearnet, Tor and I2P,
-  // driven by server_info.network_status (per-network inbound reachability).
-  networkStatus() {
-    return Page.server_info.network_status || {};
-  }
-
-  netRow(name, badge, detail) {
-    var row = [h("span.net-name", name), badge];
-    if (detail) {
-      row.push(h("span.net-detail", detail));
-    }
-    return row;
-  }
-
-  clearnetBadge(c) {
-    if (!c || !c.enabled) {
-      return h("span.status.status-disabled", _("Disabled"));
-    }
-    if (c.reachable) {
-      return h("span.status.status-ok", _("Open"));
-    }
-    return h("span.status.status-warning", _("Closed"));
-  }
-
-  clearnetDetail(c) {
-    if (!c || !c.enabled) {
-      return null;
-    }
-    return (c.ip ? c.ip : "") + ":" + c.port;
-  }
-
-  torBadge(t) {
-    if (!t || !t.enabled) {
-      return h("span.status.status-disabled", _("Off"));
-    }
-    if (t.reachable) {
-      return h("span.status.status-ok", t.always ? _("Always") : _("Online"));
-    }
-    return h("span.status.status-warning", t.status || _("Connecting"));
-  }
-
-  i2pBadge(p) {
-    if (!p || !p.enabled) {
-      return h("span.status.status-disabled", _("Off"));
-    }
-    if (p.reachable) {
-      return h("span.status.status-ok", _("Online"));
-    }
-    return h("span.status.status-warning", p.phase || _("Connecting"));
-  }
-
-  handleNetworkClick() {
-    var ns = this.networkStatus();
-    var faq = Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened";
-    this.menu_network.items = [];
-    if (Page.server_info.offline) {
-      this.menu_network.items.push(["Offline mode, network communication disabled.", "/Config"]);
-      this.menu_network.toggle();
-      return false;
-    }
-    if (ns.reachable) {
-      this.menu_network.items.push([_("Peers can reach this node."), faq]);
+  handleTorToggleClick() {
+    if (this.isTorAlways()) {
+      return this.handleDisableAlwaysTorClick();
     } else {
-      this.menu_network.items.push([_("Peers can't reach this node directly. It still works, but opening a port or enabling Tor/I2P lets peers connect to you."), faq]);
+      return this.handleEnableAlwaysTorClick();
     }
-    this.menu_network.items.push(["---"]);
-    this.menu_network.items.push([this.netRow(_("Clearnet"), this.clearnetBadge(ns.clearnet), this.clearnetDetail(ns.clearnet)), null]);
-    this.menu_network.items.push([this.netRow(_("Tor"), this.torBadge(ns.tor), ns.tor ? ns.tor.address : null), null]);
-    this.menu_network.items.push([this.netRow(_("I2P"), this.i2pBadge(ns.i2p), ns.i2p ? ns.i2p.address : null), null]);
-    this.menu_network.items.push(["---"]);
-    // The Tor-always toggle changes config and restarts the node - a read-only
-    // gateway refuses both, so only offer it off a gateway.
-    if (!Page.server_info.ui_restrict) {
-      if (this.isTorAlways()) {
-        this.menu_network.items.push([_("Disable always-Tor mode"), this.handleDisableAlwaysTorClick]);
-      } else if (ns.tor && ns.tor.enabled) {
-        this.menu_network.items.push([_("Route every connection through Tor (slower)"), this.handleEnableAlwaysTorClick]);
-      }
-    }
-    this.menu_network.items.push([_("Re-check reachability"), this.handlePortRecheckClick]);
-    this.menu_network.toggle();
-    return false;
-  }
-
-  // The pill value: green when peers can reach us over any network.
-  networkPill() {
-    if (Page.server_info.offline) {
-      return h("span.status.status-warning", _("Offline mode"));
-    }
-    if (this.port_checking) {
-      return h("span.status", _("Checking"));
-    }
-    var ns = Page.server_info.network_status;
-    if (!ns) {
-      return h("span.status", _("Checking"));
-    }
-    if (ns.reachable) {
-      return h("span.status.status-ok", _("Reachable"));
-    }
-    return h("span.status.status-warning", _("Limited"));
   }
 
   handlePortRecheckClick() {
+    if (this.port_checking) {
+      return false;
+    }
     this.port_checking = true;
+    Page.projector.scheduleRender();
     return Page.cmd("serverPortcheck", [], (res) => {
       this.port_checking = false;
       return Page.reloadServerInfo();
     });
+  }
+
+  handleStripClick() {
+    this.openHealth();
+    return false;
+  }
+
+  handleBackClick() {
+    this.closeHealth();
+    return false;
+  }
+
+  openHealth() {
+    if (window.visible_menu) {
+      window.visible_menu.hide();
+    }
+    if (Page.site_list && Page.site_list.closeRowActions) {
+      Page.site_list.closeRowActions();
+    }
+    this.health_open = true;
+    // The screen sits absolute over the shell (it scrolls with the page),
+    // so bring its header into view and put the reader back afterwards.
+    this.prev_scroll = window.pageYOffset;
+    window.scroll(window.pageXOffset, 0);
+    // Live refresh on open, same as the old Trackers menu did.
+    if (Page.announcer_stats) {
+      Page.reloadAnnouncerStats();
+    }
+    Page.projector.scheduleRender();
+  }
+
+  closeHealth() {
+    if (!this.health_open) {
+      return;
+    }
+    this.health_open = false;
+    if (this.prev_scroll != null) {
+      window.scroll(window.pageXOffset, this.prev_scroll);
+      this.prev_scroll = null;
+    }
+    Page.projector.scheduleRender();
   }
 
   handleMultiuserClick() {
@@ -247,75 +260,6 @@ class Dashboard {
     return false;
   }
 
-  handleTrackersClick() {
-    var request_taken, stat, stats, status, success_percent, title, title_text, tracker_name, tracker_url, tracker_display;
-    if (Page.announcer_stats) {
-      stats = Page.announcer_stats;
-      Page.reloadAnnouncerStats();
-    } else {
-      stats = Page.announcer_info;
-    }
-    this.menu_trackers.items = [];
-    for (tracker_url in stats) {
-      stat = stats[tracker_url];
-      tracker_name = tracker_url.replace(/(.*:\/\/.*?)[\/#].*/, "$1").replace(/:[0-9]+$/, "");
-
-      // Create a truncated display name for long URLs
-      tracker_display = tracker_name;
-      if (tracker_name.length > 35) {
-        tracker_display = tracker_name.substring(0, 32) + "...";
-      }
-
-      success_percent = parseInt((stat.num_success / stat.num_request) * 100);
-      if (isNaN(success_percent)) {
-        success_percent = "?";
-      }
-      status = stat.status.capitalize();
-      if (status === "Announced" && stat.time_request && stat.time_status) {
-        request_taken = stat.time_status - stat.time_request;
-        status += " in " + (request_taken.toFixed(2)) + "s";
-      }
-      title_text = "Full URL: " + tracker_name + "\nRequests: " + stat.num_request;
-      if (stat.last_error) {
-        title_text += "\nLast error: " + stat.last_error + " (" + (Time.since(stat.time_last_error)) + ")";
-      }
-
-      title = h("div.tracker-item", {
-        title: title_text
-      }, [
-        h("div.tracker-name", tracker_display),
-        h("div.tracker-status", status + " (" + success_percent + "% success)")
-      ]);
-
-      this.menu_trackers.items.push([title, null]);
-    }
-    this.menu_trackers.toggle();
-    return false;
-  }
-
-  handleWarningsClick() {
-    var i, len, warning, warnings;
-    warnings = this.getWarnings();
-    this.menu_warnings.items = [];
-    for (i = 0, len = warnings.length; i < len; i++) {
-      warning = warnings[i];
-      this.menu_warnings.items.push([h("b.status-error", warning.title), warning.href]);
-      if (warning.descr) {
-        this.menu_warnings.items.push([warning.descr, warning.href]);
-      }
-      this.menu_warnings.items.push(["---"]);
-    }
-    this.menu_warnings.items.push([
-      "Restart EpixNet client", () => {
-        return Page.cmd("serverShutdown", {
-          restart: true
-        });
-      }
-    ]);
-    this.menu_warnings.toggle();
-    return false;
-  }
-
   getWarnings() {
     var warnings;
     warnings = [];
@@ -351,35 +295,129 @@ class Dashboard {
         descr: "Looks like your system time is out of sync. Other users may not see your posted content and other problems could happen."
       });
     }
-    if (Page.server_errors.length > 2) {
-      warnings = warnings.concat(Page.server_errors.slice(-2).reverse());
+    // Server errors ride in the same list but carry an error flag, so the
+    // health screen can paint them red instead of warning amber.
+    var errors = (Page.server_errors || []).map(function(e) {
+      return Object.assign({error: true}, e);
+    });
+    if (errors.length > 2) {
+      warnings = warnings.concat(errors.slice(-2).reverse());
       warnings.push({
-        title: (Page.server_errors.length - 2) + " more errors...",
+        error: true,
+        title: (errors.length - 2) + " more errors...",
         href: "#EpixNet:Console"
       });
     } else {
-      warnings = warnings.concat(Page.server_errors);
+      warnings = warnings.concat(errors);
     }
     return warnings;
   }
 
-  render() {
-    var warnings;
-    if (Page.server_info) {
-      warnings = this.getWarnings();
-      return h("div#Dashboard", warnings.length ? h("a.warnings.dashboard-item", {
-        href: "#Warnings",
-        onmousedown: this.handleWarningsClick,
-        onclick: Page.returnFalse
-      }, _("Warnings") + ": " + warnings.length) : void 0, this.menu_warnings.render(".menu-warnings"), parseFloat(Page.server_info.version.replace(/\./g, "0")) < parseFloat(Page.latest_version.replace(/\./g, "0")) ? h("a.newversion.dashboard-item", {
+  // "Tor ok, I2P connecting, 7/9 announced" at a glance. Clearnet lives in the
+  // health screen only. Hidden entirely in offline mode.
+  renderMiniSummary() {
+    var ns, counts, parts, out, i;
+    if (Page.server_info.offline) {
+      return null;
+    }
+    ns = Page.server_info.network_status;
+    parts = [];
+    if (ns && ns.tor && ns.tor.enabled) {
+      parts.push(h("span.sum-seg", {key: "tor"}, [
+        h("span.sum-ic", {classes: this.inkClasses(ns.tor.reachable ? "ok" : "warn")}, [this.icon(ns.tor.reachable ? "check" : "loader", 13)]),
+        h("span.sum-name", _("Tor"))
+      ]));
+    }
+    if (ns && ns.i2p && ns.i2p.enabled) {
+      parts.push(h("span.sum-seg", {key: "i2p"}, [
+        h("span.sum-ic", {classes: this.inkClasses(ns.i2p.reachable ? "ok" : "warn")}, [this.icon(ns.i2p.reachable ? "check" : "loader", 13)]),
+        h("span.sum-name", _("I2P"))
+      ]));
+    }
+    if (Page.announcer_info || Page.announcer_stats) {
+      counts = this.trackerCounts();
+      parts.push(h("span.sum-seg.sum-trackers", {key: "trackers"}, counts.ok + "/" + counts.total));
+    }
+    if (!parts.length) {
+      return null;
+    }
+    // "Tor . I2P . 7/9": middle-dot separators between the segments.
+    out = [];
+    for (i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        out.push(h("span.sep", {key: "sep" + i}, "·"));
+      }
+      out.push(parts[i]);
+    }
+    return out;
+  }
+
+  // The health element rides on the header line (Head renders it), so it
+  // costs no vertical space of its own. The cause line drops here - it is
+  // the first thing the health screen says.
+  renderHeaderHealth() {
+    var state, summary, sic_icon, sic_ink;
+    if (!Page.server_info) {
+      return null;
+    }
+    state = this.healthState();
+    summary = this.renderMiniSummary();
+    // The chip icon reports the worst thing going on: red error when the
+    // node has errors, amber warning when something needs attention, else a
+    // wifi mark carrying the health state's own color (the spinner stays
+    // while checking).
+    if (Page.server_errors && Page.server_errors.length) {
+      sic_icon = "err";
+      sic_ink = "bad";
+    } else if (this.getWarnings().length) {
+      sic_icon = "warn";
+      sic_ink = "warn";
+    } else {
+      sic_icon = state.icon === "loader" ? "loader" : "wifi";
+      sic_ink = state.ink;
+    }
+    return h("a.health-chip", {
+      href: "#Health",
+      classes: {bounce: this.port_checking},
+      onclick: this.handleStripClick,
+      "aria-haspopup": "true",
+      "aria-label": state.cause ? state.label + " \u00B7 " + state.cause : state.label,
+      title: state.cause ? state.label + " \u00B7 " + state.cause : state.label
+    }, [
+      h("span.sic", {classes: this.inkClasses(sic_ink)}, [
+        this.icon(sic_icon, 18)
+      ]),
+      h("span.sstate", {classes: this.inkClasses(state.ink)}, state.label),
+      state.cause ? h("span.scause", state.cause) : null,
+      summary ? h("span.ssum", {"aria-hidden": "true"}, summary) : null,
+      h("span.schev", [this.icon("chevR", 15)])
+    ]);
+  }
+
+  // Status chips under the strip: warnings / newversion / multiuser / logout.
+  // Menu.js popovers stay for these, so the onmousedown+returnFalse pattern
+  // stays too, and each menu renders right after its chip (Menu anchors on
+  // previousElementSibling).
+  renderChips(warnings) {
+    var show_newversion_version = parseFloat(Page.server_info.version.replace(/\./g, "0")) < parseFloat(Page.latest_version.replace(/\./g, "0"));
+    var show_newversion_rev = !show_newversion_version && Page.server_info.rev < Page.latest_rev;
+    var show_multiuser = Page.server_info.multiuser;
+    var show_logout = Page.server_info.plugins && Page.server_info.plugins.indexOf("UiPassword") >= 0;
+    if (!show_newversion_version && !show_newversion_rev && !show_multiuser && !show_logout) {
+      return null;
+    }
+    return h("div.health-chips", [
+      show_newversion_version ? h("a.chip.newversion.dashboard-item", {
         href: "#Update",
         onmousedown: this.handleNewversionClick,
         onclick: Page.returnFalse
-      }, "New EpixNet version: " + Page.latest_version) : Page.server_info.rev < Page.latest_rev ? h("a.newversion.dashboard-item", {
+      }, "New EpixNet version: " + Page.latest_version) : show_newversion_rev ? h("a.chip.newversion.dashboard-item", {
         href: "#Update",
         onmousedown: this.handleNewversionClick,
         onclick: Page.returnFalse
-      }, "New important update: rev" + Page.latest_rev) : void 0, this.menu_newversion.render(".menu-newversion"), Page.server_info.multiuser ? h("a.port.dashboard-item.multiuser", {
+      }, "New important update: rev" + Page.latest_rev) : void 0,
+      this.menu_newversion.render(".menu-newversion"),
+      show_multiuser ? h("a.chip.port.dashboard-item.multiuser", {
         href: "#Multiuser",
         onmousedown: this.handleMultiuserClick,
         onclick: Page.returnFalse
@@ -387,22 +425,283 @@ class Dashboard {
         h("span", _("User") + ": "), h("span.status", {
           style: "color: " + (Text.toColor(Page.server_info.master_address))
         }, Page.server_info.master_address.slice(0, 5) + ".." + Page.server_info.master_address.slice(-4))
-      ]) : void 0, Page.server_info.multiuser ? this.menu_multiuser.render(".menu-multiuser") : void 0, Page.server_info.plugins && Page.server_info.plugins.indexOf("UiPassword") >= 0 ? h("a.port.dashboard-item.logout", {
+      ]) : void 0,
+      show_multiuser ? this.menu_multiuser.render(".menu-multiuser") : void 0,
+      show_logout ? h("a.chip.port.dashboard-item.logout", {
         href: "#Logout",
         onmousedown: this.handleLogoutClick,
         onclick: Page.returnFalse
-      }, [h("span", _("Logout"))]) : void 0, h("span.dash-net", [this.menu_network.render(".menu-network"), h("a.dashboard-item.network", {
-        href: "#Network",
-        classes: {
-          bounce: this.port_checking
-        },
-        onmousedown: this.handleNetworkClick,
-        onclick: Page.returnFalse
-      }, [h("span", _("Network") + ": "), this.networkPill()])]), Page.announcer_info || Page.announcer_stats ? h("a.dashboard-item.trackers", {
-        href: "#Trackers",
-        onmousedown: this.handleTrackersClick,
-        onclick: Page.returnFalse
-      }, [h("span", _("Trackers") + ": "), this.tagTrackersTitle()]) : void 0, this.menu_trackers.render(".menu-trackers"));
+      }, [h("span", _("Logout"))]) : void 0
+    ]);
+  }
+
+  // Middle truncation without a double ellipsis: the head span ellipsizes via
+  // CSS (text-overflow) while the tail span - the last 12 chars, keeping
+  // .onion / .b32.i2p endings readable - never shrinks. One ellipsis total,
+  // drawn by the browser.
+  renderAddr(text) {
+    if (!text) {
+      return null;
+    }
+    text = "" + text;
+    if (text.length <= 16) {
+      return h("div.condet.mono", [h("span.th", text)]);
+    }
+    return h("div.condet.mono", [
+      h("span.th", text.slice(0, text.length - 12)),
+      h("span.tt", text.slice(-12))
+    ]);
+  }
+
+  clearnetDetail(c) {
+    if (!c || !c.enabled) {
+      return null;
+    }
+    // No known external ip (the normal state for an unreachable node):
+    // ":26599" reads like a bug, so label the bare port instead.
+    if (!c.ip) {
+      return _("Port ") + c.port;
+    }
+    return c.ip + ":" + c.port;
+  }
+
+  clearnetStat(c) {
+    if (!c || !c.enabled) {
+      return h("span.constat", [this.icon("off", 15), _("Disabled")]);
+    }
+    if (c.reachable) {
+      return h("span.constat.ok-ink", [this.icon("check", 15), _("Open")]);
+    }
+    return h("span.constat.warn-ink", [this.icon("warn", 15), _("Closed")]);
+  }
+
+  torStat(t) {
+    if (!t || !t.enabled) {
+      return h("span.constat", [this.icon("off", 15), _("Off")]);
+    }
+    if (t.reachable) {
+      if (t.always) {
+        return h("span.constat.ok-ink", [this.icon("check", 15), _("Online") + " · " + _("always")]);
+      }
+      return h("span.constat.ok-ink", [this.icon("check", 15), _("Online")]);
+    }
+    return h("span.constat.warn-ink", [this.icon("loader", 15), t.status || _("Connecting")]);
+  }
+
+  i2pStat(p) {
+    if (!p || !p.enabled) {
+      return h("span.constat", [this.icon("off", 15), _("Off")]);
+    }
+    if (p.reachable) {
+      return h("span.constat.ok-ink", [this.icon("check", 15), _("Online")]);
+    }
+    return h("span.constat.warn-ink", [this.icon("loader", 15), p.phase || _("Connecting")]);
+  }
+
+  connRow(key, name, stat, detail) {
+    return h("div.conrow", {key: key}, [
+      h("div.conmain", [
+        h("div.conname", name),
+        detail
+      ]),
+      stat
+    ]);
+  }
+
+  renderConnections() {
+    var ns = this.networkStatus();
+    return h("div.hcard.hcard-connections", [
+      this.connRow("clearnet", _("Clearnet"), this.clearnetStat(ns.clearnet), this.renderAddr(this.clearnetDetail(ns.clearnet))),
+      this.connRow("tor", _("Tor"), this.torStat(ns.tor), this.renderAddr(ns.tor ? ns.tor.address : null)),
+      this.connRow("i2p", _("I2P"), this.i2pStat(ns.i2p), this.renderAddr(ns.i2p ? ns.i2p.address : null))
+    ]);
+  }
+
+  renderTrackers() {
+    var stats, counts, rows, announce_times, avg, tracker_url, stat, tracker_name, tracker_display,
+      success_percent, status, request_taken, title_text, ink, icon_name, width, meta;
+    stats = this.trackerStats();
+    counts = this.trackerCounts();
+    rows = [];
+    announce_times = [];
+    for (tracker_url in stats) {
+      stat = stats[tracker_url];
+      tracker_name = tracker_url.replace(/(.*:\/\/.*?)[\/#].*/, "$1").replace(/:[0-9]+$/, "");
+
+      // Create a truncated display name for long URLs
+      tracker_display = tracker_name;
+      if (tracker_name.length > 35) {
+        tracker_display = tracker_name.substring(0, 32) + "...";
+      }
+
+      success_percent = parseInt((stat.num_success / stat.num_request) * 100);
+      if (isNaN(success_percent)) {
+        success_percent = "?";
+      }
+      status = stat.status.capitalize();
+      if (status === "Announced" && stat.time_request && stat.time_status) {
+        request_taken = stat.time_status - stat.time_request;
+        status += " in " + (request_taken.toFixed(2)) + "s";
+        announce_times.push(request_taken);
+      }
+      title_text = "Full URL: " + tracker_name + "\nRequests: " + stat.num_request;
+      if (stat.last_error) {
+        title_text += "\nLast error: " + stat.last_error + " (" + (Time.since(stat.time_last_error)) + ")";
+      }
+
+      if (stat.status === "announced") {
+        ink = "ok";
+        icon_name = "check";
+      } else if (stat.status === "error") {
+        ink = "bad";
+        icon_name = "err";
+      } else {
+        ink = "warn";
+        icon_name = "loader";
+      }
+      width = success_percent === "?" ? 0 : success_percent;
+      meta = success_percent + "%";
+      if (stat.last_error) {
+        meta += " · " + stat.last_error + " (" + Time.since(stat.time_last_error) + ")";
+      }
+
+      rows.push(h("div.trrow", {key: tracker_url, title: title_text}, [
+        h("div.trtop", [
+          h("span.trname.mono", [h("span.th", tracker_display)]),
+          h("span.trstat", {classes: this.inkClasses(ink)}, [this.icon(icon_name, 13), status])
+        ]),
+        h("div.trbot", [
+          h("span.track", [
+            h("span.tfill", {
+              styles: {
+                width: width + "%",
+                background: "var(--dash-" + ink + "-ink)"
+              }
+            })
+          ]),
+          h("span.trmeta", meta)
+        ])
+      ]));
+    }
+    avg = null;
+    if (announce_times.length) {
+      avg = announce_times.reduce(function(a, b) { return a + b; }, 0) / announce_times.length;
+    }
+    return h("div.hcard.hcard-trackers", [
+      h("div.trhead", [
+        h("span.th1", counts.ok + _(" of ") + counts.total + _(" announced")),
+        avg !== null ? h("span.th2", _("avg announce ") + avg.toFixed(1) + " s") : null
+      ]),
+      h("div.tracker-rows", rows)
+    ]);
+  }
+
+  // Warnings live here rather than in a banner of their own: this screen is
+  // the one place that answers "is my node ok". The restart action came from
+  // the old warnings menu.
+  handleRestartClick() {
+    return Page.cmd("serverShutdown", {restart: true});
+  }
+
+  renderWarningsSection() {
+    var warnings = this.getWarnings();
+    if (!warnings.length) {
+      return null;
+    }
+    return [
+      h("div.seclabel", {key: "warnlabel"}, _("Warnings")),
+      h("div.hcard.hcard-warnings", {key: "warncard"}, [
+        warnings.map((warning, i) => {
+          var body = [
+            h("div.wtitle", warning.title),
+            warning.descr ? h("div.wdescr", warning.descr) : null
+          ];
+          return warning.href ? h("a.wrow", {
+            key: "w" + i,
+            classes: {error: !!warning.error},
+            href: warning.href
+          }, body.concat([h("span.wchev", [this.icon("chevR", 15)])])) : h("div.wrow", {
+            key: "w" + i,
+            classes: {error: !!warning.error}
+          }, body);
+        }),
+        h("button.wrestart", {
+          key: "restart",
+          onclick: this.handleRestartClick
+        }, [this.icon("refresh", 16), _("Restart EpixNet client")])
+      ])
+    ];
+  }
+
+  renderHealthScreen(state) {
+    var si = Page.server_info;
+    var ns = this.networkStatus();
+    var has_stats = !!(Page.announcer_info || Page.announcer_stats);
+    var faq = Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#do-i-need-to-have-a-port-opened";
+    // Exact old gating: no toggle on a read-only gateway; enable offered only
+    // when Tor is running, disable only when already in always mode. The old
+    // offline menu offered no actions either, so hide both when offline.
+    var show_tor_toggle = !si.offline && !si.ui_restrict && (this.isTorAlways() || (ns.tor && ns.tor.enabled));
+    return h("div.health-screen.screen", {
+      classes: {open: this.health_open},
+      role: "region",
+      "aria-label": _("Network health"),
+      "aria-hidden": this.health_open ? "false" : "true"
+    }, [
+      h("div.shead", [
+        h("a.back.health-back", {
+          href: "#Back",
+          onclick: this.handleBackClick
+        }, [this.icon("chevL", 18), Page.head ? Page.head.modeTitle() : _("Dashboard")]),
+        h("h2", _("Network health")),
+        h("div.ssub", {classes: this.inkClasses(state.ink)}, [
+          this.icon(state.icon, 15),
+          h("span", state.cause ? state.label + " · " + state.cause : state.label)
+        ])
+      ]),
+      h("div.sbody", [
+        this.renderWarningsSection(),
+        h("div.seclabel", _("Connections")),
+        this.renderConnections(),
+        has_stats ? h("div.seclabel.seclabel-trackers", _("Trackers")) : null,
+        has_stats ? this.renderTrackers() : null,
+        h("div.hactions", [
+          si.offline ? h("a.offline-note", {
+            key: "offline",
+            href: "/Config"
+          }, "Offline mode, network communication disabled.") : null,
+          !si.offline ? h("button.recheck", {
+            key: "recheck",
+            classes: {checking: this.port_checking},
+            disabled: this.port_checking,
+            onclick: this.handlePortRecheckClick
+          }, [this.icon("refresh", 16), _("Re-check reachability")]) : null,
+          show_tor_toggle ? h("button.togglerow", {
+            key: "tor",
+            role: "switch",
+            "aria-checked": this.isTorAlways() ? "true" : "false",
+            onclick: this.handleTorToggleClick
+          }, [
+            // Keep the old distinct string for the already-on case (it is an
+            // existing i18n key).
+            h("span.tlabel", this.isTorAlways() ? _("Disable always-Tor mode") : _("Route every connection through Tor (slower)")),
+            h("span.sw", {"aria-hidden": "true"})
+          ]) : null,
+          h("a.learn-more", {key: "learn", href: faq}, _("Learn more"))
+        ])
+      ])
+    ]);
+  }
+
+  render() {
+    var warnings, state;
+    if (Page.server_info) {
+      warnings = this.getWarnings();
+      state = this.healthState();
+      return h("div#Dashboard", [
+        this.renderChips(warnings),
+        this.renderHealthScreen(state)
+      ]);
     } else {
       return h("div#Dashboard");
     }

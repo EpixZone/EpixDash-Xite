@@ -1,5 +1,10 @@
 (function() {
 
+  // The optional-file table, shared by three modes: a xite's own card
+  // ("single_site"), the cross-xite big-file list ("bigfiles") and the search
+  // results ("result"). One DOM path for all three and for both breakpoints -
+  // the phone two-line row is pure CSS re-flow of the same cells, so the
+  // layouts cannot drift apart.
   class SiteFiles {
     constructor(site) {
       this.site = site;
@@ -19,20 +24,38 @@
       this.items = [];
       this.loaded = false;
       this.orderby = "time_downloaded";
-      this.mode = "site";
       this.mode = "single_site";
       this.orderby_desc = true;
       this.has_more = false;
+      // Per-file pin handlers, cached by inner_path (maquette forbids handler
+      // identity changing across renders).
+      this.pin_handlers = {};
+      // The "?" explainer for the pin column - an inline band, not a popup
+      // (this page deliberately has no floating menus left).
+      this.pin_help_open = false;
+      this.handlePinHelpClick = (() => {
+        this.pin_help_open = !this.pin_help_open;
+        Page.projector.scheduleRender();
+        return false;
+      });
     }
 
+    // Grouped by the row's own address: bigfiles/search rows can reference a
+    // xite siteList hasn't answered for yet (file.site undefined - the render
+    // path already degrades to the bare address), and dereferencing it here
+    // crashed selection and wedged the rate-limited search callback for good.
     getSites() {
       var back = [];
       var sites = {};
       for (var i = 0, len = this.items.length; i < len; i++) {
         var file = this.items[i];
-        if (sites[file.site.row.address] == null) {
-          sites[file.site.row.address] = {
-            row: file.site.row,
+        var address = file.site ? file.site.row.address : file.address;
+        if (!address) {
+          continue;
+        }
+        if (sites[address] == null) {
+          sites[address] = {
+            row: file.site ? file.site.row : {address: address, settings: {}},
             files: {
               items: [],
               selected: this.selected,
@@ -40,11 +63,10 @@
             }
           };
         }
-        sites[file.site.row.address].files.items.push(file);
+        sites[address].files.items.push(file);
       }
-      for (var address in sites) {
-        var site = sites[address];
-        back.push(site);
+      for (var addr in sites) {
+        back.push(sites[addr]);
       }
       return back;
     }
@@ -75,6 +97,8 @@
     }
 
     handleRowMouseenter(e) {
+      // Drag-select is a desktop affordance: e.buttons is only set while a
+      // mouse button is held, so touch scrolling never triggers it.
       if (e.buttons && this.select_action) {
         var inner_path = e.target.attributes.inner_path.value;
         if (this.select_action === "select") {
@@ -103,6 +127,39 @@
       this.limit += 15;
       this.update();
       return false;
+    }
+
+    // Always-visible per-row pin toggle, sharing the exact command shape the
+    // selectbar bulk path uses so the two cannot drift. The handler is cached
+    // for maquette (identity must not change across renders) but resolves the
+    // file FRESH at click time - the row objects are replaced on every
+    // update(), so a captured one would keep serving its stale is_pinned and
+    // the second click would pin again instead of unpinning.
+    getPinHandler(file) {
+      var inner_path = file.inner_path;
+      var row_address = file.address || "";
+      var key = row_address + "|" + inner_path;
+      if (this.pin_handlers[key] == null) {
+        this.pin_handlers[key] = (() => {
+          var current = null;
+          for (var i = 0, len = this.items.length; i < len; i++) {
+            if (this.items[i].inner_path === inner_path && (this.items[i].address || "") === row_address) {
+              current = this.items[i];
+              break;
+            }
+          }
+          if (!current) {
+            return false;
+          }
+          var address = current.address || this.site.row.address;
+          var cmd = current.is_pinned ? "optionalFileUnpin" : "optionalFilePin";
+          Page.cmd(cmd, [[current.inner_path], address], () => {
+            return this.update();
+          });
+          return false;
+        });
+      }
+      return this.pin_handlers[key];
     }
 
     renderOrder(title, orderby) {
@@ -139,25 +196,47 @@
           exitAnimation: Animation.slideUpInout
         }, [
           h("div.tr.thead", [
-            h("div.td.pre", "."),
-            this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder("Xite", "address")) : void 0,
-            h("div.td.inner_path", this.renderOrder("Optional file", "is_pinned DESC, inner_path")),
-            this.mode === "bigfiles" ? h("div.td.status", "Status") : void 0,
-            h("div.td.size", this.renderOrderRight("Size", "size")),
-            h("div.td.peer", this.renderOrder("Peers", "peer")),
-            h("div.td.uploaded", this.renderOrder("Uploaded", "uploaded")),
-            h("div.td.added", this.renderOrder("Finished", "time_downloaded"))
+            h("div.td.pre", "​"),
+            this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", this.renderOrder(_("Xite"), "address")) : void 0,
+            h("div.td.inner_path", this.renderOrder(_("File"), "is_pinned DESC, inner_path")),
+            this.mode === "bigfiles" ? h("div.td.status", _("Status")) : void 0,
+            h("div.td.size", this.renderOrderRight(_("Size"), "size")),
+            h("div.td.peer", this.renderOrderRight(_("Peers"), "peer")),
+            h("div.td.uploaded", this.renderOrderRight(_("Uploaded"), "uploaded")),
+            h("div.td.added", this.renderOrderRight(_("Finished"), "time_downloaded")),
+            h("div.td.rowpin-col", h("a.pin-help-btn", {
+              href: "#What+is+pinning",
+              title: _("What does pinning do?"),
+              "aria-expanded": this.pin_help_open ? "true" : "false",
+              onclick: this.handlePinHelpClick
+            }, "?"))
           ]),
+          this.pin_help_open ? h("div.pin-help", [
+            h("span.pin-help-text", [
+              h("b", _("Pinning. ")),
+              _("Downloaded optional files are a cache: when they grow past your storage limit, the oldest are deleted automatically to make room. A pinned file is never touched by that cleanup - it stays on disk and keeps seeding until you delete it yourself. Xites with auto-download switched on keep everything without pinning.")
+            ]),
+            h("a.pin-help-close", {
+              href: "#Got+it",
+              onclick: this.handlePinHelpClick
+            }, _("Got it"))
+          ]) : void 0,
           h("div.tbody", this.items.map((file) => {
-            var classes, percent, percent_bg, percent_title, profile_color, site, status;
+            var classes, peer_ink, percent, site, site_cell, up_ratio;
             site = file.site || this.site;
-            if (file.peer >= 10) {
-              profile_color = "#2DCE89";
-            } else if (file.peer > 0) {
-              profile_color = "#F0B622";
-            } else {
-              profile_color = "#ABABB5";
+            if (this.mode === "bigfiles" || this.mode === "result") {
+              // Rows can reference a xite that is not in siteList anymore; the
+              // pseudo-site fallback has no row.content and its getHref() would
+              // throw, so degrade to the bare address.
+              if (site.row.content) {
+                site_cell = h("a.link", {
+                  href: site.getHref()
+                }, site.row.content.title);
+              } else {
+                site_cell = h("span.site-missing", file.address || "");
+              }
             }
+            peer_ink = file.peer >= 10 ? "p-ok" : (file.peer > 0 ? "p-warn" : "p-low");
             if (this.mode === "bigfiles") {
               if (file.pieces == null) {
                 file.pieces = 0;
@@ -170,21 +249,14 @@
               } else {
                 percent = parseInt((file.pieces_downloaded / file.pieces) * 100);
               }
-              if (file.is_downloading || percent === 100) {
-                status = "";
-                percent_bg = "rgba(45, 206, 137, 0.35)";
-              } else {
-                status = "paused";
-                percent_bg = "rgba(240, 182, 34, 0.35)";
-              }
-              percent_title = percent + "% " + status;
             }
+            up_ratio = file.size > 0 ? Math.min(1, file.uploaded / file.size) : 0;
             classes = {
               selected: this.selected[file.inner_path],
               pinned: file.is_pinned
             };
             return h("div.tr", {
-              key: file.inner_path,
+              key: this.mode === "single_site" ? file.inner_path : (file.address || "") + "|" + file.inner_path,
               inner_path: file.inner_path,
               exitAnimation: Animation.slideUpInout,
               enterAnimation: Animation.slideDown,
@@ -197,55 +269,67 @@
                 onclick: this.handleSelectClick,
                 inner_path: file.inner_path
               }, h("span.checkbox"))),
-              this.mode === "bigfiles" || this.mode === "result" ? h("div.td.site", h("a.link", {
-                href: site.getHref()
-              }, site.row.content.title)) : void 0,
+              site_cell ? h("div.td.site", site_cell) : void 0,
               h("div.td.inner_path",
                 h("a.title.link", {
                   href: site.getHref(file),
                   target: "_blank",
-                  title: file.inner_path.replace(/.*\//, "")
-                }, file.inner_path.replace(/.*\//, "")),
-                file.is_pinned ? h("span.pinned", {
-                  exitAnimation: Animation.slideUpInout,
-                  enterAnimation: Animation.slideDown
-                }, _("Pinned")) : void 0
+                  title: file.inner_path
+                }, file.inner_path.replace(/.*\//, ""))
               ),
-              this.mode === "bigfiles" ? h("div.td.status", {
+              this.mode === "bigfiles" ? h("div.td.status", h("span.percent", {
+                title: file.pieces_downloaded + " " + _("of") + " " + file.pieces + " " + _("pieces downloaded"),
                 classes: {
-                  "downloading": file.is_downloading
+                  "pct-done": percent === 100,
+                  "pct-active": file.is_downloading && percent < 100,
+                  "pct-paused": !file.is_downloading && percent < 100
                 }
-              }, h("span.percent", {
-                title: file.pieces_downloaded + " of " + file.pieces + " pieces downloaded",
-                style: "box-shadow: inset " + (percent * 0.8) + "px 0px 0px " + percent_bg + ";"
-              }, percent_title)) : void 0,
+              }, [
+                h("span.fact-meter", [
+                  h("span.fact-meter-fill", {
+                    styles: {
+                      width: percent + "%"
+                    }
+                  })
+                ]),
+                h("span.pct-num", percent + "%")
+              ])) : void 0,
               h("div.td.size", Text.formatSize(file.size)),
               h("div.td.peer", [
-                h("div.icon.icon-profile", {
-                  style: "color: " + profile_color
-                }),
-                h("span.num", file.peer)
+                h("span.peer-dot." + peer_ink, {"aria-hidden": "true"}),
+                h("span.num", "" + file.peer)
               ]),
-              h("div.td.uploaded",
-                h("div.uploaded-text", Text.formatSize(file.uploaded)),
-                h("div.dots-container", [
-                  h("span.dots.dots-bg", {
-                    title: "Ratio: " + ((file.uploaded / file.size).toFixed(1))
-                  }, "\u2022\u2022\u2022\u2022\u2022"),
-                  h("span.dots.dots-fg", {
-                    title: "Ratio: " + ((file.uploaded / file.size).toFixed(1)),
-                    style: "width: " + (Math.min(5, file.uploaded / file.size) * 9) + "px"
-                  }, "\u2022\u2022\u2022\u2022\u2022")
+              h("div.td.uploaded", {
+                title: _("Ratio: ") + ((file.size > 0 ? file.uploaded / file.size : 0).toFixed(1))
+              }, [
+                h("span.uploaded-text", Text.formatSize(file.uploaded) || "0 B"),
+                h("span.upmeter", [
+                  h("span.upmeter-fill", {
+                    styles: {
+                      width: Math.round(up_ratio * 100) + "%"
+                    }
+                  })
                 ])
-              ),
-              h("div.td.added", file.time_downloaded ? Time.since(file.time_downloaded) : "n/a")
+              ]),
+              h("div.td.added", file.time_downloaded ? Time.since(file.time_downloaded) : "n/a"),
+              h("div.td.rowpin-col", h("a.rowpin", {
+                href: "#Pin",
+                title: file.is_pinned ? _("Unpin (allow automatic cleanup)") : _("Pin (never delete automatically)"),
+                "aria-pressed": file.is_pinned ? "true" : "false",
+                onclick: this.getPinHandler(file),
+                classes: {
+                  on: file.is_pinned
+                }
+              }, h("span.rowpin-icon", {
+                innerHTML: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5M7 4h10l-1.5 6.5L18 13H6l2.5-2.5z"/></svg>'
+              })))
             ]);
           }))
         ]),
         this.has_more ? h("div.more-container", h("a.more", {
           href: "#More",
           onclick: this.handleMoreClick
-        }, _("More files..."))) : void 0
+        }, _("Show 15 more"))) : void 0
       ];
     }
 

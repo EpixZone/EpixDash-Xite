@@ -43,8 +43,15 @@
       if (!this.files.items.length) {
         return [];
       }
-      return h("div.site", [
-        h("div.title", [h("h3.name", "Bigfiles")]),
+      var total = 0;
+      this.files.items.map((file) => {
+        total += file.size || 0;
+      });
+      return h("div.site.spanel.fpanel.site-bigfiles", [
+        h("div.phead", [
+          h("span.plabel", _("Big files")),
+          h("span.pval", this.files.items.length + " " + _("files") + " · " + (Text.formatSize(total) || "0 B"))
+        ]),
         this.files.render()
       ]);
     }

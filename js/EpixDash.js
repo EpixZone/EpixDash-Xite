@@ -42,9 +42,23 @@ class EpixDash extends EpixFrame {
     this.server_errors = [];
     this.latest_version = "0.0.1";
     this.latest_rev = 8192;
-    this.mode = "Sites";
-    this.change_timer = null;
+    // Read the mode out of the boot url right away: the body id drives which
+    // pane is visible, so deep-linking ?Files used to paint the xites pane
+    // first and fade it out once routing caught up.
+    var boot_url = base.href.indexOf("?") === -1 ? "" : base.href.replace(/.*?\?/, "");
+    var boot_mode = Text.parseQuery(boot_url).url;
+    this.mode = (boot_mode === "Files" || boot_mode === "Stats") ? boot_mode : "Sites";
+    this.mode_attached = false;
+    this.seg_feed = false;
     return document.body.id = "Body" + this.mode;
+  }
+
+  // Which pane the Sites-mode segmented control shows on single-column
+  // widths (body.seg-feed gates it in css; desktop shows both panes).
+  setSegFeed(on) {
+    this.seg_feed = !!on;
+    document.body.classList.toggle("seg-feed", this.seg_feed);
+    return this.projector.scheduleRender();
   }
 
   addRenderer(node, renderer) {
@@ -64,8 +78,20 @@ class EpixDash extends EpixFrame {
 
   setProjectorMode(mode) {
     this.log("setProjectorMode", mode);
-    if (this.mode === mode) {
+    if (mode !== "Files" && mode !== "Stats") {
+      mode = "Sites";
+    }
+    // The first call comes from boot routing, where this.mode already reads
+    // "Sites": compare against the normalized value so it is recognised as
+    // the initial attach and skips the crossfade below (the page used to
+    // render, fade out and fade back in on every load).
+    if (this.mode === mode && this.mode_attached) {
       return;
+    }
+    // The health screen belongs to the mode it was opened from; leaving the
+    // mode closes it (its back label names the current mode).
+    if (this.dashboard && this.dashboard.health_open) {
+      this.dashboard.closeHealth();
     }
     this.detachRenderers();
     if (mode === "Files") {
@@ -80,15 +106,20 @@ class EpixDash extends EpixFrame {
       this.addRenderer($("#SiteList"), this.site_list.render);
     }
     this.mode = mode;
+    // First attach: set the body id straight away and skip the crossfade, so
+    // the page just appears. The crossfade only runs on real mode switches.
+    if (!this.mode_attached) {
+      this.mode_attached = true;
+      document.body.id = "Body" + mode;
+      return;
+    }
+    // Real mode switch: swap the body id right away (60ms lets the new pane
+    // render first) and let the incoming pane transition from its hidden
+    // resting state (opacity 0, 30px down) to visible on its own. The old
+    // body.changing hold blanked every pane for 800ms, which read as a
+    // one-second empty page between modes.
     return setTimeout(() => {
       document.body.id = "Body" + mode;
-      if (this.change_timer) {
-        clearInterval(this.change_timer);
-      }
-      document.body.classList.add("changing");
-      return this.change_timer = setTimeout(() => {
-        document.body.classList.remove("changing");
-      }, 800);
     }, 60);
   }
 
@@ -135,6 +166,7 @@ class EpixDash extends EpixFrame {
       this.page_files.need_update = true;
     } else if ((this.params.url || "").toLowerCase() === "discover") {
       this.feed_list.filter = "discover";
+      this.setSegFeed(true);
     }
     return this.projector.scheduleRender();
   }
@@ -174,14 +206,22 @@ class EpixDash extends EpixFrame {
   }
 
   handleLinkClick(e) {
+    var target_params, target_mode;
     if (e.which === 2) {
       return true;
     } else {
       this.log("save scrollTop", window.pageYOffset);
       this.history_state["scrollTop"] = window.pageYOffset;
       this.cmd("wrapperReplaceState", [this.history_state, null]);
-      window.scroll(window.pageXOffset, 0);
-      this.history_state["scrollTop"] = 0;
+      target_params = Text.parseQuery((e.currentTarget.search || "").replace(/.*?\?/, ""));
+      target_mode = target_params.url === "Files" || target_params.url === "Stats" ? target_params.url : "Sites";
+      // Scroll to top only when the link changes PAGE. Param-only navigation
+      // within Stats/Files (the day-strip drill, 1D/1W) keeps the scroll
+      // position - jumping to the top made the day buttons unusable.
+      if (target_mode !== this.mode || (this.mode !== "Stats" && this.mode !== "Files")) {
+        window.scroll(window.pageXOffset, 0);
+        this.history_state["scrollTop"] = 0;
+      }
       this.setUrl(e.currentTarget.search);
       return false;
     }
@@ -196,7 +236,7 @@ class EpixDash extends EpixFrame {
         } else {
           this.settings = res;
           if ((base1 = this.settings).sites_orderby == null) {
-            base1.sites_orderby = "peers";
+            base1.sites_orderby = "modified";
           }
           if ((base2 = this.settings).favorite_sites == null) {
             base2.favorite_sites = {};
@@ -226,7 +266,7 @@ class EpixDash extends EpixFrame {
         this.settings = {};
       }
       if ((base1 = this.settings).sites_orderby == null) {
-        base1.sites_orderby = "peers";
+        base1.sites_orderby = "modified";
       }
       if ((base2 = this.settings).favorite_sites == null) {
         base2.favorite_sites = {};

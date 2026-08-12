@@ -1,5 +1,9 @@
 (function() {
 
+// The peer map: dots on canvas over img/world.png (the projection constants
+// below are tuned to that PNG - don't swap the art without retuning). Feeds
+// the country rail (StatList) from the same chartGetPeerLocations answer, so
+// map and rail can never disagree.
 class ChartWorld {
   constructor() {
     this.render = this.render.bind(this);
@@ -11,29 +15,6 @@ class ChartWorld {
   }
 
   update() {
-
-    /*
-        @points = [
-          {lat: 0, lon: 0},
-          {lat: 30, lon: 30},
-          {lat: 33.137551, lon: 129.902344},
-          {lat: 0.351560, lon: 115.136719},
-          {lat: 40.178873, lon: -8.261719},
-          {lat: 52.482780, lon: -0.878906},
-          {lat: 47.040182, lon: 19.511719},
-          {lat: 38.548165, lon: -76.113281},
-          {lat: 40.446947, lon: -122.871094}
-          {lat: -16.972741, lon: 46.582031}
-          {lat: -35.173808, lon: 19.511719}
-          {lat: -33.431441, lon: 116.542969}
-          {lat: -45.336702, lon: 168.222656}
-          {lat: -54.977614, lon: -67.412109}
-          {lat: 8.928487, lon: -62.314453}
-          {lat: 65.20515, lon: -14.670696}
-          {lat: 64.90863, lon: -21.70194625}
-        ]
-        return false
-     */
     return Page.cmd("chartGetPeerLocations", [], (res) => {
       res = Page.rows(res);
       var country, country_db, i, item, items, j, len, len1, name, num, num_others, point, ref, ref1;
@@ -59,43 +40,92 @@ class ChartWorld {
       items.sort(function(a, b) {
         return b.value - a.value;
       });
-      if (items.length > 15) {
+      // 12 named rows + Other, sized to sit beside the map instead of under it.
+      if (items.length > 13) {
         num_others = 0;
-        ref1 = items.slice(14);
+        ref1 = items.slice(12);
         for (j = 0, len1 = ref1.length; j < len1; j++) {
           item = ref1[j];
           num_others += item.value;
         }
-        items.length = 14;
+        items.length = 12;
         items.push({
           title: "Other",
           value: num_others,
           type: "other"
         });
       }
+      Page.page_stats.country_list.total_peers = this.points.length;
+      Page.page_stats.country_list.total_countries = Object.keys(country_db).length;
       this.drawPoints();
       return Page.projector.scheduleRender();
     });
   }
 
+  // Peer dots in the outbound teal with a surface-colored ring. Peers within
+  // a few pixels of each other merge into one bubble sized by headcount
+  // (area-ish: sqrt), carrying the count once it is big enough to read -
+  // dense regions read as "34 here" instead of a smear of overlapping dots.
+  // Colors resolved per draw - the theme flip just calls this again.
   drawPoints() {
-    var i, left, len, point, ref, results, top;
+    var c, clusters, found, i, j, k, left, len, len1, point, r, ref, ring, threshold, top;
+    if (!this.ctx) {
+      return;
+    }
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ring = getComputedStyle(document.body).getPropertyValue("--epix-surface-2").trim() || "#F6F6F9";
+    threshold = 12;
+    clusters = [];
     ref = this.points;
-    results = [];
     for (i = 0, len = ref.length; i < len; i++) {
       point = ref[i];
       left = (47 + (point.lon / 3.65)) * this.canvas.width / 100;
       top = (59 - (point.lat / 1.52)) * this.canvas.height / 100;
-      results.push(this.ctx.fillRect(left, top, 2, 2));
+      found = null;
+      for (j = 0, len1 = clusters.length; j < len1; j++) {
+        c = clusters[j];
+        if ((c.x - left) * (c.x - left) + (c.y - top) * (c.y - top) < threshold * threshold) {
+          found = c;
+          break;
+        }
+      }
+      if (found) {
+        found.count += 1;
+        // Running average keeps the bubble centered over its group.
+        found.x += (left - found.x) / found.count;
+        found.y += (top - found.y) / found.count;
+      } else {
+        clusters.push({x: left, y: top, count: 1});
+      }
     }
-    return results;
+    // Small dots first, so the big labeled bubbles stay readable on top.
+    clusters.sort(function(a, b) {
+      return a.count - b.count;
+    });
+    for (k = 0; k < clusters.length; k++) {
+      c = clusters[k];
+      r = c.count === 1 ? 2.4 : Math.min(10, 3.2 + 1.4 * Math.sqrt(c.count - 1));
+      this.ctx.beginPath();
+      this.ctx.fillStyle = ring;
+      this.ctx.arc(c.x, c.y, r + 1.2, 0, 2 * Math.PI);
+      this.ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.fillStyle = Viz.color("out");
+      this.ctx.arc(c.x, c.y, r, 0, 2 * Math.PI);
+      this.ctx.fill();
+      if (c.count >= 4) {
+        this.ctx.fillStyle = ring;
+        this.ctx.font = "700 8px " + (getComputedStyle(document.body).fontFamily || "sans-serif");
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "middle";
+        this.ctx.fillText(c.count > 99 ? "99+" : "" + c.count, c.x, c.y + 0.5);
+      }
+    }
   }
 
   initCanvas(node) {
     this.canvas = node;
     this.ctx = node.getContext("2d");
-    this.ctx.fillStyle = '#31BDC6';
     return this.drawPoints();
   }
 

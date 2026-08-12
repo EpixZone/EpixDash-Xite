@@ -1,17 +1,46 @@
 (function() {
 
+// Inline stroke icons for the row-action strip and row accents (per the
+// design language: new icons are inline SVG, 1.5-2px stroke, currentColor).
+var ICON_PATHS = {
+  dots: '<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+  star: '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+  starF: '<path fill="currentColor" stroke="none" d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7M20 3.8v4.4h-4.4"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8.2 12.4l2.6 2.6 5-5.4"/>',
+  pause: '<path d="M9 5.5v13M15 5.5v13"/>',
+  play: '<path d="M8 5.5v13l10-6.5z"/>',
+  zip: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/>',
+  upgrade: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+  chevronUp: '<path d="M6 14.5l6-6 6 6"/>',
+  trash: '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l.9 13h9.2l.9-13M10 11v5.5M14 11v5.5"/>'
+};
+
+// Must match the .message.fading transition in css/all.css: the element stays
+// mounted for this long so the fade has something to animate.
+var MESSAGE_FADE_MS = 260;
+
+var actionIcon = function(name, size) {
+  size = size || 18;
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_PATHS[name] || "") + '</svg>';
+};
+
 class Site {
   constructor(row, item_list) {
     this.item_list = item_list;
     this.renderOptionalStats = this.renderOptionalStats.bind(this);
     this.render = this.render.bind(this);
     this.renderMergedExpander = this.renderMergedExpander.bind(this);
+    this.renderFact = this.renderFact.bind(this);
+    this.renderSeedRow = this.renderSeedRow.bind(this);
+    this.renderActions = this.renderActions.bind(this);
     this.handleMergedExpandClick = this.handleMergedExpandClick.bind(this);
     this.handleLimitIncreaseClick = this.handleLimitIncreaseClick.bind(this);
-    this.handleHelpsClick = this.handleHelpsClick.bind(this);
     this.handleHelpAllClick = this.handleHelpAllClick.bind(this);
     this.handleHelpClick = this.handleHelpClick.bind(this);
-    this.handleSettingsClick = this.handleSettingsClick.bind(this);
+    this.handleActionsClick = this.handleActionsClick.bind(this);
+    this.handleRowActionsClick = this.handleRowActionsClick.bind(this);
     this.handleDeleteClick = this.handleDeleteClick.bind(this);
     this.handleCloneUpgradeClick = this.handleCloneUpgradeClick.bind(this);
     this.handleCloneClick = this.handleCloneClick.bind(this);
@@ -27,9 +56,9 @@ class Site {
     this.handleUnfavoriteClick = this.handleUnfavoriteClick.bind(this);
     this.handleFavoriteClick = this.handleFavoriteClick.bind(this);
     this.deleted = false;
-    // The declared favicon failed to load; fall back to the brand-color dot.
-    // Bound once: maquette forbids a function property changing identity
-    // across renders.
+    // The declared favicon failed to load; fall back to the brand-color
+    // letter tile. Bound once: maquette forbids a function property changing
+    // identity across renders.
     this.favicon_failed = false;
     this.handleFaviconError = () => {
       this.favicon_failed = true;
@@ -41,18 +70,46 @@ class Site {
     this.message_class = "";
     this.message_collapsed = false;
     this.message_timer = null;
+    this.message_fading = false;
+    this.message_fade_timer = null;
+    this.message_progress = null;
     this.favorite = Page.settings.favorite_sites[row.address];
     this.key = row.address;
     this.optional_helps = [];
-    this.optional_helps_disabled = {};
     this.setRow(row);
     this.files = new SiteFiles(this);
-    this.menu = new Menu();
-    this.menu_helps = null;
+    // Files-page seed row state: the switch waits for the node's ack (pending)
+    // and the per-directory list collapses past three rows. Handlers are
+    // cached per directory - maquette forbids identity changing per render.
+    this.help_all_pending = false;
+    this.seed_expanded = false;
+    this.seed_stop_handlers = {};
+    this.handleSeedExpandClick = () => {
+      this.seed_expanded = !this.seed_expanded;
+      Page.projector.scheduleRender();
+      return false;
+    };
+  }
+
+  // Files this xite is still going to download, as one number: the update's own
+  // changed files plus the optional files THIS node promised to fetch (the
+  // whole-site toggle, an optionalHelp directory, or full retention). The node
+  // reports `optional_left` already excluding anything `tasks` covers, so these
+  // add. A xite the user never opted into reports 0 however many optional files
+  // it declares - the count is what will be downloaded, not what exists.
+  // Only work actually pending. `bad_files` is deliberately not in here: those
+  // are files a previous pass failed on, and they have their own error pill -
+  // folding them in left a row counting down forever with nothing downloading.
+  filesLeft(row) {
+    if (!row) { return 0; }
+    return (row.tasks || 0) + (row.optional_left || 0);
   }
 
   setRow(row) {
-    var base, base1, base2, base3, key, ref, ref1, ref2, val;
+    var base, base1, base2, base3, event, files_left, key, phase, prev_left, ref, val;
+    if (this.help_all_hold_until && Date.now() < this.help_all_hold_until) {
+      row.settings.autodownloadoptional = this.help_all_value;
+    }
     if ((base = row.settings).modified == null) {
       base.modified = 0;
     }
@@ -65,12 +122,43 @@ class Site {
     if ((base3 = row.settings).peers == null) {
       base3.peers = 0;
     }
-    if (((ref = row.event) != null ? ref[0] : void 0) === "updated" && row.content_updated !== false) {
-      this.setMessage(_("Updated!"), "done");
-    } else if (row.tasks > 0) {
-      this.setMessage(_("Updating: ") + (Math.max(row.tasks, row.bad_files)) + _(" left"));
-    } else if (((ref1 = row.event) != null ? ref1[0] : void 0) === "updating") {
+    // An update pass reaches us two ways: as an `event` on the push that
+    // announces each step, and as `update_phase` on every siteInfo for as long
+    // as the pass runs. The phase is what makes the pill survive a reload -
+    // events only reach a page that was already open, so refreshing mid-update
+    // used to blank the row.
+    event = (ref = row.event) != null ? ref[0] : void 0;
+    phase = row.update_phase;
+    files_left = this.filesLeft(row);
+    prev_left = this.filesLeft(this.row);
+    // The node reports how far the current phase has got as {done, total}
+    // (files while a batch drains, candidate peers while checking), or null
+    // when the phase has nothing countable. The pill renders it as a fill
+    // behind its label. Read per push; only the progress-bearing states below
+    // adopt it, so an error or "Updated!" pill never wears a stale bar.
+    val = row.progress;
+    val = (val && val.total > 0) ? Math.min(1, val.done / val.total) : null;
+    if (event === "updated" && files_left === 0) {
+      this.setUpdateOutcome(row);
+    } else if (files_left > 0) {
+      // Files are landing: the update's own changed files, then any optional
+      // ones this node promised to fetch. The pass isn't done until they are,
+      // so an `updated` event arriving mid-download does not end the countdown.
+      this.setMessage(_("Updating: ") + files_left + _(" left"));
+      this.message_progress = val;
+    } else if (event === "updating" || phase === "updating") {
+      // A peer answered with something newer: this xite really is out of date.
+      // Verifying/staging has nothing countable, so no bar - better absent
+      // than invented.
       this.setMessage(_("Updating..."));
+    } else if (event === "checking" || phase === "checking") {
+      // Asking peers whether anything is newer. Nothing is known to be wrong
+      // yet, so this pill is deliberately quiet - it is not news.
+      // Reuses the health strip's existing key, so all 22 languages already
+      // translate it. The bar is its walk through the candidate peers - the
+      // honest reason this state takes as long as it does.
+      this.setMessage(_("Checking…"), "checking");
+      this.message_progress = val;
     } else if (row.bad_files > 0) {
       if (row.peers <= 1) {
         this.setMessage(_("No peers"), "error");
@@ -83,7 +171,9 @@ class Site {
       } else {
         this.setMessage(_("Update failed"), "error");
       }
-    } else if (row.tasks === 0 && ((ref2 = this.row) != null ? ref2.tasks : void 0) > 0) {
+    } else if (prev_left > 0) {
+      // The last file landed. This is the "Updated!" the outcome event was not
+      // allowed to show while the countdown was still running.
       this.setMessage(_("Updated!"), "done");
     }
     if (row.body == null) {
@@ -102,31 +192,66 @@ class Site {
     return this.row = row;
   }
 
+  // How an update pass ended. `update_applied` is the node telling us whether
+  // the pass actually brought anything: most passes find nothing, and flashing
+  // a green "Updated!" on every row every cycle announced work that never
+  // happened. Older nodes don't send the field, so only an explicit false
+  // counts as "nothing to report".
+  setUpdateOutcome(row) {
+    if (row.content_updated === false) {
+      return this.setMessage(row.peers <= 1 ? _("No peers") : _("Update failed"), "error");
+    }
+    if (row.update_applied === false) {
+      // Nothing was newer. Retire the pill - unless this xite has a standing
+      // problem, which is not something the end of a check should hide.
+      if (row.bad_files > 0) {
+        return this.setMessage(row.peers <= 1 ? _("No peers") : row.bad_files + _(" file update failed"), "error");
+      }
+      return this.setMessage("");
+    }
+    return this.setMessage(_("Updated!"), "done");
+  }
+
   setMessage(message, message_class) {
-    this.message_class = message_class != null ? message_class : "";
+    clearTimeout(this.message_timer);
+    clearTimeout(this.message_fade_timer);
+    this.message_fading = false;
     if (message) {
       this.message = message;
+      // Cleared on every new message; the progress-bearing states in setRow
+      // re-assign it right after their setMessage call. During a fade the old
+      // value stays, so the bar doesn't jump while the pill is going out.
+      this.message_progress = null;
+      this.message_class = message_class != null ? message_class : "";
       this.message_visible = true;
-      if (this.message_class === "error" && !this.show_errors) {
-        this.message_collapsed = true;
-      } else {
-        this.message_collapsed = false;
+      this.message_collapsed = this.message_class === "error" && !this.show_errors;
+      if (this.message_class === "done") {
+        this.message_timer = setTimeout((() => {
+          return this.setMessage("");
+        }), 5000);
       }
+    } else if (this.message_visible) {
+      // Fade the pill out instead of blinking it off. Keep the text and the
+      // colour class through the fade - swapping them mid-transition reads as
+      // a second, different pill appearing.
+      this.message_fading = true;
+      this.message_fade_timer = setTimeout((() => {
+        this.message_fading = false;
+        this.message_visible = false;
+        return Page.projector.scheduleRender();
+      }), MESSAGE_FADE_MS);
     } else {
-      this.message_visible = false;
-    }
-    clearInterval(this.message_timer);
-    if (this.message_class === "done") {
-      this.message_timer = setTimeout((() => {
-        return this.setMessage("");
-      }), 5000);
+      this.message_class = "";
     }
     return Page.projector.scheduleRender();
   }
 
+  // Drives the spinner over the row's icon. Deliberately excludes the checking
+  // phase: at that point we don't know there is anything to do, and a spinner
+  // on every row every resync cycle is exactly the noise this flow removes.
   isWorking() {
     var ref;
-    return this.row.tasks > 0 || ((ref = this.row.event) != null ? ref[0] : void 0) === "updating";
+    return this.row.tasks > 0 || ((ref = this.row.event) != null ? ref[0] : void 0) === "updating" || this.row.update_phase === "updating";
   }
 
   // A merger renders twice (overview row + its line in the sublist), each
@@ -144,7 +269,6 @@ class Site {
 
   handleFavoriteClick() {
     this.setFavorite(true);
-    this.menu = new Menu();
     Page.settings.favorite_sites[this.row.address] = true;
     Page.saveSettings();
     Page.site_list.reorder();
@@ -153,7 +277,6 @@ class Site {
 
   handleUnfavoriteClick() {
     this.setFavorite(false);
-    this.menu = new Menu();
     delete Page.settings.favorite_sites[this.row.address];
     Page.saveSettings();
     Page.site_list.reorder();
@@ -378,6 +501,9 @@ class Site {
       if (onSuccess) {
         onSuccess();
       }
+      if (Page.site_list && Page.site_list.open_actions_site === this) {
+        Page.site_list.open_actions_site = null;
+      }
       // Delete the canonical list item: `this` may be a merger's sublist
       // copy, which the item list does not hold.
       this.item_list.deleteItem((ref = this.item_list.items_bykey[this.row.address]) != null ? ref : this);
@@ -386,116 +512,172 @@ class Site {
     return false;
   }
 
-  handleSettingsClick(e) {
-    var merged_sites;
-    // On a group overview row Update / Check files / Pause / Resume / Delete
-    // become their "all" variants and cover the parent + its merged xites.
-    // The Pause<->Resume flip follows the PARENT's serving state, like any
-    // single row. Favorite and Save as .zip stay parent-scoped.
+  // The row's action items, in the same order the old popup menu used.
+  // On a group overview row Update / Check files / Pause / Resume / Delete
+  // become their "all" variants and cover the parent + its merged xites.
+  // The Pause<->Resume flip follows the PARENT's serving state, like any
+  // single row. Favorite and Save as .zip stay parent-scoped.
+  getActionItems() {
+    var items, merged_sites;
     merged_sites = this.getMergedSites();
-    this.menu.items = [];
+    items = [];
     if (this.favorite) {
-      this.menu.items.push([_("Unfavorite"), this.handleUnfavoriteClick]);
+      items.push({label: _("Unfavorite"), icon: "starF", onclick: this.handleUnfavoriteClick});
     } else {
-      this.menu.items.push([_("Favorite"), this.handleFavoriteClick]);
+      items.push({label: _("Favorite"), icon: "star", onclick: this.handleFavoriteClick});
     }
     if (merged_sites) {
-      this.menu.items.push([_("Update all"), this.handleUpdateAllClick]);
-      this.menu.items.push([_("Check all files"), this.handleCheckfilesAllClick]);
+      items.push({label: _("Update all"), icon: "refresh", onclick: this.handleUpdateAllClick});
+      items.push({label: _("Check all files"), icon: "check", onclick: this.handleCheckfilesAllClick});
       if (this.row.settings.serving) {
-        this.menu.items.push([_("Pause all"), this.handlePauseAllClick]);
+        items.push({label: _("Pause all"), icon: "pause", onclick: this.handlePauseAllClick});
       } else {
-        this.menu.items.push([_("Resume all"), this.handleResumeAllClick]);
+        items.push({label: _("Resume all"), icon: "play", onclick: this.handleResumeAllClick});
       }
     } else {
-      this.menu.items.push([_("Update"), this.handleUpdateClick]);
-      this.menu.items.push([_("Check files"), this.handleCheckfilesClick]);
+      items.push({label: _("Update"), icon: "refresh", onclick: this.handleUpdateClick});
+      items.push({label: _("Check files"), icon: "check", onclick: this.handleCheckfilesClick});
       if (this.row.settings.serving) {
-        this.menu.items.push([_("Pause"), this.handlePauseClick]);
+        items.push({label: _("Pause"), icon: "pause", onclick: this.handlePauseClick});
       } else {
-        this.menu.items.push([_("Resume"), this.handleResumeClick]);
+        items.push({label: _("Resume"), icon: "play", onclick: this.handleResumeClick});
       }
     }
-    this.menu.items.push([_("Save as .zip"), "/EpixNet-Internal/Zip?address=" + this.row.address]);
+    items.push({label: _("Save as .zip"), icon: "zip", href: "/EpixNet-Internal/Zip?address=" + this.row.address});
     if (this.row.content.cloneable === true) {
-      this.menu.items.push([_("Clone"), this.handleCloneClick]);
+      items.push({label: _("Clone"), icon: "copy", onclick: this.handleCloneClick});
     }
     if (this.row.settings.own && this.row.content.cloned_from) {
-      this.menu.items.push(["---"]);
-      this.menu.items.push([_("Upgrade code"), this.handleCloneUpgradeClick]);
+      items.push({sep: true});
+      items.push({label: _("Upgrade code"), icon: "upgrade", onclick: this.handleCloneUpgradeClick});
     }
-    this.menu.items.push(["---"]);
+    items.push({sep: true});
     if (merged_sites) {
-      this.menu.items.push([_("Delete all"), this.handleDeleteAllClick]);
+      items.push({label: _("Delete all"), icon: "trash", danger: true, onclick: this.handleDeleteAllClick});
     } else {
-      this.menu.items.push([_("Delete"), this.handleDeleteClick]);
+      items.push({label: _("Delete"), icon: "trash", danger: true, onclick: this.handleDeleteClick});
     }
-    if (this.menu.visible) {
-      this.menu.hide();
+    return items;
+  }
+
+  // The "⋯" button: toggles this row's inline action strip. One strip open
+  // app-wide, tracked on SiteList so the panel/health screen can fold it.
+  handleActionsClick() {
+    var list = Page.site_list;
+    if (!list) {
+      return false;
+    }
+    if (list.open_actions_site === this) {
+      list.open_actions_site = null;
     } else {
-      this.menu.show();
+      // Single-overlay rule: opening a strip folds any open popup menu
+      // (warnings chip, Files helps) and any other row's strip.
+      if (window.visible_menu) {
+        window.visible_menu.hide();
+      }
+      list.open_actions_site = this;
     }
+    Page.projector.scheduleRender();
     return false;
   }
 
+  // Delegated click on the strip: an item click folds the strip afterwards
+  // (parity with the old menu's close-on-select). The item's own handler ran
+  // first (child fires before this bubbled call); the zip link keeps its
+  // default navigation because nothing here prevents it.
+  handleRowActionsClick(e) {
+    var node = e.target;
+    while (node && node !== e.currentTarget) {
+      if (node.classList && node.classList.contains("action-btn")) {
+        if (Page.site_list) {
+          Page.site_list.closeRowActions();
+        }
+        return;
+      }
+      node = node.parentNode;
+    }
+  }
+
+  renderActions() {
+    var children, i, item, items, len;
+    if (Page.site_list == null || Page.site_list.open_actions_site !== this) {
+      return void 0;
+    }
+    items = this.getActionItems();
+    children = [];
+    for (i = 0, len = items.length; i < len; i++) {
+      item = items[i];
+      if (item.sep) {
+        // Separators of the old menu become visual gaps in the strip.
+        children.push(h("div.row-actions-sep", {key: "sep" + i}));
+        continue;
+      }
+      children.push(h("a.action-btn", {
+        key: item.label,
+        href: item.href ? item.href : "#" + item.label,
+        classes: {
+          danger: !!item.danger
+        },
+        onclick: item.onclick
+      }, [
+        h("span.action-icon", {innerHTML: actionIcon(item.icon, 17)}),
+        h("span.action-label", [item.label])
+      ]));
+    }
+    return h("div.row-actions", {
+      key: "actions",
+      onclick: this.handleRowActionsClick,
+      enterAnimation: Animation.slideDown,
+      exitAnimation: Animation.slideUpInout
+    }, children);
+  }
+
+  // Stop helping a directory: plain removal. The node's siteInfo push drops
+  // the row within a frame, so there is no meaningful "Resume" window - the
+  // old toggle-state map went stale and showed re-added directories as
+  // stopped.
   handleHelpClick(directory, title) {
-    if (this.optional_helps_disabled[directory]) {
-      Page.cmd("OptionalHelp", [directory, title, this.row.address]);
-      delete this.optional_helps_disabled[directory];
-    } else {
-      Page.cmd("OptionalHelpRemove", [directory, this.row.address]);
-      this.optional_helps_disabled[directory] = true;
-    }
-    return true;
+    Page.cmd("OptionalHelpRemove", [directory, this.row.address]);
+    return false;
   }
 
+  // The Files-page auto-download switch. Optimistic-after-ack: the row shows
+  // a pending state until the node answers, then flips. Plain onclick - the
+  // old heart menu opened on mousedown and died to the global menu-hide
+  // mouseup in the same physical click.
   handleHelpAllClick() {
-    if (this.row.settings.autodownloadoptional === true) {
-      Page.cmd("OptionalHelpAll", [false, this.row.address], () => {
-        this.row.settings.autodownloadoptional = false;
+    if (this.help_all_pending) {
+      return false;
+    }
+    this.help_all_pending = true;
+    // A lost ack (websocket drop mid-command) must not disable the switch
+    // forever: give up on pending after 10s and let the user retry.
+    clearTimeout(this.help_all_timer);
+    this.help_all_timer = setTimeout((() => {
+      if (this.help_all_pending) {
+        this.help_all_pending = false;
+        Page.projector.scheduleRender();
+      }
+    }), 10000);
+    var want = this.row.settings.autodownloadoptional !== true;
+    Page.cmd("OptionalHelpAll", [want, this.row.address], (res) => {
+      clearTimeout(this.help_all_timer);
+      this.help_all_pending = false;
+      if (res && res.error) {
+        // The node refused: keep the real state, say why.
+        Page.cmd("wrapperNotification", ["error", res.error]);
         return Page.projector.scheduleRender();
-      });
-    } else {
-      Page.cmd("OptionalHelpAll", [true, this.row.address], () => {
-        this.row.settings.autodownloadoptional = true;
-        return Page.projector.scheduleRender();
-      });
-    }
-    // Keep the menu open (like the per-directory hearts) so the toggled
-    // heart is visible instead of the menu vanishing on click.
-    return true;
-  }
-
-  handleHelpsClick(e) {
-    var directory, i, len, ref, ref1, title;
-    if (e.target.classList.contains("menu-item")) {
-      return;
-    }
-    if (!this.menu_helps) {
-      this.menu_helps = new Menu();
-    }
-    this.menu_helps.items = [];
-    this.menu_helps.items.push([
-      _("Help distribute all new files"), this.handleHelpAllClick, (() => {
-        return this.row.settings.autodownloadoptional;
-      })
-    ]);
-    if (this.optional_helps.length > 0) {
-      this.menu_helps.items.push(["---"]);
-    }
-    ref = this.optional_helps;
-    for (i = 0, len = ref.length; i < len; i++) {
-      ref1 = ref[i], directory = ref1[0], title = ref1[1];
-      this.menu_helps.items.push([
-        title, (() => {
-          return this.handleHelpClick(directory, title);
-        }), (() => {
-          return !this.optional_helps_disabled[directory];
-        })
-      ]);
-    }
-    this.menu_helps.toggle();
-    return true;
+      }
+      this.row.settings.autodownloadoptional = want;
+      // Hold the acked value against in-flight siteList snapshots queued
+      // before the toggle - one of those landing now would flip the switch
+      // back for a moment.
+      this.help_all_value = want;
+      this.help_all_hold_until = Date.now() + 4000;
+      return Page.projector.scheduleRender();
+    });
+    Page.projector.scheduleRender();
+    return false;
   }
 
   getHref(row) {
@@ -520,18 +702,26 @@ class Site {
     return false;
   }
 
-  // The rail marker: the xite's declared favicon when it loads, else the
-  // brand-color dot.
+  // The row marker: the xite's declared favicon when it loads, else a
+  // letter tile in the address' brand-color bucket. "Epix Talk" -> T,
+  // "EpixScreen" -> S: the brand prefix carries no identity, so the tile
+  // letter comes from the distinctive word instead.
   renderMarker() {
-    var favicon = this.row.content ? this.row.content.favicon : null;
-    if (favicon && !this.favicon_failed) {
+    var content, letter, m, name;
+    content = this.row.content || {};
+    if (content.favicon && !this.favicon_failed) {
       return h("img.favicon", {
-        src: "/" + this.row.address + "/" + favicon,
+        src: "/" + this.row.address + "/" + content.favicon,
         alt: "",
         onerror: this.handleFaviconError
       });
     }
-    return h("div.circle." + Text.toBrandClass(this.row.address), ["\u2022"]);
+    name = content.title || this.row.address;
+    m = /^Epix\s*(.)/.exec(name);
+    letter = ((m ? m[1] : name.charAt(0)) || "?").toUpperCase();
+    return h("div.tile." + Text.toBrandClass(this.row.address), {
+      "aria-hidden": "true"
+    }, [letter]);
   }
 
   // The merged xites nested under this row when it is a group overview row;
@@ -568,13 +758,20 @@ class Site {
   }
 
   render() {
-    var merged_expander, merged_stats, now, ref;
+    var actions_open, merged_expander, merged_stats, now, peers_value, ref, stat_value;
     now = Date.now() / 1000;
     merged_expander = this.renderMergedExpander();
     // A merger's row is the group overview: the newest update time across
     // the group and everyone's peers summed (own size). Its own numbers show
     // on its individual line inside the expanded sublist.
     merged_stats = merged_expander ? this.merged_stats : null;
+    actions_open = Page.site_list != null && Page.site_list.open_actions_site === this;
+    peers_value = merged_stats ? merged_stats.peers : Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers);
+    if (Page.settings.sites_orderby === "size") {
+      stat_value = ((this.row.settings.size + (this.row.settings.size_optional || 0)) / 1024 / 1024).toFixed(1) + "MB";
+    } else {
+      stat_value = Time.sinceShort(merged_stats ? merged_stats.modified : this.row.settings.modified);
+    }
     return h("div.site", {
       key: this.key,
       "data-key": this.key,
@@ -582,101 +779,247 @@ class Site {
         "modified-lastday": now - (merged_stats ? merged_stats.modified : this.row.settings.modified) < 60 * 60 * 24,
         "disabled": !this.row.settings.serving && !this.row.demo,
         "working": this.isWorking(),
-        "has-merged": !!merged_expander
+        "has-merged": !!merged_expander,
+        "actions-open": actions_open
       }
     }, this.renderMarker(), h("a.inner", {
       href: this.getHref(),
       title: ((ref = this.row.content.title) != null ? ref.length : void 0) > 20 ? this.row.content.title : void 0
     }, [
-      h("span.title", [this.row.content.title || this.row.address]), merged_expander, h("div.details", [
+      h("div.title-line", [
+        h("span.title", [this.row.content.title || this.row.address]),
+        this.favorite ? h("span.fav-star", {
+          key: "fav",
+          "aria-hidden": "true",
+          innerHTML: actionIcon("starF", 13)
+        }) : void 0,
+        (Page.notification_counts && Page.notification_counts[this.row.address] > 0)
+          ? h("span.site-unread-badge", {key: "unread"}, Page.notification_counts[this.row.address] > 99 ? "99+" : String(Page.notification_counts[this.row.address]))
+          : void 0,
+        merged_expander
+      ]), h("div.details", [
+        // The meta trio is one collapsible unit: display:contents normally
+        // (layout as if unwrapped), a shrinkable ellipsizing block in the
+        // compact list so it gives way to the pill as a whole.
+        h("span.dmeta", [
+          h("span.peers", [peers_value + _(" peers")]),
+          h("span.sep", "\u00B7"),
+          h("span.modified", [stat_value])
+        ]),
+        // The message pill is pushed flush right on the meta line (margin-left:
+        // auto) so it sits opposite the date instead of on top of it. It
+        // shrinks with an ellipsis when the row is too narrow for both.
         h("div.message", {
           classes: {
             visible: this.message_visible,
+            fading: this.message_fading,
             done: this.message_class === 'done',
             error: this.message_class === 'error',
+            checking: this.message_class === 'checking',
             collapsed: this.message_collapsed
-          }
-        }, [this.message]),
-        h("span.modified", [h("div.icon-clock"), Page.settings.sites_orderby === "size" ? h("span.value", [(this.row.settings.size / 1024 / 1024 + (this.row.settings.size_optional != null) / 1024 / 1024).toFixed(1), "MB"]) : h("span.value", [Time.sinceShort(merged_stats ? merged_stats.modified : this.row.settings.modified)])]), h("span.peers", [h("div.icon-profile"), h("span.value", [merged_stats ? merged_stats.peers : Math.max((this.row.settings.peers ? this.row.settings.peers : 0), this.row.peers)])])
+          },
+          title: this.message || undefined
+        }, [
+          // Progress fill behind the label, tinted from the pill's own ink so
+          // it works on every colour without per-state rules. Absent (not 0%)
+          // when the phase has nothing countable.
+          this.message_progress != null ? h("span.mbar", {
+            styles: {width: Math.round(this.message_progress * 100) + "%"}
+          }) : void 0,
+          h("span.mtext", [this.message])
+        ])
       ]), this.row.demo ? h("div.details.demo", "Activate \u00BB") : void 0, this.row.need_limit ? h("a.details.needaction", {
         href: "#Set+limit",
         onclick: this.handleLimitIncreaseClick
       }, "Set limit to " + this.row.need_limit + "MB") : void 0
     ]), h("a.settings", {
-      href: "#Settings",
-      tabIndex: -1,
-      onmousedown: this.handleSettingsClick,
-      onclick: Page.returnFalse
-    }, ["\u22EE"]), this.menu.render(), (Page.notification_counts && Page.notification_counts[this.row.address] > 0)
-      ? h("span.site-unread-badge", {key: "unread"}, Page.notification_counts[this.row.address] > 99 ? "99+" : String(Page.notification_counts[this.row.address]))
-      : null);
+      href: "#Actions",
+      "aria-label": _("Actions"),
+      "aria-expanded": actions_open ? "true" : "false",
+      onclick: this.handleActionsClick
+    }, [h("span.action-icon", {innerHTML: actionIcon(actions_open ? "chevronUp" : "dots", 20)})]), this.renderActions());
   }
 
-  renderCircle(value, max) {
-    var dashoffset, stroke;
-    if (value < 1) {
-      dashoffset = 75 + (1 - value) * 75;
+  // A .fact chip (same anatomy the Stats mini panels use: label + optional
+  // status dot / mini meter + value).
+  renderFact(fact) {
+    return h("span.fact", {
+      key: fact.key,
+      title: fact.tip,
+      classes: {
+        "fact-ok": fact.ink === "ok",
+        "fact-warn": fact.ink === "warn",
+        "fact-bad": fact.ink === "bad"
+      }
+    }, [
+      fact.ink ? h("span.fact-dot", {"aria-hidden": "true"}) : void 0,
+      fact.dot ? h("span.kdot." + fact.dot, {"aria-hidden": "true"}) : void 0,
+      h("span.fact-label", fact.label),
+      fact.meter ? h("span.fact-meter", [
+        h("span.fact-meter-fill", {
+          styles: {
+            width: Math.min(100, Math.round(fact.meter.num / Math.max(1, fact.meter.den) * 100)) + "%"
+          }
+        })
+      ]) : void 0,
+      h("span.fact-value", fact.value)
+    ]);
+  }
+
+  // The share-ratio ring, kept by request - the glanceable gauge the old
+  // dashboard had, with its bugs fixed: it now carries a label, the arc is
+  // ratio/(ratio+1) so empty = taking only, HALF ring = break-even, full =
+  // pure giving (the old dash math drew a FULL ring at 0.0), and the color is
+  // amber below 1 / teal at 1+ instead of a hue ramp that started at alarm
+  // red and wrapped past 360.
+  renderRatioRing() {
+    var sent, recv, has, ratio, display, frac, offset, cls;
+    sent = this.row.settings.bytes_sent || 0;
+    recv = this.row.settings.bytes_recv || 0;
+    has = sent > 0 || recv > 0;
+    ratio = recv > 0 ? sent / recv : (sent > 0 ? Infinity : 0);
+    if (!has) {
+      display = "\u2013";
+    } else if (ratio === Infinity || ratio >= 100) {
+      display = "\u221E";
+    } else if (ratio >= 10) {
+      display = ratio.toFixed(0);
     } else {
-      dashoffset = Math.max(0, 75 - ((value - 1) / 9) * 75);
+      display = ratio.toFixed(1);
     }
-    stroke = "hsl(" + (Math.min(555, value * 50)) + ", 55%, 55%)";
-    return h("div.circle", {
-      title: "Upload/Download ratio",
-      innerHTML: "<svg class=\"circle-svg\" width=\"30\" height=\"30\" viewPort=\"0 0 30 30\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n  \t\t\t<circle r=\"12\" cx=\"15\" cy=\"15\" fill=\"transparent\" class='circle-bg'></circle>\n  \t\t\t<circle r=\"12\" cx=\"15\" cy=\"15\" fill=\"transparent\" class='circle-fg' style='stroke-dashoffset: " + dashoffset + "; stroke: " + stroke + "'></circle>\n</svg>"
+    frac = !has ? 0 : (ratio === Infinity ? 1 : ratio / (ratio + 1));
+    // r=12 -> circumference 75.4; offset counts down from empty to full.
+    offset = 75.4 * (1 - frac);
+    cls = !has ? "r-idle" : (ratio >= 1 ? "r-good" : "r-low");
+    return h("span.ratio-ring." + cls, {
+      key: "ratio",
+      title: _("Share ratio: uploaded vs downloaded for this xite. Half ring = break-even.")
+    }, [
+      h("span.rr-label", _("Ratio")),
+      h("span.rr-wrap", [
+        h("span.rr-gauge", {
+          innerHTML: '<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle r="12" cx="15" cy="15" fill="transparent" class="rr-bg"></circle><circle r="12" cx="15" cy="15" fill="transparent" class="rr-fg" style="stroke-dashoffset: ' + offset.toFixed(1) + '"></circle></svg>'
+        }),
+        h("span.rr-value", display)
+      ])
+    ]);
+  }
+
+  getSeedStopHandler(directory, title) {
+    var base;
+    return (base = this.seed_stop_handlers)[directory] != null ? base[directory] : base[directory] = (() => {
+      this.handleHelpClick(directory, title);
+      return false;
     });
   }
 
+  // The seed row: an explicit labeled switch for "auto-download everything
+  // new", then each optionalHelp folder commitment as a visible row with a
+  // Stop action - replacing the share/heart/chevron cluster whose dropdown
+  // died to a mousedown/mouseup race before it could be read.
+  renderSeedRow() {
+    var auto, dirs, shown, hidden;
+    auto = this.row.settings.autodownloadoptional === true;
+    dirs = this.optional_helps;
+    shown = this.seed_expanded ? dirs : dirs.slice(0, 3);
+    hidden = dirs.length - shown.length;
+    return h("div.seedrow", {key: "seedrow"}, [
+      h("a.switchrow", {
+        href: "#Auto-download",
+        role: "switch",
+        "aria-checked": auto ? "true" : "false",
+        onclick: this.handleHelpAllClick,
+        classes: {
+          pending: this.help_all_pending
+        }
+      }, [
+        h("span.sw-label", [
+          _("Auto-download new optional files"),
+          h("span.sw-hint", _("Fetch and seed every optional file this xite publishes"))
+        ]),
+        h("span.switch")
+      ]),
+      auto ? (dirs.length ? h("div.seed-note", _("Seeding everything new") + " \u00B7 " + dirs.length + " " + _("folder commitments")) : void 0) : [
+        shown.map((pair) => {
+          var directory = pair[0], title = pair[1];
+          return h("div.seed-dir", {key: directory}, [
+            h("span.fact-dot.sd-on", {"aria-hidden": "true"}),
+            h("span.sd-title", {title: directory}, title || directory),
+            h("a.sd-stop", {
+              href: "#Stop",
+              onclick: this.getSeedStopHandler(directory, title)
+            }, _("Stop"))
+          ]);
+        }),
+        hidden > 0 ? h("a.sd-more", {
+          href: "#More",
+          onclick: this.handleSeedExpandClick
+        }, "+" + hidden + " " + _("more")) : void 0,
+        this.seed_expanded && dirs.length > 3 ? h("a.sd-more", {
+          href: "#Less",
+          onclick: this.handleSeedExpandClick
+        }, _("Show less")) : void 0
+      ]
+    ]);
+  }
+
   renderOptionalStats() {
-    var ratio, ratio_value, ratio_hue, row, sent, recv;
+    var row, facts;
     row = this.row;
-    // Guard the division: a fresh site (or an older node that doesn't send
-    // the fields) has 0/0 or undefined/undefined, which renders "NaN".
-    // No downloads yet: anything uploaded counts as infinite, else 0.
-    sent = row.settings.bytes_sent || 0;
-    recv = row.settings.bytes_recv || 0;
-    ratio_value = recv > 0 ? sent / recv : (sent > 0 ? 100 : 0);
-    ratio = ratio_value.toFixed(1);
-    if (ratio_value >= 100) {
-      ratio = "\u221E";
-    } else if (ratio_value >= 10) {
-      ratio = ratio_value.toFixed(0);
+    facts = [
+      {
+        key: "content",
+        label: _("Content"),
+        value: Text.formatSize(row.settings.size) || "0 B",
+        meter: {
+          num: row.settings.size,
+          den: row.size_limit * 1024 * 1024
+        },
+        tip: _("Xite size limit: ") + (Text.formatSize(row.size_limit * 1024 * 1024))
+      }, {
+        key: "optional",
+        label: _("Optional"),
+        value: (Text.formatSize(row.settings.optional_downloaded) || "0 B") + " " + _("of") + " " + (Text.formatSize(row.settings.size_optional) || "0 B"),
+        meter: {
+          num: row.settings.optional_downloaded,
+          den: row.settings.size_optional
+        },
+        tip: _("Optional files downloaded from this xite")
+      }, {
+        key: "sent",
+        label: _("Sent"),
+        dot: "kd-out",
+        value: Text.formatSize(row.settings.bytes_sent) || "0 B"
+      }, {
+        key: "recv",
+        label: _("Received"),
+        dot: "kd-in",
+        value: Text.formatSize(row.settings.bytes_recv) || "0 B"
+      }
+    ];
+    if (row.need_limit) {
+      facts.push({
+        key: "needlimit",
+        label: _("Running out of space"),
+        value: _("Set limit to ") + row.need_limit + "MB",
+        ink: "warn"
+      });
     }
-    ratio_hue = Math.min(555, ratio_value * 50);
-    return h("div.site", {
+    return h("div.site.spanel.fpanel", {
       key: this.key
     }, [
-      h("div.title", [
-        h("h3.name", h("a", {
+      h("div.phead", [
+        h("a.fname", {
           href: this.getHref()
-        }, row.content.title)), h("div.size", {
-          title: "Xite size limit: " + (Text.formatSize(row.size_limit * 1024 * 1024))
-        }, [
-          "" + (Text.formatSize(row.settings.size)), h("div.bar", h("div.bar-active", {
-            style: "width: " + (100 * (row.settings.size / (row.size_limit * 1024 * 1024))) + "%"
-          }))
-        ]), h("div.plus", "+"), h("div.size.size-optional", {
-          title: "Optional files on xite: " + (Text.formatSize(row.settings.size_optional))
-        }, [
-          "" + (Text.formatSize(row.settings.optional_downloaded)), h("span.size-title", _("Optional")), h("div.bar", h("div.bar-active", {
-            style: "width: " + (100 * (row.settings.optional_downloaded / row.settings.size_optional)) + "%"
-          }))
-        ]), h("a.helps", {
-          href: "#",
-          onmousedown: this.handleHelpsClick,
-          onclick: Page.returnFalse
-        }, h("div.icon-share"), this.row.settings.autodownloadoptional ? "\u2661" : this.optional_helps.length, h("div.icon-arrow-down"), this.menu_helps ? this.menu_helps.render() : void 0), this.renderCircle(parseFloat(ratio_value.toFixed(1)), 10), h("div.circle-value", {
-          classes: {
-            negative: ratio < 1
-          },
-          style: "color: hsl(" + ratio_hue + ", 55%, 55%)"
-        }, ratio), h("div.transfers", [
-          h("div.up", {
-            "title": _("Uploaded")
-          }, "\u22F0 \u00A0" + (Text.formatSize(sent) || "0 KB")), h("div.down", {
-            "title": _("Downloaded")
-          }, "\u22F1 \u00A0" + (Text.formatSize(recv) || "0 KB"))
+        }, row.content.title || row.address),
+        h("span.ph-right", [
+          this.renderRatioRing(),
+          h("span.pval", (Text.formatSize(row.settings.optional_downloaded) || "0 B") + " " + _("optional"))
         ])
-      ]), this.files.render()
+      ]),
+      h("div.pfacts", facts.map(this.renderFact)),
+      this.renderSeedRow(),
+      this.files.render()
     ]);
   }
 }
