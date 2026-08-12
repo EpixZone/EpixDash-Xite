@@ -21,6 +21,12 @@ class Dashboard {
     this.port_checking = false;
     this.health_open = false;
     this.has_web_gl = null;
+    // The health drawer closes on Escape, like the hamburger panel does.
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.health_open) {
+        this.closeHealth();
+      }
+    });
     Page.cmd('wrapperPermissionAdd', 'ADMIN', () => {
       Page.reloadServerInfo();
       Page.reloadSiteInfo();
@@ -198,10 +204,6 @@ class Dashboard {
       Page.site_list.closeRowActions();
     }
     this.health_open = true;
-    // The screen sits absolute over the shell (it scrolls with the page),
-    // so bring its header into view and put the reader back afterwards.
-    this.prev_scroll = window.pageYOffset;
-    window.scroll(window.pageXOffset, 0);
     // Live refresh on open, same as the old Trackers menu did.
     if (Page.announcer_stats) {
       Page.reloadAnnouncerStats();
@@ -214,10 +216,6 @@ class Dashboard {
       return;
     }
     this.health_open = false;
-    if (this.prev_scroll != null) {
-      window.scroll(window.pageXOffset, this.prev_scroll);
-      this.prev_scroll = null;
-    }
     Page.projector.scheduleRender();
   }
 
@@ -700,6 +698,14 @@ class Dashboard {
       state = this.healthState();
       return h("div#Dashboard", [
         this.renderChips(warnings),
+        // Scrim behind the health drawer: the dashboard stays visible
+        // through it, and clicking it closes - same pattern as the
+        // hamburger panel's backdrop, mirrored to the right side.
+        h("div.health-backdrop", {
+          classes: {open: this.health_open},
+          onclick: this.handleBackClick,
+          "aria-hidden": "true"
+        }),
         this.renderHealthScreen(state)
       ]);
     } else {

@@ -1654,24 +1654,48 @@ code {
 
 /* ---- the health screen ---- */
 
-/* Slides in over the shell content - position absolute over .shell, NOT the
-   whole viewport (its background is plain --epix-bg, so the fixbutton corner
-   stays clean); its own back header carries a notched hairline. It scrolls
-   with the page. Data cards reuse the option-c anatomy. */
+/* A right-side drawer, the hamburger panel's mirror image: fixed to the
+   viewport, slides in from the right over a scrim that keeps the dashboard
+   visible behind it. Clicking the scrim (or Escape, or the back link)
+   closes it. Data cards reuse the option-c anatomy. */
 
-.health-screen,
-#Dashboard .screen {
-	position: absolute;
+.health-backdrop {
+	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
-	min-height: 100%;
+	bottom: 0;
+	z-index: 600;
+	background-color: rgba(2, 2, 2, 0.45);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.22s ease-out, visibility 0s 0.22s;
+}
+
+.health-backdrop.open {
+	opacity: 1;
+	visibility: visible;
+	transition: opacity 0.22s ease-out;
+}
+
+.health-screen,
+#Dashboard .screen {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: auto;
+	width: min(92vw, 520px);
 	box-sizing: border-box;
-	z-index: 520;
+	z-index: 610;
 	background-color: var(--epix-bg);
+	border-left: 1px solid var(--epix-border);
+	box-shadow: var(--epix-shadow);
 	display: flex;
 	flex-direction: column;
-	transform: translateX(100%);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	transform: translateX(102%);
 	visibility: hidden;
 	transition: transform 0.22s ease-out, visibility 0s 0.22s;
 }
@@ -1711,13 +1735,22 @@ code {
 	padding: 0 10px 0 4px;
 	font-size: 15px;
 	font-weight: 500;
-	color: var(--epix-accent);
+	/* Plain ink, not accent purple: the purple back label was near
+	   invisible on the dark background. */
+	color: var(--epix-text-mid);
 	border-radius: var(--epix-radius-md);
 	text-decoration: none;
+	transition: color 0.15s ease;
+}
+
+.health-screen .back:hover {
+	color: var(--epix-text);
+	transition: none;
 }
 
 .health-screen .back:active {
 	background-color: var(--epix-surface-2);
+	color: var(--epix-text);
 }
 
 .health-screen h2 {
@@ -5688,13 +5721,20 @@ code {
 @media screen and (min-width: 1025px) {
 	.content {
 		display: grid;
-		/* The reading column grows to a cap; past that the leftover width
-		   used to pile up on the right, pinning everything to the left on
-		   big monitors. Centering the track pair splits it evenly instead. */
-		grid-template-columns: minmax(380px, 420px) minmax(0, var(--read-max));
+		/* Rail pinned at the left edge; the feed centers itself in the
+		   remaining width, capped at --read-max. (The alternative is
+		   centering the pair as one block: second track minmax(0,
+		   var(--read-max)) plus justify-content: center, no .pane-feed
+		   centering.) */
+		grid-template-columns: minmax(380px, 420px) minmax(0, 1fr);
 		column-gap: 40px;
 		align-items: start;
-		justify-content: center;
+	}
+
+	.pane-feed {
+		width: 100%;
+		max-width: var(--read-max);
+		margin: 0 auto;
 	}
 
 	.pane-files,
