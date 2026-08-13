@@ -976,7 +976,7 @@ class FeedList {
     }
     return h("div#FeedList.FeedContainer", {
       classes: {
-        faded: Page.mute_list.visible || (Page.console_list && Page.console_list.visible)
+        faded: Page.mute_list.visible
       }
     }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
       has_feeds ? h("div.feeds-filters", [

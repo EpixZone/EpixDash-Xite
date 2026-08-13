@@ -307,10 +307,12 @@ class Dashboard {
     });
     if (errors.length > 2) {
       warnings = warnings.concat(errors.slice(-2).reverse());
+      // Plain row (no link): the dashboard console this used to open is
+      // gone; the full log lives in the wrapper sidebar's console.
       warnings.push({
         error: true,
         title: (errors.length - 2) + " more errors...",
-        href: "#EpixNet:Console"
+        href: null
       });
     } else {
       warnings = warnings.concat(errors);

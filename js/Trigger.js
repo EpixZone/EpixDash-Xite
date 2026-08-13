@@ -15,6 +15,11 @@ class Trigger {
 
   open() {
     this.active = true;
+    // The panel always opens on the main settings list, not wherever the
+    // language subview was left last time.
+    if (Page.head) {
+      Page.head.lang_open = false;
+    }
     // Opening the only overlay closes every lesser transient surface.
     if (window.visible_menu) {
       window.visible_menu.hide();
@@ -30,6 +35,14 @@ class Trigger {
       return;
     }
     this.active = false;
+    // The focused element is inside the panel that just left; hand focus
+    // back to the toggle so keyboard users are not dropped on body.
+    setTimeout(function() {
+      var el = document.querySelector("#Trigger .icon, .Trigger .icon");
+      if (el && document.activeElement === document.body) {
+        el.focus();
+      }
+    }, 80);
     return Page.projector.scheduleRender();
   }
 
@@ -76,13 +89,17 @@ class Trigger {
       h("div.corner-mask", {"aria-hidden": "true"}),
       h("a.icon", {
         "href": "#Menu",
-        "aria-label": "Menu",
+        "aria-label": _("Menu"),
         "aria-expanded": this.active ? "true" : "false",
         onclick: this.handleToggleClick,
         ontouchend: ""
       }, [this.renderIconHamburger()]),
+      // Click-only scrim: keyboard users close with Escape or the panel's
+      // own close button, so keep it out of the tab order and the tree.
       h("a.Trigger-backdrop", {
         "href": "#Close",
+        tabindex: "-1",
+        "aria-hidden": "true",
         onclick: this.handleToggleClick,
         ontouchend: ""
       }),
