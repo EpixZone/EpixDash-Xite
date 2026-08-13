@@ -985,7 +985,7 @@ code {
 	transition: transform 0.22s ease-out;
 }
 
-/* Brand row */
+/* Header row: title + close ×, back chevron in subviews (Notch design). */
 
 .panel .phead,
 .panel .panel-head,
@@ -993,30 +993,49 @@ code {
 	flex: none;
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 18px 16px 10px 16px;
-	font-size: 16px;
-	font-weight: 700;
-	letter-spacing: -0.01em;
+	gap: 4px;
+	padding: 10px 10px 6px 18px;
 	color: var(--epix-text);
 }
 
-.panel .phead img,
-.panel .panel-head img,
-.panel .brand img {
-	width: 20px;
-	height: 20px;
-	display: block;
-	flex: none;
+.panel .ptitle {
+	flex: 1;
+	min-width: 0;
+	font-size: 17px;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.panel .phead .version,
-.panel .panel-head .version,
-.panel .caption {
-	font-size: 11px;
-	font-weight: 400;
-	color: var(--epix-text-low);
-	margin-left: auto;
+.panel .pclose,
+.panel .pback {
+	flex: none;
+	width: 44px;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	color: var(--epix-text-mid);
+	text-decoration: none;
+}
+
+/* The back chevron leads the title, so it hangs into the left padding. */
+.panel .pback {
+	margin-left: -10px;
+}
+
+.panel .pclose:active,
+.panel .pback:active {
+	background-color: var(--epix-surface-2);
+}
+
+.panel .pclose svg,
+.panel .pback svg {
+	width: 18px;
+	height: 18px;
 }
 
 /* Scrollable middle */
@@ -1034,9 +1053,7 @@ code {
 /* Items: nav, actions, gated links — 46px rows, icon + label */
 
 .panel .pnav a,
-.panel .pnav button,
-.panel .prow,
-.panel .panel-item {
+.panel .pnav button {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -1053,41 +1070,165 @@ code {
 }
 
 .panel .pnav a svg,
-.panel .pnav button svg,
-.panel .prow svg,
-.panel .panel-item svg {
+.panel .pnav button svg {
 	flex: none;
 	color: var(--epix-text-low);
 }
 
 .panel .pnav a:active,
-.panel .pnav button:active,
-.panel .prow:active,
-.panel .panel-item:active {
+.panel .pnav button:active {
 	background-color: var(--epix-surface-2);
 }
 
 .panel .pnav [aria-current="true"],
-.panel .pnav .active,
-.panel .panel-item.active,
-.panel .prow.active {
+.panel .pnav .active {
 	background-color: var(--epix-accent-soft);
 	color: var(--epix-text);
 	font-weight: 600;
 }
 
 .panel .pnav [aria-current="true"] svg,
-.panel .pnav .active svg,
-.panel .panel-item.active svg {
+.panel .pnav .active svg {
 	color: var(--epix-accent);
 }
 
-.panel .prow .pval,
-.panel .panel-item .value {
-	margin-left: auto;
-	font-size: 13px;
+/* Settings rows (Notch design): full-width, hairline separators, icon +
+   label + optional right-aligned value + chevron. */
+
+.panel .srow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 50px;
+	padding: 4px 8px;
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--epix-text);
+	text-decoration: none;
+	border-bottom: 1px solid var(--epix-border);
+	transition: background-color 0.15s ease;
+}
+
+.panel .srow:active {
+	background-color: var(--epix-surface-2);
+}
+
+.panel .srow > svg {
+	flex: none;
+	width: 19px;
+	height: 19px;
+	color: var(--epix-text-low);
+}
+
+.panel .srow .grow {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.panel .srow .sval {
+	flex: none;
+	font-size: 13.5px;
 	font-weight: 400;
 	color: var(--epix-text-low);
+}
+
+.panel .srow .chev {
+	flex: none;
+	display: flex;
+	color: var(--epix-text-low);
+}
+
+.panel .srow .chev svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Labelled control blocks: "Order by" / "Theme" + their segmented control. */
+
+.panel .srow-static {
+	padding: 10px 8px 14px;
+	border-bottom: 1px solid var(--epix-border);
+}
+
+.panel .slab {
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--epix-text);
+}
+
+/* The app-wide .seg restyled for the panel column: tighter, full width. */
+.panel .seg.pseg {
+	display: flex;
+	margin: 10px 0 0;
+	min-height: 44px;
+	padding: 3px;
+	border: 1px solid var(--epix-border);
+	border-radius: 10px;
+	gap: 2px;
+}
+
+.panel .seg.pseg a {
+	min-height: 36px;
+	border-radius: 7px;
+	font-size: 13px;
+	font-weight: 600;
+	padding: 0 2px;
+}
+
+/* Language picker rows: native name + muted code + checkmark. */
+
+.panel .lrow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 48px;
+	padding: 4px 8px;
+	font-size: 14.5px;
+	font-weight: 500;
+	color: var(--epix-text);
+	text-decoration: none;
+	border-bottom: 1px solid var(--epix-border);
+}
+
+.panel .lrow:active {
+	background-color: var(--epix-surface-2);
+}
+
+.panel .lrow .lname {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.panel .lrow .lcode {
+	flex: none;
+	font-size: 11.5px;
+	color: var(--epix-text-low);
+}
+
+.panel .lrow .lcheck {
+	flex: none;
+	width: 18px;
+	display: flex;
+	color: var(--epix-accent);
+}
+
+.panel .lrow .lcheck svg {
+	width: 17px;
+	height: 17px;
+}
+
+.panel .lrow.selected {
+	font-weight: 600;
 }
 
 .panel .danger,
@@ -1121,85 +1262,20 @@ code {
 	margin: 8px 6px;
 }
 
-/* Radio rows (sort by / theme) */
+/* The last row before the version footer keeps no separator. */
 
-.panel .pradio,
-.panel .radio-row {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	width: 100%;
-	box-sizing: border-box;
-	min-height: 44px;
-	padding: 0 10px;
-	border-radius: var(--epix-radius-md);
-	font-size: 14px;
-	color: var(--epix-text-mid);
-	text-decoration: none;
-	position: relative;
+.panel .pscroll > a.srow:last-of-type,
+.panel .pscroll > a.lrow:last-of-type {
+	border-bottom: none;
 }
 
-.panel .pradio:active,
-.panel .radio-row:active {
-	background-color: var(--epix-surface-2);
-}
+/* Centered version footer, scrolls with the content (Notch design). */
 
-.panel .pradio .dot,
-.panel .radio-row .dot {
-	width: 18px;
-	height: 18px;
-	box-sizing: border-box;
-	border-radius: 50%;
-	border: 2px solid var(--epix-border-strong);
-	flex: none;
-	position: relative;
-}
-
-.panel .pradio.selected,
-.panel .radio-row.selected {
-	color: var(--epix-text);
-	font-weight: 600;
-}
-
-.panel .pradio.selected .dot,
-.panel .radio-row.selected .dot {
-	border-color: var(--epix-accent);
-}
-
-.panel .pradio.selected .dot::after,
-.panel .radio-row.selected .dot::after {
-	content: "";
-	position: absolute;
-	top: 3px;
-	left: 3px;
-	right: 3px;
-	bottom: 3px;
-	border-radius: 50%;
-	background-color: var(--epix-accent);
-}
-
-/* The Head-built chip radios (theme / 22-language grid incl. the pt/pt-br
-   pair) reuse the .menu-radio markup inside the panel. */
-
-.panel .menu-radio {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
-	padding: 2px 12px 8px 12px;
-	line-height: normal;
-	white-space: normal;
-}
-
-/* Footer */
-
-.panel .pfoot,
-.panel .panel-foot,
-.panel .footer {
-	flex: none;
-	padding: 10px 20px calc(14px + env(safe-area-inset-bottom, 0px)) 20px;
+.panel .pversion {
+	padding: 16px 8px calc(10px + env(safe-area-inset-bottom, 0px));
 	font-size: 12px;
 	color: var(--epix-text-low);
-	border-top: 1px solid var(--epix-border);
+	text-align: center;
 }
 
 
@@ -1289,59 +1365,6 @@ code {
 .menu-item:active:not(.noaction).selected:before,
 .menu-item:focus:not(.noaction).selected:before {
 	color: var(--epix-on-accent);
-}
-
-.menu-radio {
-	white-space: normal;
-	line-height: 26px;
-}
-
-.menu-radio a {
-	background-color: var(--epix-surface-2);
-	width: auto;
-	min-width: 34px;
-	padding: 6px 10px;
-	box-sizing: border-box;
-	text-align: center;
-	margin-top: 2px;
-	margin-bottom: 2px;
-	color: var(--epix-text-mid);
-	font-weight: 600;
-	text-decoration: none;
-	font-size: 12px;
-	border-radius: var(--epix-radius-sm);
-	transition: all 0.3s;
-	text-transform: uppercase;
-	display: inline-block;
-}
-
-.menu-radio a:hover,
-.menu-radio a.selected {
-	transition: none;
-	background-color: var(--epix-accent) !important;
-	color: var(--epix-on-accent) !important;
-}
-
-.menu-radio a.long {
-	font-size: 10px;
-}
-
-.menu-radio .lang-pair {
-	display: inline-flex;
-	width: auto;
-	margin-top: 2px;
-	margin-bottom: 2px;
-	gap: 0;
-}
-
-.menu-radio .lang-pair a.half {
-	flex: 1;
-	width: auto;
-	min-width: 0;
-	font-size: 10px;
-	text-align: center;
-	margin: 0;
-	white-space: nowrap;
 }
 
 .menu .status {
@@ -2375,12 +2398,15 @@ code {
 	display: block;
 }
 
-/* The right margin is the pill's minimum breathing room: once the row is too
-   narrow for margin-left:auto to leave any slack, this is the only gap left. */
+/* Peers pin to the row's right edge (matching the compact list) and the
+   status pill slots between the date and them: peers absorb the slack with
+   an auto margin; when a pill is visible the :has() rule hands the slack to
+   the pill's own auto margin and keeps a fixed 12px pill-to-peers gap. */
 
 .SiteList .site .inner .details .peers {
-	margin-left: 12px;
-	margin-right: 10px;
+	order: 2;
+	margin-left: auto;
+	margin-right: 0;
 	/* Fixed column: wide enough for the person glyph plus "999k+" (the
 	   formatter's widest output). Number and glyph pack right - the icon
 	   sits at a fixed right position with the count against it, so the
@@ -2388,6 +2414,10 @@ code {
 	   and the date column's endpoint stays put. */
 	width: 50px;
 	justify-content: flex-end;
+}
+
+.SiteList .site .inner .details:has(.message.visible) .peers {
+	margin-left: 12px;
 }
 
 .SiteList .site .inner .details .modified {
@@ -2662,10 +2692,13 @@ code {
 	max-width: 118px;
 }
 
-/* The pill rides first here, so the peers group's pill breathing room from
-   the two-line view is just a stray gap - drop it. */
+/* The pill rides first here, so the peers group needs no pill breathing
+   room on the right - and the date gap must be the fixed 12px again: the
+   base rule's auto margin computes to zero in this inline flow (dmeta is a
+   block here, not display:contents). */
 
 #SiteList.compact .site .inner .details .peers {
+	margin-left: 12px;
 	margin-right: 0;
 }
 
@@ -3786,14 +3819,13 @@ code {
 }
 
 
-/* ---- mute list + console cards ---- */
+/* ---- mute list card ---- */
 
-/* Reachable via panel items; they render in the feed pane as cards above
+/* Reachable via a panel item; renders in the feed pane as a card above
    the feed. Hidden state stays a hard clamp so the JS max-height measure
    (or its absence) can't leave a stray card on screen. */
 
-#MuteList,
-#ConsoleList {
+#MuteList {
 	position: relative;
 	z-index: 5;
 	box-sizing: border-box;
@@ -3812,24 +3844,21 @@ code {
 	transition: all 0.4s cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-#MuteList:not(.visible),
-#ConsoleList:not(.visible) {
+#MuteList:not(.visible) {
 	max-height: 0px !important;
 	margin-top: 0;
 	margin-bottom: 0;
 	border-width: 0;
 }
 
-#MuteList.visible,
-#ConsoleList.visible {
+#MuteList.visible {
 	opacity: 1;
 	transform: none;
 	pointer-events: all;
 	padding-bottom: 24px;
 }
 
-.mute-empty,
-.console-empty {
+.mute-empty {
 	text-align: center;
 	font-size: 13px;
 	text-transform: uppercase;
@@ -3838,9 +3867,7 @@ code {
 	padding: 20px;
 }
 
-.mute-hide,
-.console-hide,
-.console-refresh {
+.mute-hide {
 	color: var(--epix-text-mid);
 	text-transform: uppercase;
 	font-size: 12px;
@@ -3854,22 +3881,14 @@ code {
 	transition: all 0.3s;
 }
 
-.mute-hide:hover,
-.console-hide:hover,
-.console-refresh:hover {
+.mute-hide:hover {
 	color: var(--epix-text);
 	transition: none;
 }
 
-.mute-hide:active,
-.console-hide:active {
+.mute-hide:active {
 	background-color: var(--epix-surface-2);
 	transition: none;
-}
-
-.console-header {
-	padding: 0px;
-	border-bottom: 1px solid var(--epix-border);
 }
 
 .mute {
@@ -4006,54 +4025,6 @@ code {
 #MuteList .include .action {
 	vertical-align: 0px;
 }
-
-/* Console log rows */
-
-.log {
-	padding: 10px 20px;
-	border-top: 1px solid var(--epix-border);
-	padding-right: 40px;
-	transition: all 0.3s;
-}
-
-.log.log-head {
-	font-weight: 600;
-	font-size: 12px;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	border-top: none;
-	background-color: var(--epix-surface-2);
-	color: var(--epix-text-mid);
-}
-
-.log.log-error {
-	background-color: var(--epix-danger-soft);
-	border-left: 3px solid var(--epix-danger);
-	color: var(--epix-ink-soft);
-}
-
-.log.log-warning {
-	background-color: var(--epix-warning-soft);
-	border-left: 3px solid var(--epix-warning);
-	color: var(--epix-ink-soft);
-}
-
-.log.log-info {
-	background-color: var(--epix-info-soft);
-	border-left: 3px solid var(--epix-info);
-	color: var(--epix-ink-soft);
-}
-
-.log .log-col {
-	display: inline-block;
-	margin-right: 5px;
-	overflow: hidden;
-	vertical-align: top;
-	white-space: normal;
-	font-family: var(--epix-font-mono);
-	font-size: 12px;
-}
-
 
 /* ---- files ---- */
 
@@ -5823,11 +5794,6 @@ code {
 		max-width: none;
 	}
 
-	.log .log-col {
-		display: block;
-		width: 100% !important;
-	}
-
 	/* Files table re-flows into two-line rows: name line, then a small meta
 	   line - same DOM, no sideways scrolling. */
 	#PageFiles .files .thead .td.site,
@@ -5992,8 +5958,7 @@ code {
 		display: inline;
 	}
 
-	.mute,
-	.log {
+	.mute {
 		padding-left: 14px;
 		padding-right: 14px;
 	}

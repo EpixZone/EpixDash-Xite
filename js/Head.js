@@ -9,19 +9,16 @@ class Head {
     this.handleOrderbyClick = this.handleOrderbyClick.bind(this);
     this.handleUpdateAllClick = this.handleUpdateAllClick.bind(this);
     this.handleBackupClick = this.handleBackupClick.bind(this);
-    this.handleConsoleClick = this.handleConsoleClick.bind(this);
     this.handleCreateSiteClick = this.handleCreateSiteClick.bind(this);
     this.renderMenuTheme = this.renderMenuTheme.bind(this);
     this.handleThemeClick = this.handleThemeClick.bind(this);
     this.renderMenuLanguage = this.renderMenuLanguage.bind(this);
-    this.handleLanguageClick = this.handleLanguageClick.bind(this);
     this.handleSegSitesClick = this.handleSegSitesClick.bind(this);
     this.handleSegFeedClick = this.handleSegFeedClick.bind(this);
     this.handleNavSitesClick = this.handleNavSitesClick.bind(this);
     this.handleNavFilesClick = this.handleNavFilesClick.bind(this);
     this.handleNavStatsClick = this.handleNavStatsClick.bind(this);
     this.handleHealthClick = this.handleHealthClick.bind(this);
-    this.handlePanelConsoleClick = this.handlePanelConsoleClick.bind(this);
     this.handlePanelBlocksClick = this.handlePanelBlocksClick.bind(this);
     this.handlePanelUpdateAllClick = this.handlePanelUpdateAllClick.bind(this);
     this.handlePanelCreateClick = this.handlePanelCreateClick.bind(this);
@@ -33,11 +30,58 @@ class Head {
     this.handleOrderbyModified = () => { this.handleOrderbyClick("modified"); return false; };
     this.handleOrderbyAddtime = () => { this.handleOrderbyClick("addtime"); return false; };
     this.handleOrderbySize = () => { this.handleOrderbyClick("size"); return false; };
+    this.handleLangOpen = this.handleLangOpen.bind(this);
+    this.handleLangBack = this.handleLangBack.bind(this);
+    this.handleLangPick = this.handleLangPick.bind(this);
+    // Whether the panel shows the language picker subview instead of the
+    // main settings list. Trigger.open() resets it so the panel always
+    // opens on the main view.
+    this.lang_open = false;
   }
 
-  handleLanguageClick(e) {
-    var lang;
-    lang = e.target.hash.replace("#", "");
+  // Native names, so someone stuck on the English default recognises their
+  // own language in its own script (the reason the row wears a globe icon).
+  langName(code) {
+    var names = {
+      "ar": "العربية", "da": "Dansk", "de": "Deutsch", "en": "English",
+      "es": "Español", "fa": "فارسی", "fr": "Français", "hu": "Magyar",
+      "it": "Italiano", "jp": "日本語", "kr": "한국어", "nl": "Nederlands",
+      "pl": "Polski", "pt": "Português", "pt-br": "Português (Brasil)",
+      "ru": "Русский", "sk": "Slovenčina", "sl": "Slovenščina",
+      "tr": "Türkçe", "uk": "Українська", "zh": "中文（简体）", "zh-tw": "中文（繁體）"
+    };
+    return names[code] || code;
+  }
+
+  handleLangOpen() {
+    this.lang_open = true;
+    Page.projector.scheduleRender();
+    // The clicked row is about to leave the DOM, which would drop focus to
+    // body; hand it to the subview's back button once it renders.
+    this.focusAfterRender(".panel .pback");
+    return false;
+  }
+
+  handleLangBack() {
+    this.lang_open = false;
+    Page.projector.scheduleRender();
+    this.focusAfterRender('.panel .srow[href="#Language"]');
+    return false;
+  }
+
+  focusAfterRender(selector) {
+    setTimeout(function() {
+      var el = document.querySelector(selector);
+      if (el) {
+        el.focus();
+      }
+    }, 80);
+  }
+
+  handleLangPick(e) {
+    // currentTarget, not target: the row has name/code span children and
+    // the click usually lands on one of them.
+    var lang = e.currentTarget.hash.replace("#", "");
     Page.cmd("configSet", ["language", lang], function() {
       Page.server_info.language = lang;
       loadLanguage(lang);
@@ -46,49 +90,54 @@ class Head {
     return false;
   }
 
-  renderMenuLanguage() {
-    var lang, langs, ref;
-    langs = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw", "kr"];
+  // The language codes the node ships translations for, plus the current
+  // language when it is something exotic (so the picker can still show it).
+  languageCodes() {
+    var langs, ref;
+    langs = ["ar", "da", "de", "en", "es", "fa", "fr", "hu", "it", "jp", "kr", "nl", "pl", "pt", "pt-br", "ru", "sk", "sl", "tr", "uk", "zh", "zh-tw"];
     if (Page.server_info.language && Page.server_info.language.length >= 2 && (ref = Page.server_info.language, langs.indexOf(ref) < 0)) {
       langs.push(Page.server_info.language);
     }
-    return h("div.menu-radio", h("div", _("Language: ")), (() => {
-      var i, len, results;
-      results = [];
-      for (i = 0, len = langs.length; i < len; i++) {
-        lang = langs[i];
-        if (lang === "pt") {
-          results.push([
-            h("span.lang-pair", [
-              h("a.half", {
-                href: "#pt",
-                onclick: this.handleLanguageClick,
-                classes: { selected: Page.server_info.language === "pt" }
-              }, "pt"),
-              h("a.half", {
-                href: "#pt-br",
-                onclick: this.handleLanguageClick,
-                classes: { selected: Page.server_info.language === "pt-br" }
-              }, "pt-br")
-            ]), " "
-          ]);
-        } else if (lang === "pt-br") {
-          continue;
-        } else {
-          results.push([
-            h("a", {
-              href: "#" + lang,
-              onclick: this.handleLanguageClick,
-              classes: {
-                selected: Page.server_info.language === lang,
-                long: lang.length > 2
-              }
-            }, lang), " "
-          ]);
-        }
-      }
-      return results;
-    })());
+    return langs;
+  }
+
+  currentLanguage() {
+    return Page.server_info.language || "en";
+  }
+
+  // The settings row: globe icon + the current language's native name +
+  // chevron into the picker subview. The globe is the wayfinding for
+  // someone who landed on the English default and reads none of it.
+  renderMenuLanguage() {
+    return h("a.srow", {
+      key: "language",
+      href: "#Language",
+      onclick: this.handleLangOpen
+    }, [
+      this.icon("globe"),
+      h("span.grow", _("Language")),
+      h("span.sval", this.langName(this.currentLanguage())),
+      h("span.chev", [this.icon("chev")])
+    ]);
+  }
+
+  // The picker subview: one row per language, native name first, code as
+  // the muted secondary, checkmark on the active one.
+  renderLanguageList() {
+    var current = this.currentLanguage();
+    return this.languageCodes().map((lang) => {
+      return h("a.lrow", {
+        href: "#" + lang,
+        key: lang,
+        "aria-current": current === lang ? "true" : "false",
+        onclick: this.handleLangPick,
+        classes: {selected: current === lang}
+      }, [
+        h("span.lname", this.langName(lang)),
+        h("span.lcode.mono", lang),
+        h("span.lcheck", current === lang ? [this.icon("check")] : [])
+      ]);
+    });
   }
 
   handleThemeClick(e) {
@@ -123,8 +172,11 @@ class Head {
     return false;
   }
 
+  // Theme as a labelled segmented control (the Notch settings design).
+  // The <a> children stay text-only on purpose: handleThemeClick reads
+  // e.target.hash, and a child element would swallow the hash.
   renderMenuTheme() {
-    var ref, theme, theme_names, theme_selected, themes;
+    var ref, theme_names, theme_selected, themes;
     themes = ["system", "light", "dark"];
     theme_names = {"system": _("System"), "light": _("Light"), "dark": _("Dark")};
     if (Page.server_info.user_settings.use_system_theme) {
@@ -135,24 +187,34 @@ class Head {
         theme_selected = "system";
       }
     }
-    return h("div.menu-radio.menu-themes", h("div", _("Theme: ")), (() => {
-      var i, len, results;
-      results = [];
-      for (i = 0, len = themes.length; i < len; i++) {
-        theme = themes[i];
-        results.push([
-          h("a", {
-            href: "#" + theme,
-            onclick: this.handleThemeClick,
-            classes: {
-              selected: theme_selected === theme,
-              long: true
-            }
-          }, theme_names[theme] || theme), " "
-        ]);
-      }
-      return results;
-    })());
+    return h("div.srow-static", {key: "theme"}, [
+      h("div.slab", _("Theme")),
+      h("div.seg.pseg", {role: "group", "aria-label": _("Theme")}, themes.map((t) => {
+        return h("a", {
+          href: "#" + t,
+          key: t,
+          role: "button",
+          "aria-pressed": theme_selected === t ? "true" : "false",
+          onclick: this.handleThemeClick,
+          classes: {active: theme_selected === t}
+        }, theme_names[t] || t);
+      }))
+    ]);
+  }
+
+  // Order-by as the same labelled segmented control. Same one-per-option
+  // bound handlers the old radio rows used.
+  renderMenuOrderby() {
+    var orderby = (Page.settings || {}).sites_orderby || "modified";
+    return h("div.srow-static", {key: "orderby"}, [
+      h("div.slab", _("Order by")),
+      h("div.seg.pseg", {role: "group", "aria-label": _("Order by")}, [
+        h("a", {href: "#modified", key: "modified", role: "button", "aria-pressed": orderby === "modified" ? "true" : "false", onclick: this.handleOrderbyModified, classes: {active: orderby === "modified"}}, _("Updated")),
+        h("a", {href: "#peers", key: "peers", role: "button", "aria-pressed": orderby === "peers" ? "true" : "false", onclick: this.handleOrderbyPeers, classes: {active: orderby === "peers"}}, _("Peers")),
+        h("a", {href: "#addtime", key: "addtime", role: "button", "aria-pressed": orderby === "addtime" ? "true" : "false", onclick: this.handleOrderbyAddtime, classes: {active: orderby === "addtime"}}, _("Added")),
+        h("a", {href: "#size", key: "size", role: "button", "aria-pressed": orderby === "size" ? "true" : "false", onclick: this.handleOrderbySize, classes: {active: orderby === "size"}}, _("Size"))
+      ])
+    ]);
   }
 
   handleCreateSiteClick() {
@@ -205,11 +267,6 @@ class Head {
     return Page.mute_list.show();
   }
 
-  handleConsoleClick() {
-    Page.projector.replace($("#ConsoleList"), Page.console_list.render);
-    return Page.console_list.show();
-  }
-
   handleShutdownEpixNetClick() {
     return Page.cmd("wrapperConfirm", ["Are you sure?", "Shut down EpixNet"], () => {
       return Page.cmd("serverShutdown");
@@ -255,15 +312,6 @@ class Head {
     if (Page.dashboard && Page.dashboard.openHealth) {
       Page.dashboard.openHealth();
     }
-    return false;
-  }
-
-  handlePanelConsoleClick() {
-    // The console panel renders in the feed pane, so land there first.
-    Page.setSegFeed(true);
-    this.goSitesMode();
-    this.closePanel();
-    this.handleConsoleClick();
     return false;
   }
 
@@ -317,7 +365,6 @@ class Head {
       folder: "M3 5.5A1.5 1.5 0 014.5 4h3.6l1.8 2h5.6A1.5 1.5 0 0117 7.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 14.5z",
       bars: "M4 16.5v-6M10 16.5v-13M16 16.5v-9",
       pulse: "M2.5 10h3l2-5 3.5 10 2.5-7 1 2h3",
-      terminal: "M4 6l4 4-4 4M10 15h6",
       shield: "M10 2.5l6 2.5v4c0 4-2.7 6.9-6 8.5-3.3-1.6-6-4.5-6-8.5V5z",
       refresh: "M16 8A6.3 6.3 0 004.2 6.2M4 3.5v3h3M4 12a6.3 6.3 0 0011.8 1.8M16 16.5v-3h-3",
       plus: "M10 4v12M4 10h12",
@@ -325,7 +372,13 @@ class Head {
       hex: "M10 2.5l6.5 3.75v7.5L10 17.5l-6.5-3.75v-7.5z",
       save: "M4 3.5h9.5L16 6v10.5H4zM6.5 3.5V8h7V3.5M7 12h6v4.5H7z",
       dir: "M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12",
-      power: "M10 3v7M5.5 6.2a6.3 6.3 0 108.9 0"
+      power: "M10 3v7M5.5 6.2a6.3 6.3 0 108.9 0",
+      globe: "M10 17.5a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM2.5 10h15M10 2.5c1.9 2 3 4.6 3 7.5s-1.1 5.5-3 7.5c-1.9-2-3-4.6-3-7.5s1.1-5.5 3-7.5z",
+      sliders: "M3 6.5h7.3M15.1 6.5H17M3 13.5h1.9M8.7 13.5H17M14.9 6.5a1.9 1.9 0 10-3.8 0 1.9 1.9 0 003.8 0zM8.9 13.5a1.9 1.9 0 10-3.8 0 1.9 1.9 0 003.8 0z",
+      chev: "M7.5 5.5l4.5 4.5-4.5 4.5",
+      back: "M12.5 5.5L8 10l4.5 4.5",
+      check: "M4.5 10.5l3.5 3.5 7.5-8",
+      x: "M5.5 5.5l9 9M14.5 5.5l-9 9"
     };
     return h("svg", {
       width: "20", height: "20", viewBox: "0 0 20 20", fill: "none", "aria-hidden": "true"
@@ -340,19 +393,13 @@ class Head {
     ]);
   }
 
-  radioRow(label, selected, onclick) {
-    return h("a.pradio", {
-      href: "#" + label,
-      classes: { selected: selected },
-      onclick: onclick,
-      onmousedown: Page.returnFalse
-    }, [h("span.dot"), label]);
-  }
-
-  // The panel's inner content. Rendered by Trigger inside aside.panel;
-  // every gating rule from the old settings menu survives here verbatim.
+  // The panel's inner content, in the Notch settings design: a titled
+  // header with a close ×, full-width rows with hairline separators,
+  // labelled segmented controls, and a centered version footer. Rendered
+  // by Trigger inside aside.panel; every gating rule from the old settings
+  // menu survives here verbatim.
   renderPanelContent(trigger) {
-    var base, orderby, server_info;
+    var base, server_info;
     server_info = Page.server_info;
     if (!server_info) {
       return [];
@@ -360,89 +407,114 @@ class Head {
     if ((base = Page.settings || {}).sites_orderby == null) {
       base.sites_orderby = "modified";
     }
-    orderby = (Page.settings || {}).sites_orderby || "modified";
     var multiuser_ok = !server_info.multiuser || server_info.multiuser_admin;
+    // The language picker replaces the whole panel body; back returns to
+    // the main list without dropping the panel.
+    if (this.lang_open) {
+      return [
+        h("div.phead", [
+          h("a.pback", {
+            href: "#Back",
+            "aria-label": _("Back"),
+            onclick: this.handleLangBack
+          }, [this.icon("back")]),
+          h("span.ptitle", [_("Language")]),
+          h("a.pclose", {
+            href: "#Close",
+            "aria-label": _("Close"),
+            onclick: trigger.handleToggleClick
+          }, [this.icon("x")])
+        ]),
+        h("div.pscroll", this.renderLanguageList())
+      ];
+    }
     return [
       h("div.phead", [
-        h("img", { src: "img/logo.png", alt: "" }),
-        h("span", [_("EpixNet Dashboard")]),
-        h("span.version", ["v" + server_info.version])
+        h("span.ptitle", [_("Settings")]),
+        h("a.pclose", {
+          href: "#Close",
+          "aria-label": _("Close"),
+          onclick: trigger.handleToggleClick
+        }, [this.icon("x")])
       ]),
       h("div.pscroll", [
         h("div.pnav", [
           h("a", {
             href: "?",
             classes: { active: Page.mode === "Sites" },
+            "aria-current": Page.mode === "Sites" ? "page" : "false",
             onclick: this.handleNavSitesClick
           }, [this.icon("grid"), _("Xites")]),
           h("a", {
             href: "?Files",
             classes: { active: Page.mode === "Files" },
+            "aria-current": Page.mode === "Files" ? "page" : "false",
             onclick: this.handleNavFilesClick
           }, [this.icon("folder"), _("Files")]),
           h("a", {
             href: "?Stats",
             classes: { active: Page.mode === "Stats" },
+            "aria-current": Page.mode === "Stats" ? "page" : "false",
             onclick: this.handleNavStatsClick
           }, [this.icon("bars"), _("Stats")])
         ]),
         h("div.pdiv"),
-        h("a.prow", {
+        h("a.srow", {
+          key: "health",
           href: "#Health",
           onclick: this.handleHealthClick
-        }, [this.icon("pulse"), _("Network health")]),
-        h("a.prow", {
-          href: "#Console",
-          onclick: this.handlePanelConsoleClick
-        }, [this.icon("terminal"), _("Console")]),
-        h("a.prow", {
+        }, [this.icon("pulse"), h("span.grow", _("Network health")), h("span.chev", [this.icon("chev")])]),
+        h("a.srow", {
+          key: "blocks",
           href: "#Blocks",
           onclick: this.handlePanelBlocksClick
-        }, [this.icon("shield"), _("Manage blocks")]),
-        h("div.pdiv"),
-        this.radioRow(_("Order xites by update time"), orderby === "modified", this.handleOrderbyModified),
-        this.radioRow(_("Order xites by peers"), orderby === "peers", this.handleOrderbyPeers),
-        this.radioRow(_("Order xites by add time"), orderby === "addtime", this.handleOrderbyAddtime),
-        this.radioRow(_("Order xites by size"), orderby === "size", this.handleOrderbySize),
-        h("div.pdiv"),
-        this.renderMenuTheme(),
-        this.renderMenuLanguage(),
-        h("div.pdiv"),
-        h("a.prow", {
+        }, [this.icon("shield"), h("span.grow", _("Manage blocks")), h("span.chev", [this.icon("chev")])]),
+        h("a.srow", {
+          key: "updateall",
           href: "#UpdateAll",
           onclick: this.handlePanelUpdateAllClick
-        }, [this.icon("refresh"), _("Update all xites")]),
-        h("a.prow", {
+        }, [this.icon("refresh"), h("span.grow", _("Update all xites"))]),
+        this.renderMenuOrderby(),
+        this.renderMenuTheme(),
+        this.renderMenuLanguage(),
+        h("a.srow", {
+          key: "create",
           href: "#Create",
           onclick: this.handlePanelCreateClick
-        }, [this.icon("plus"), _("Create new, empty xite")]),
-        server_info.plugins.indexOf("UiConfig") >= 0 ? h("a.prow", {
+        }, [this.icon("plus"), h("span.grow", _("Create new xite")), h("span.chev", [this.icon("chev")])]),
+        server_info.plugins.indexOf("UiConfig") >= 0 ? h("a.srow", {
+          key: "config",
           href: "/Config"
-        }, [this.icon("gear"), _("Configuration")]) : void 0,
-        server_info.plugins.indexOf("UiPluginManager") >= 0 ? h("a.prow", {
+        }, [this.icon("sliders"), h("span.grow", _("Configuration")), h("span.chev", [this.icon("chev")])]) : void 0,
+        server_info.plugins.indexOf("UiPluginManager") >= 0 ? h("a.srow", {
+          key: "plugins",
           href: "/Plugins"
-        }, [this.icon("hex"), _("Plugins")]) : void 0,
-        server_info.plugins.indexOf("Stats") >= 0 ? h("a.prow", {
+        }, [this.icon("hex"), h("span.grow", _("Plugins")), h("span.chev", [this.icon("chev")])]) : void 0,
+        server_info.plugins.indexOf("Stats") >= 0 ? h("a.srow", {
+          key: "nodestats",
           href: "/Stats"
-        }, [this.icon("bars"), _("Node Stats")]) : void 0,
+        }, [this.icon("bars"), h("span.grow", _("Node stats")), h("span.chev", [this.icon("chev")])]) : void 0,
         // The backend refuses /Backup on a restricted gateway or a NoNewSites
         // node, and clients on v0.3.24 or older have no /Backup page at all.
         server_info.plugins.indexOf("UiBackup") >= 0 && !server_info.ui_restrict &&
           this.isVersionNewerThan(server_info.version, "0.3.24") &&
-          server_info.plugins.indexOf("NoNewSites") < 0 && multiuser_ok ? h("a.prow", {
+          server_info.plugins.indexOf("NoNewSites") < 0 && multiuser_ok ? h("a.srow", {
+          key: "backup",
           href: "/Backup"
-        }, [this.icon("save"), _("Backup & Restore")]) : void 0,
-        multiuser_ok ? h("a.prow", {
+        }, [this.icon("save"), h("span.grow", _("Backup & Restore")), h("span.chev", [this.icon("chev")])]) : void 0,
+        multiuser_ok ? h("a.srow", {
+          key: "datadir",
           href: "#DataDir",
           onclick: this.handlePanelBackupClick
-        }, [this.icon("dir"), _("Show data directory")]) : void 0,
+        }, [this.icon("dir"), h("span.grow", _("Show data directory"))]) : void 0,
         // A read-only gateway refuses serverShutdown, so don't offer it there.
-        multiuser_ok && !server_info.ui_restrict ? h("a.prow.danger", {
+        multiuser_ok && !server_info.ui_restrict ? h("a.srow.danger", {
+          key: "shutdown",
           href: "#Shutdown",
           onclick: this.handlePanelShutdownClick
-        }, [this.icon("power"), _("Shut down EpixNet")]) : void 0
-      ]),
-      h("div.pfoot", [_("Version ") + server_info.version])
+        }, [this.icon("power"), h("span.grow", _("Shut down EpixNet"))]) : void 0,
+        h("div.pversion", ["EpixNet v" + server_info.version])
+      ])
     ];
   }
 
