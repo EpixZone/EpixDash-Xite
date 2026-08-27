@@ -162,6 +162,12 @@ class Site {
       // so an `updated` event arriving mid-download does not end the countdown.
       this.setMessage(_("Updating: ") + files_left + _(" left"));
       this.message_progress = val;
+    } else if (event === "deleting" || phase === "deleting") {
+      // The node is removing this xite (locks, durable intent, directory
+      // deletion, Store handover) - visible seconds on a synced xite. The
+      // phase rides every siteInfo, so the pill survives a reload and the
+      // row reads as working until it disappears.
+      this.setMessage(_("Deleting…"), "checking");
     } else if (event === "updating" || phase === "updating") {
       // A peer answered with something newer: this xite really is out of date.
       // Verifying/staging has nothing countable, so no bar - better absent
@@ -506,12 +512,20 @@ class Site {
   }
 
   deleteSite(onSuccess) {
+    // Removal takes visible time on a synced xite (locks, durable intent,
+    // directory deletion, Store handover): show it immediately. The node
+    // pushes the same "deleting" phase on every siteInfo for the duration,
+    // so the pill also survives a reload mid-delete.
+    this.setMessage(_("Deleting…"), "checking");
+    Page.projector.scheduleRender();
     // Wait for the server: only remove the row when the delete actually
     // succeeded, so a refusal (e.g. NoNewSites) leaves the site in place.
     // The node surfaces policy refusals as their own notification.
     Page.cmd("siteDelete", { "address": this.row.address }, (res) => {
       var ref;
       if (res && res.error) {
+        this.setMessage(null);
+        Page.projector.scheduleRender();
         return false; // refused - keep the row; the node showed why
       }
       if (onSuccess) {
