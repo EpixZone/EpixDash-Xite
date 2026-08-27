@@ -338,7 +338,10 @@ class EpixDash extends EpixFrame {
   }
 
   reloadAnnouncerStats(cb) {
-    return this.cmd("announcerStats", {}, (announcer_stats) => {
+    // planned:true also returns overlay-gated trackers (waiting on Tor/I2P),
+    // so the health drawer lists what the node is going to try instead of
+    // sitting on "Waiting for trackers" with an empty card during boot.
+    return this.cmd("announcerStats", {planned: true}, (announcer_stats) => {
       this.announcer_stats = announcer_stats;
       Page.projector.scheduleRender();
       return typeof cb === "function" ? cb() : void 0;
@@ -427,8 +430,10 @@ class EpixDash extends EpixFrame {
     // command, and the tracker readouts prefer announcer_stats - so keep it in
     // step or the pushes leave the counts on whatever the last poll returned.
     // Empty means the node blanked them (non-admin xite); keep what we have.
+    // Merged, not replaced: pushes exclude overlay-gated entries, and a
+    // replace would drop the gated rows a planned poll added to the drawer.
     if (announcer_info.stats && Object.keys(announcer_info.stats).length) {
-      this.announcer_stats = announcer_info.stats;
+      this.announcer_stats = Object.assign({}, this.announcer_stats || {}, announcer_info.stats);
     }
     return this.projector.scheduleRender();
   }

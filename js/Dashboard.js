@@ -117,7 +117,12 @@ class Dashboard {
       if (val.status === "announced") {
         num_ok += 1;
       }
-      num_total += 1;
+      // Only trackers with a verdict rate. Queued, announcing, and
+      // overlay-gated rows are listed in the drawer, but counting them here
+      // would read a booting node as Bad over announces still in flight.
+      if (val.status === "announced" || val.status === "error") {
+        num_total += 1;
+      }
     }
     return {ok: num_ok, total: num_total};
   }
@@ -343,7 +348,11 @@ class Dashboard {
     }
     if (Page.announcer_info || Page.announcer_stats) {
       counts = this.trackerCounts();
-      parts.push(h("span.sum-seg.sum-trackers", {key: "trackers"}, counts.ok + "/" + counts.total));
+      // "0/0" while every tracker is still queued or announcing says nothing;
+      // the chip's own label already reads "Waiting for trackers" then.
+      if (counts.total > 0) {
+        parts.push(h("span.sum-seg.sum-trackers", {key: "trackers"}, counts.ok + "/" + counts.total));
+      }
     }
     if (!parts.length) {
       return null;
@@ -584,6 +593,13 @@ class Dashboard {
     if (stat.last_error) {
       meta += " · " + stat.last_error + " (" + Time.since(stat.time_last_error) + ")";
     }
+    // A gated tracker was skipped, not tried: its overlay (Tor/I2P) is not
+    // up yet. An announcing one is being tried right now.
+    if (stat.status === "gated") {
+      meta += " · " + _("waiting for Tor/I2P");
+    } else if (stat.status === "announcing") {
+      meta += " · " + _("announcing…");
+    }
 
     return h("div.trrow", {key: tracker_url, title: title_text}, [
       h("div.trtop", [
@@ -631,7 +647,9 @@ class Dashboard {
     }
     return h("div.hcard.hcard-trackers", [
       h("div.trhead", [
-        h("span.th1", counts.ok + _(" of ") + counts.total + _(" announced")),
+        // No verdicts yet but rows listed: the pass is still in flight, so
+        // the header says so instead of claiming "0 of 0 announced".
+        h("span.th1", counts.total > 0 ? counts.ok + _(" of ") + counts.total + _(" announced") : _("Waiting for trackers…")),
         avg !== null ? h("span.th2", _("avg announce ") + avg.toFixed(1) + " s") : null
       ]),
       h("div.tracker-rows", rows)
