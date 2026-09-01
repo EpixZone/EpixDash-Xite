@@ -185,9 +185,16 @@ class FeedList {
         rows = res;
       }
       this.res = res;
-      if (rows.length < 10 && this.query_day_limit !== null) {
-        this.log("Only " + res.rows.length + " results, query without day limit");
-        this.query_limit = 20;
+      // Fewer rows than we ASKED for means the day window is what's binding,
+      // not the supply - so widen it. Comparing against a hardcoded 10 was
+      // wrong for every request the page actually makes: query_limit starts
+      // at 20 and grows by 30 per scroll, so a feed returning exactly 10 rows
+      // (a full 3-day view on a quiet week) failed `< 10`, never widened, and
+      // the dashboard sat on two cards while months of content waited behind
+      // the window.
+      if (rows.length < this.query_limit && this.query_day_limit !== null) {
+        this.log("Only " + rows.length + " results, query without day limit");
+        this.query_limit = Math.max(this.query_limit, 20);
         this.query_day_limit = null;
         this.updating = false;
         this.update();
