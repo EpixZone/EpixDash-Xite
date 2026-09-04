@@ -105,13 +105,20 @@ class SiteList {
     Page.cmd("siteList", args, (site_rows) => {
       var favorite_sites;
       favorite_sites = Page.settings.favorite_sites;
-      this.item_list.sync(site_rows);
+      // {error} until the ADMIN grant lands on a fresh install: ItemList.sync
+      // quietly treated it as an empty list; remember why it is empty so the
+      // pane can say so instead of showing nothing.
+      this.admin_ok = Array.isArray(site_rows);
+      this.item_list.sync(Page.rows(site_rows));
       this.sortRows(this.item_list.items);
       if (this.inactive_demo_sites === null) {
         this.updateInactiveDemoSites();
       }
+      this.maybeOpenDiscover();
       Page.projector.scheduleRender();
       this.loaded = true;
+      // The landing pane is decided (above): the boot placeholder can go.
+      Page.setBooting(false);
       this.log("loaded");
       return this.on_loaded.resolve();
     });
@@ -270,16 +277,78 @@ class SiteList {
     return false;
   }
 
+  // A node with nothing but its dashboard has nothing to list: on a phone
+  // (one pane at a time) land on Discover, where the xites to visit are,
+  // instead of an empty Xites pane. Once per page load, and never over a
+  // choice the user already made with the segmented control.
+  maybeOpenDiscover() {
+    // A refused answer (no ADMIN grant yet) says nothing about the list, so
+    // it does not use up the one check; the answer after the grant does.
+    if (this.discover_checked || !this.admin_ok) {
+      return;
+    }
+    this.discover_checked = true;
+    if (window.innerWidth > 1024 || Page.seg_feed) {
+      return;
+    }
+    if (this.item_list.items.length <= 1 && Page.feed_list) {
+      Page.feed_list.filter = "discover";
+      Page.setSegFeed(true);
+    }
+  }
+
+  handleDiscoverClick(e) {
+    if (Page.feed_list) {
+      Page.feed_list.filter = "discover";
+    }
+    Page.setSegFeed(true);
+    return false;
+  }
+
+  // The pane before the list can show: siteList still answering, refused
+  // (no ADMIN grant yet), the node still connecting, or simply nothing to
+  // list. A blank pane read as "broken" on a fresh install.
+  renderEmpty() {
+    var state;
+    if (!this.discover_click) {
+      // maquette forbids swapping an event handler between renders.
+      this.discover_click = (e) => this.handleDiscoverClick(e);
+    }
+    if (!Page.dashboard) {
+      return void 0;
+    }
+    if (!this.loaded) {
+      // Same block (and words) as the boot placeholder and the feed pane.
+      state = Page.dashboard.readyState();
+    } else if (!this.admin_ok) {
+      state = {
+        spinning: true,
+        label: _("Waiting for permission"),
+        hint: _("Allow the dashboard to manage this node (the prompt above) to see your xites.")
+      };
+    } else if (Page.server_info && Page.dashboard.healthState().icon === "loader") {
+      state = Page.dashboard.readyState();
+    } else {
+      state = {
+        spinning: false,
+        label: _("No xites yet"),
+        hint: _("Xites you open appear here. Discover lists a few to start with."),
+        action: h("a.pane-empty-action", {href: "?Discover", onclick: this.discover_click}, _("Open Discover"))
+      };
+    }
+    return Page.dashboard.renderEmpty(state);
+  }
+
   render() {
     var filter_base, i, len, num_found, ref, ref1, ref2, site;
-    if (!this.loaded) {
+    if (!this.loaded || this.sites.length === 0) {
       // Same props shape as the loaded return: maquette throws if a node's
       // properties appear only on a later render.
       return h("div#SiteList", {
         classes: {
           compact: false
         }
-      }, []);
+      }, [this.renderEmpty()]);
     }
     this.sites_needaction = [];
     this.sites_favorited = [];
@@ -359,6 +428,14 @@ class SiteList {
     var ref, ref1;
     if ((ref = this.item_list.items_bykey[site_info.address]) != null) {
       ref.setRow(site_info);
+    } else if (this.loaded && this.admin_ok && site_info.address && site_info.settings) {
+      // A xite this list has never seen (activated from Discover, or cloned
+      // in the background): re-read the list so its row appears with its
+      // download progress, instead of only after a page reload.
+      if (!this.update_bound) {
+        this.update_bound = () => this.update();
+      }
+      RateLimitCb(2000, this.update_bound);
     }
     if ((ref1 = this.merger_dups[site_info.address]) != null) {
       ref1.setRow(site_info);

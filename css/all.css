@@ -2162,6 +2162,61 @@ code {
 
 /* ---- xites list ---- */
 
+/* Pane placeholder (Dashboard.renderEmpty): the boot block on phones, the
+   feed pane while feedQuery is out, the xite list before siteList answers
+   (still loading, permission not granted yet, node still connecting) and
+   when there is nothing to list */
+
+.pane-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 56px 24px 24px;
+	color: var(--epix-text-low);
+}
+
+.pane-empty-icon {
+	margin-bottom: 14px;
+	color: var(--epix-text-low);
+}
+
+.pane-empty-icon svg {
+	animation: rotate 0.9s infinite linear;
+}
+
+.pane-empty-label {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--epix-text);
+}
+
+.pane-empty-hint {
+	margin-top: 6px;
+	max-width: 320px;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+/* Boot placeholder (EpixDash.renderBooting). Only the single-column layout
+   shows it, in place of both panes, until the landing pane is decided. */
+
+.Booting {
+	display: none;
+}
+
+.pane-empty-action {
+	display: inline-block;
+	margin-top: 20px;
+	padding: 11px 20px;
+	border-radius: var(--epix-radius-md);
+	background-color: var(--epix-accent);
+	color: #fff;
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
 /* Section headers */
 
 #SiteList h2,
@@ -5734,6 +5789,23 @@ code {
 
 	body.seg-feed .pane-sites {
 		display: none;
+	}
+
+	/* While booting neither pane paints (the landing pane is not decided
+	   yet) and the Xites|Feed control keeps its space without showing a
+	   choice that may flip. Scoped to Sites mode: a deep link to Files or
+	   Stats shows its own page as before. */
+	#BodySites.booting .pane-sites,
+	#BodySites.booting .pane-feed {
+		display: none;
+	}
+
+	#BodySites.booting .Booting {
+		display: block;
+	}
+
+	body.booting #Head .seg {
+		visibility: hidden;
 	}
 }
 

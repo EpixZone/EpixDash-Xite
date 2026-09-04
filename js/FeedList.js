@@ -179,10 +179,30 @@ class FeedList {
     this.updating = true;
     return Page.cmd("feedQuery", params, (res) => {
       var rows;
-      if (res.rows) {
+      // The node answers {rows, num, sites}, an older one a bare array, and a
+      // refused or not-ready command {error}. That last shape used to reach
+      // displayRows as-is: rows.sort threw, `updating` never reset, and the
+      // feed pane stayed blank for the rest of the session (a fresh install
+      // hit it on every load, because feedQuery is refused until the ADMIN
+      // grant lands). Show the empty state instead and let the next update
+      // (the grant callback, a file_done) fill it in.
+      if (res && Array.isArray(res.rows)) {
         rows = res.rows;
-      } else {
+      } else if (Array.isArray(res)) {
         rows = res;
+      } else {
+        this.log("feedQuery failed:", res && res.error);
+        this.updating = false;
+        if (this.feeds === null) {
+          this.feeds = [];
+          this.feed_keys = {};
+          this.feed_types = {};
+        }
+        Page.projector.scheduleRender();
+        if (cb) {
+          cb();
+        }
+        return false;
       }
       this.res = res;
       // Fewer rows than we ASKED for means the day window is what's binding,
@@ -200,13 +220,19 @@ class FeedList {
         this.update();
         return false;
       }
-      this.displayRows(rows);
+      try {
+        this.displayRows(rows);
+      } finally {
+        // A render error must not wedge the feed: every later update() checks
+        // this flag first.
+        this.updating = false;
+      }
       setTimeout(this.checkScroll, 100);
       this.logEnd("Updating feed");
       if (cb) {
         cb();
       }
-      return this.updating = false;
+      return false;
     });
   }
 
@@ -225,17 +251,22 @@ class FeedList {
     this.loading = true;
     Page.projector.scheduleRender();
     return Page.cmd("feedSearch", params, (res) => {
+      var rows;
       this.loading = false;
-      if (res.rows.length < 10 && this.query_day_limit !== null) {
-        this.log("Only " + res.rows.length + " results, search without day limit");
+      // Same shapes as feedQuery: {rows, ...}, or {error} when refused.
+      rows = (res && Array.isArray(res.rows)) ? res.rows : Page.rows(res);
+      if (rows.length < 10 && this.query_day_limit !== null && !(res && res.error)) {
+        this.log("Only " + rows.length + " results, search without day limit");
         this.query_limit = 30;
         this.query_day_limit = null;
         this.search(search, cb);
         return false;
       }
-      this.displayRows(res["rows"], search);
-      delete res["rows"];
-      this.res = res;
+      this.displayRows(rows, search);
+      if (res && res.rows) {
+        delete res["rows"];
+      }
+      this.res = res || {};
       this.searched = search;
       if (cb) {
         return cb();
@@ -909,7 +940,7 @@ class FeedList {
     }
     var installed = Page.site_list.sites_byaddress && Page.site_list.sites_byaddress[address];
     var href = "/" + address + "/";
-    var visitText = installed ? _("Visit \u2501") : _("Activate \u2501");
+    var visitText = installed ? _("Visit \u2501") : _("Open \u2501");
     return h("a.site." + cssClass, {href: href, classes: {installed: !!installed}}, [
       h("div.title", [title]),
       h("div.description", [_(description)]),
@@ -920,12 +951,22 @@ class FeedList {
     ]);
   }
 
+  // The node counts itself in `peers` (floored at 1), so a fresh install
+  // read "served by 1 peers". Nothing to say until someone else serves it.
+  renderServed() {
+    var peers = (Page.site_info && Page.site_info.peers) || 0;
+    if (peers <= 1) {
+      return null;
+    }
+    return h("div.served", [_("Served by "), h("b.peers", "" + (peers - 1)), _(" other people, with no central server.")]);
+  }
+
   renderWelcome() {
     return h("div.welcome", [
       h("img", {src: "img/logo.png", height: 150}),
       h("h1", _("Welcome to EpixNet")),
       h("h2", _("Decentralization Without Compromise")),
-      h("div.served", [_("This xite currently served by "), h("b.peers", (Page.site_info["peers"] || "n/a")), _(" peers, without any central server.")]),
+      this.renderServed(),
       h("div.sites", [
         this.renderDiscoverSite("site-epixtalk", "epix1talk58lw26c0cyrtuu8axptne2p6zf33s7xxwu", "Epix Talk", "Decentralized forum"),
         this.renderDiscoverSite("site-epixblog", "epix18l0gy59ka9ka89wm9mwsspfmkcv9tvf7g0cs6f", "Epix Blog", "Decentralized microblogging"),
@@ -985,7 +1026,7 @@ class FeedList {
       classes: {
         faded: Page.mute_list.visible
       }
-    }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading") : [
+    }, Page.mute_list.updated ? this.renderNotifications() : void 0, this.renderNotificationAlerts(), this.feeds === null || !Page.site_list.loaded ? h("div.loading", Page.dashboard ? [Page.dashboard.renderReady()] : []) : [
       has_feeds ? h("div.feeds-filters", [
         h("a.feeds-filter", {
           key: "all",

@@ -35,11 +35,7 @@ class Dashboard {
       }
     });
     Page.cmd('wrapperPermissionAdd', 'ADMIN', () => {
-      Page.reloadServerInfo();
-      Page.reloadSiteInfo();
-      if (Page.site_list) {
-        Page.site_list.update();
-      }
+      Page.onAdminGranted();
     });
   }
 
@@ -97,6 +93,47 @@ class Dashboard {
     };
   }
 
+  // One block for everything that has nothing to show yet: the boot
+  // placeholder on phones, the feed pane while feedQuery is out, the xite
+  // list before siteList answers. Same spinner, same words, so a fresh
+  // install reads the same wherever it looks first.
+  renderEmpty(state) {
+    return h("div.pane-empty", [
+      state.spinning ? h("div.pane-empty-icon", [this.icon("loader", 24)]) : void 0,
+      h("div.pane-empty-label", state.label),
+      state.hint ? h("div.pane-empty-hint", state.hint) : void 0,
+      state.action
+    ]);
+  }
+
+  // What that block says while the node itself is what is being waited on.
+  // Before serverInfo answers nothing is known; after it the health chip's
+  // own label says where the node is ("Checking…", "Waiting for trackers…").
+  // Once the node is past connecting the wait is only for the lists, and a
+  // "Healthy" label over a spinner would read wrong, so the label goes
+  // generic and the health state moves to the hint when it has something
+  // to say ("Offline · showing saved xites").
+  readyState() {
+    var health, hint;
+    hint = _("This takes a moment on first start.");
+    if (!Page.server_info) {
+      return {spinning: true, label: _("Starting EpixNet…"), hint: hint};
+    }
+    health = this.healthState();
+    if (health.icon === "loader") {
+      return {spinning: true, label: health.label, hint: hint};
+    }
+    return {
+      spinning: true,
+      label: _("Getting ready…"),
+      hint: health.cause ? health.label + " · " + health.cause : null
+    };
+  }
+
+  renderReady() {
+    return this.renderEmpty(this.readyState());
+  }
+
   // announcer_stats is preferred, announcer_info is the fallback (same rule
   // the old Trackers pill used).
   trackerStats() {
@@ -129,17 +166,25 @@ class Dashboard {
 
   // Worst-of ranking: offline > checking > unreachable > tracker trouble > ok.
   healthState() {
-    var counts, percent, answering;
+    var counts, percent, answering, tor;
     if (Page.server_info.offline) {
       return {ink: "warn", icon: "warn", label: _("Offline mode"), cause: _("network disabled")};
     }
     if (this.port_checking || !Page.server_info.network_status) {
       return {ink: "", icon: "loader", label: _("Checking…"), cause: null};
     }
+    counts = this.trackerCounts();
+    // Tor could not start and no tracker has answered: the device is most
+    // likely without a connection (airplane mode, no wifi). Ahead of Limited,
+    // which is also true then but blames the port, and ahead of the tracker
+    // spinner, which would wait for good. The saved xites still open.
+    tor = Page.server_info.network_status.tor;
+    if (tor && tor.status === "Failed" && counts.ok === 0) {
+      return {ink: "warn", icon: "warn", label: _("Offline"), cause: _("showing saved xites")};
+    }
     if (!Page.server_info.network_status.reachable) {
       return {ink: "warn", icon: "warn", label: _("Limited"), cause: _("peers can't reach you")};
     }
-    counts = this.trackerCounts();
     if (counts.total === 0) {
       return {ink: "", icon: "loader", label: _("Waiting for trackers…"), cause: null};
     }

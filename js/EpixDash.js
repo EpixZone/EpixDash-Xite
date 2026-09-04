@@ -14,6 +14,7 @@ class EpixDash extends EpixFrame {
     this.reloadSiteInfo = this.reloadSiteInfo.bind(this);
     this.onOpenWebsocket = this.onOpenWebsocket.bind(this);
     this.handleLinkClick = this.handleLinkClick.bind(this);
+    this.renderBooting = this.renderBooting.bind(this);
   }
 
   // A ws command answers an array of rows, or an object carrying an error
@@ -50,7 +51,27 @@ class EpixDash extends EpixFrame {
     this.mode = (boot_mode === "Files" || boot_mode === "Stats") ? boot_mode : "Sites";
     this.mode_attached = false;
     this.seg_feed = false;
+    // Which pane a phone lands on is only known once siteList answers
+    // (SiteList.maybeOpenDiscover). Until then body.booting hides both panes
+    // and shows one "getting ready" block, so a fresh launch never paints the
+    // Xites pane and then jumps to Discover.
+    this.booting = true;
+    document.body.classList.add("booting");
     return document.body.id = "Body" + this.mode;
+  }
+
+  // The landing pane is decided: let the panes paint.
+  setBooting(on) {
+    this.booting = !!on;
+    document.body.classList.toggle("booting", this.booting);
+    return this.projector.scheduleRender();
+  }
+
+  // The boot placeholder. It sits in .content next to the panes; css shows
+  // it only while body.booting on single-column widths (desktop shows both
+  // panes, each with its own placeholder).
+  renderBooting() {
+    return h("div.Booting", this.booting && this.dashboard ? [this.dashboard.renderReady()] : []);
   }
 
   // Which pane the Sites-mode segmented control shows on single-column
@@ -136,6 +157,7 @@ class EpixDash extends EpixFrame {
     this.dashboard = new Dashboard();
     this.mute_list = new MuteList();
     this.trigger = new Trigger();
+    this.projector.append(document.querySelector(".content"), this.renderBooting);
     if (base.href.indexOf("?") === -1) {
       url = "";
     } else {
@@ -307,6 +329,31 @@ class EpixDash extends EpixFrame {
     // server_info, and setSiteInfo keeps refreshing the stats on pushes.)
     this.reloadAnnouncerStats();
     return this.reloadSiteInfo();
+  }
+
+  // The ADMIN grant just landed (the wrapper's Grant button on a fresh
+  // install). Everything the node refused before it is retried here: the
+  // xite list and feed, tracker stats and server errors, the mute list, and
+  // the all-xite siteChanged subscription - the one sent at socket open was
+  // refused too, so without this other xites' rows never updated live.
+  onAdminGranted() {
+    this.reloadServerInfo();
+    this.reloadSiteInfo();
+    this.reloadServerErrors();
+    this.reloadAnnouncerStats();
+    this.cmd("channelJoinAllsite", {"channel": "siteChanged"});
+    if (this.site_list) {
+      this.site_list.admin_ok = true;
+      this.site_list.update();
+    }
+    if (this.feed_list) {
+      this.feed_list.updating = false;
+      this.feed_list.need_update = true;
+    }
+    if (this.mute_list) {
+      this.mute_list.update();
+    }
+    return this.projector.scheduleRender();
   }
 
   reloadSiteInfo() {
