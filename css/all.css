@@ -2543,9 +2543,70 @@ code {
 	position: relative;
 }
 
-/* Checking for a newer version. Nothing is known to need doing yet, so this
-   one recedes: no fill, quiet ink, no spinner on the row. It is the pill the
-   user sees most often, and it should not read as news. */
+/* The resync check ("is anything newer?") is not news, so it gets no pill:
+   a thin progress ring circles the person glyph in the peers column while
+   the node walks the candidate peers. The ring is absolutely positioned and
+   overflows the glyph's 12px box, so the fixed-width column never moves.
+   Known progress fills the arc clockwise from the top; unknown progress
+   (nothing countable yet) spins a short arc. */
+
+.SiteList .site .inner .details .pring {
+	position: relative;
+	transition: opacity 0.3s ease;
+}
+
+.SiteList .site .inner .details .pring.on {
+	opacity: 1;
+}
+
+.SiteList .site .inner .details .pring .pglyph {
+	display: inline-flex;
+	position: relative;
+}
+
+.SiteList .site .inner .details .pring-svg {
+	position: absolute;
+	left: -3px;
+	top: -3px;
+	width: 18px;
+	height: 18px;
+	display: block;
+	fill: none;
+	transform: rotate(-90deg);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	pointer-events: none;
+}
+
+.SiteList .site .inner .details .pring.on .pring-svg {
+	opacity: 1;
+}
+
+.SiteList .site .inner .details .pring-bg {
+	stroke: var(--epix-border);
+	stroke-width: 1.75;
+}
+
+.SiteList .site .inner .details .pring-fg {
+	stroke: var(--epix-text-mid);
+	stroke-width: 1.75;
+	stroke-linecap: round;
+	stroke-dasharray: 43.98;
+	stroke-dashoffset: 43.98;
+	transition: stroke-dashoffset 0.5s ease;
+}
+
+.SiteList .site .inner .details .pring.spin .pring-svg {
+	animation: working-spin 1s linear infinite;
+}
+
+.SiteList .site .inner .details .pring.spin .pring-fg {
+	stroke-dasharray: 12 31.98;
+	stroke-dashoffset: 0;
+	transition: none;
+}
+
+/* Still used by "Deleting…": quiet pill, no fill, no spinner on the row. */
 
 .SiteList .site .message.checking {
 	background-color: transparent;
