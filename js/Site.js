@@ -23,6 +23,10 @@ var ICON_PATHS = {
 // mounted for this long so the fade has something to animate.
 var MESSAGE_FADE_MS = 260;
 
+// Circumference of the peer-check ring (r=7 in an 18-unit viewBox): the
+// dasharray the CSS uses, and the base for the progress dashoffset.
+var PRING_CIRC = 43.98;
+
 var actionIcon = function(name, size) {
   size = size || 18;
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_PATHS[name] || "") + '</svg>';
@@ -89,6 +93,11 @@ class Site {
     this.message_fading = false;
     this.message_fade_timer = null;
     this.message_progress = null;
+    // The resync check rides the peer glyph as a ring, not the message pill:
+    // whether it is running, and how far through the candidate peers it is
+    // (null = nothing countable, drawn as an indeterminate arc).
+    this.checking = false;
+    this.checking_progress = null;
     this.favorite = Page.settings.favorite_sites[row.address];
     this.key = row.address;
     this.optional_helps = [];
@@ -154,6 +163,10 @@ class Site {
     // adopt it, so an error or "Updated!" pill never wears a stale bar.
     val = row.progress;
     val = (val && val.total > 0) ? Math.min(1, val.done / val.total) : null;
+    // Only the checking branch below keeps the ring on; every other state
+    // (and a push with no phase at all) means the check is over.
+    this.checking = false;
+    this.checking_progress = null;
     if (event === "updated" && files_left === 0) {
       this.setUpdateOutcome(row);
     } else if (files_left > 0) {
@@ -175,12 +188,16 @@ class Site {
       this.setMessage(_("Updating..."));
     } else if (event === "checking" || phase === "checking") {
       // Asking peers whether anything is newer. Nothing is known to be wrong
-      // yet, so this pill is deliberately quiet - it is not news.
-      // Reuses the health strip's existing key, so all 22 languages already
-      // translate it. The bar is its walk through the candidate peers - the
-      // honest reason this state takes as long as it does.
-      this.setMessage(_("Checking…"), "checking");
-      this.message_progress = val;
+      // yet, so this is deliberately quiet - it is not news: no pill, just a
+      // progress ring around the peer glyph. The ring is its walk through
+      // the candidate peers - the honest reason this state takes as long as
+      // it does. A pill from before the check retires the way it did when
+      // the "Checking…" pill replaced it.
+      this.checking = true;
+      this.checking_progress = val;
+      if (this.message_visible && this.message_class !== "checking") {
+        this.setMessage("");
+      }
     } else if (row.bad_files > 0) {
       if (row.peers <= 1) {
         this.setMessage(_("No peers"), "error");
@@ -838,9 +855,11 @@ class Site {
             h("span.mic", {innerHTML: actionIcon("clock", 12)}),
             stat_value
           ]),
-          h("span.peers", {title: peers_value + _(" peers")}, [
+          h("span.peers", {
+            title: this.checking ? _("Checking…") + " \u00B7 " + peers_value + _(" peers") : peers_value + _(" peers")
+          }, [
             formatPeers(peers_value),
-            h("span.mic", {innerHTML: actionIcon("person", 12)})
+            this.renderPeerGlyph()
           ])
         ]),
         // The message pill is pushed flush right on the meta line (margin-left:
@@ -875,6 +894,29 @@ class Site {
       "aria-expanded": actions_open ? "true" : "false",
       onclick: this.handleActionsClick
     }, [h("span.action-icon", {innerHTML: actionIcon(actions_open ? "chevronUp" : "dots", 20)})]), this.renderActions());
+  }
+
+  // The person glyph, wrapped so a progress ring can circle it while the
+  // resync check walks the candidate peers. The ring overflows the glyph's
+  // 12px box (absolutely positioned), so the fixed-width peers column keeps
+  // its layout whether or not a check is running. Known progress fills the
+  // arc; unknown progress spins a short arc.
+  renderPeerGlyph() {
+    var progress = this.checking ? this.checking_progress : null;
+    var known = progress != null;
+    return h("span.mic.pring", {
+      classes: {on: this.checking, spin: this.checking && !known},
+      "aria-hidden": "true"
+    }, [
+      h("svg.pring-svg", {viewBox: "0 0 18 18"}, [
+        h("circle.pring-bg", {cx: "9", cy: "9", r: "7"}),
+        h("circle.pring-fg", {
+          cx: "9", cy: "9", r: "7",
+          styles: {"stroke-dashoffset": known ? String(PRING_CIRC * (1 - progress)) : ""}
+        })
+      ]),
+      h("span.pglyph", {innerHTML: actionIcon("person", 12)})
+    ]);
   }
 
   // A .fact chip (same anatomy the Stats mini panels use: label + optional
