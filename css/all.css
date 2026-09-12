@@ -2407,12 +2407,17 @@ code {
 	order: 2;
 	margin-left: auto;
 	margin-right: 0;
+	/* The peer-check ring overflows the person glyph (its last child) by 3px
+	   on every side, and .details clips (overflow: hidden, for the ellipsis).
+	   Pinned to the right edge, the ring lost its right 3px - it read as a
+	   second gap. Keep that much slack inside the clipped box. */
+	padding-right: 3px;
 	/* Fixed column: wide enough for the person glyph plus "999k+" (the
-	   formatter's widest output). Number and glyph pack right - the icon
-	   sits at a fixed right position with the count against it, so the
-	   column's slack hides on the left instead of gapping in the middle,
-	   and the date column's endpoint stays put. */
-	width: 50px;
+	   formatter's widest output), plus the 3px ring slack above. Number and
+	   glyph pack right - the icon sits at a fixed right position with the
+	   count against it, so the column's slack hides on the left instead of
+	   gapping in the middle, and the date column's endpoint stays put. */
+	width: 53px;
 	justify-content: flex-end;
 }
 
