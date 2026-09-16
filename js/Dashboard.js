@@ -161,7 +161,7 @@ class Dashboard {
 
   handleEnableAlwaysTorClick() {
     return Page.cmd("configSet", ["tor", "always"], (res) => {
-      Page.cmd("wrapperNotification", ["done", "Tor always mode enabled, please restart your EpixNet to make it work.<br>For your privacy switch to Tor browser and start a new profile by renaming the data directory."]);
+      Page.cmd("wrapperNotification", ["done", "Tor Always selected. Restart EpixNet to apply it to node connections.<br>Check your browser's separate proxy settings; this does not guarantee anonymity."]);
       return Page.cmd("wrapperConfirm", ["Restart EpixNet client?", "Restart now"], (res) => {
         if (res) {
           return Page.cmd("serverShutdown", {
@@ -281,14 +281,14 @@ class Dashboard {
       });
     }
     // The Epix Browser routes clearnet through Tor when the extension's
-    // "Clearnet traffic over Tor" box is checked, so it's already safe - skip
+    // "Clearnet traffic over Tor" box is checked, so that routing warning is unnecessary - skip
     // the Tor-browser nudge in that case.
     var browser_safe = Page.server_info.epix_browser && Page.server_info.browser_tor_clearnet;
     if (this.isTorAlways() && !browser_safe && (!navigator.userAgent.match(/(Firefox)/) || (navigator.maxTouchPoints != null) || (navigator.serviceWorker != null))) {
       warnings.push({
-        title: "Your browser is not safe",
+        title: "Check your browser's routing",
         href: Text.getSiteUrl("epix1readmehqfdxy4pzx7u72wwaerc4psx0gt6fety") + "faq/#how-to-use-epixnet-in-tor-browser",
-        descr: "To protect your anonymity you should use EpixNet in the Tor or Epix Browser."
+        descr: "Tor Always controls the node's connections. Your browser may still connect directly to external sites. Check its proxy settings; using Tor or Epix Browser does not guarantee anonymity."
       });
     }
     if (Page.server_info.lib_verify_best === "btctools") {
