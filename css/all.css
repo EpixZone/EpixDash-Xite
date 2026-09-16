@@ -3800,7 +3800,6 @@ code {
 .welcome .site-epixwiki { border-top-color: var(--epix-warning); }
 .welcome .site-vrfdebugger { border-top-color: var(--epix-success); }
 .welcome .site-explorer { border-top-color: var(--epix-teal); }
-.welcome .site-deflix { border-top-color: var(--epix-danger); }
 .welcome .site-epixdocs { border-top-color: var(--epix-success); }
 
 .welcome .site.coming-soon {

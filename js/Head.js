@@ -531,6 +531,7 @@ class Head {
   }
 
   render() {
+    var has_feeds = Page.feed_list && Page.feed_list.feeds && Page.feed_list.feeds.length > 0;
     return h("div#Head", [
       h("div.eyebrow", [
         h("span.apptitle", [this.modeTitle()]),
@@ -572,7 +573,7 @@ class Head {
           classes: { active: Page.seg_feed },
           "aria-pressed": Page.seg_feed ? "true" : "false",
           onclick: this.handleSegFeedClick
-        }, [_("Feed")])
+        }, [has_feeds ? _("Feed") : _("Discover")])
       ])
     ]);
   }
