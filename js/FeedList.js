@@ -47,14 +47,26 @@ class FeedList {
     this.date_save_feed_visit = 0;
     this.notification_alerts = [];
     this.notification_alerts_loaded = false;
-    // Addresses whose declared favicon failed to load; they fall back to the
-    // brand-color ring until the page reloads. The handler is bound once:
+    // Favicons that failed to load, keyed by address, declared path and
+    // content version (a corrected path or a re-signed xite is a new key and
+    // retries at once); they fall back to the brand-color ring and retry on
+    // the same backoff the xite rows use. The handler is bound once:
     // maquette forbids a function property changing identity across renders.
     this.favicon_failed = {};
+    this.favicon_retries = {};
+    this.favicon_retry_timers = {};
     this.handleFaviconError = (e) => {
-      var address = e.target.getAttribute("data-address");
-      if (address) {
-        this.favicon_failed[address] = true;
+      var key = e.target.getAttribute("data-favicon-key");
+      if (key) {
+        this.favicon_failed[key] = true;
+        if (!this.favicon_retry_timers[key]) {
+          var retries = this.favicon_retries[key] = (this.favicon_retries[key] || 0) + 1;
+          this.favicon_retry_timers[key] = setTimeout(() => {
+            delete this.favicon_retry_timers[key];
+            delete this.favicon_failed[key];
+            Page.projector.scheduleRender();
+          }, Site.faviconRetryDelay(retries));
+        }
       }
       return Page.projector.scheduleRender();
     };
@@ -652,11 +664,13 @@ class FeedList {
     var content = site.row.content || {};
     var favicon = content.favicon;
     var address = site.row.address;
-    if (favicon && !this.favicon_failed[address]) {
+    var key = address + "@" + site.faviconKey(site.row);
+    if (favicon && !this.favicon_failed[key]) {
+      var retries = this.favicon_retries[key] || 0;
       return h("img.favicon", {
-        src: "/" + address + "/" + favicon,
+        src: "/" + address + "/" + favicon + (retries ? "?retry=" + retries : ""),
         alt: "",
-        "data-address": address,
+        "data-favicon-key": key,
         onerror: this.handleFaviconError
       });
     }
