@@ -77,12 +77,29 @@ class Site {
     this.handleFavoriteClick = this.handleFavoriteClick.bind(this);
     this.deleted = false;
     // The declared favicon failed to load; fall back to the brand-color
-    // letter tile. Bound once: maquette forbids a function property changing
+    // letter tile and try the image again later. The failure is remembered
+    // against the favicon path and content version it came from (see
+    // faviconKey), so a corrected path or a re-signed xite retries at once,
+    // and a transient miss (the node still starting, the file not landed
+    // yet) retries on a backoff instead of leaving the tile until the page
+    // reloads. Bound once: maquette forbids a function property changing
     // identity across renders.
-    this.favicon_failed = false;
+    this.favicon_failed = null;
+    this.favicon_retries = 0;
+    this.favicon_retry_timer = null;
     this.handleFaviconError = () => {
-      this.favicon_failed = true;
+      this.favicon_failed = this.faviconKey(this.row);
+      this.favicon_retries += 1;
+      clearTimeout(this.favicon_retry_timer);
+      this.favicon_retry_timer = setTimeout(() => {
+        this.favicon_retry_timer = null;
+        this.favicon_failed = null;
+        Page.projector.scheduleRender();
+      }, Site.faviconRetryDelay(this.favicon_retries));
       return Page.projector.scheduleRender();
+    };
+    this.handleFaviconLoad = () => {
+      this.favicon_retries = 0;
     };
     this.show_errors = false;
     this.message_visible = false;
@@ -228,7 +245,27 @@ class Site {
       }
       return results;
     })();
+    // A new favicon path or a re-signed content.json is a new image: forget
+    // the old failure and its backoff so the row tries it right away.
+    if (this.favicon_failed && this.favicon_failed !== this.faviconKey(row)) {
+      clearTimeout(this.favicon_retry_timer);
+      this.favicon_retry_timer = null;
+      this.favicon_failed = null;
+      this.favicon_retries = 0;
+    }
     return this.row = row;
+  }
+
+  // What a favicon failure is remembered against: the declared path and the
+  // content version it came from.
+  faviconKey(row) {
+    var content = (row && row.content) || {};
+    return content.favicon + "@" + (content.modified || 0);
+  }
+
+  // Backoff between favicon retries: 15s, 30s, 1m, 2m, 4m, then 5m.
+  static faviconRetryDelay(retries) {
+    return Math.min(15000 * Math.pow(2, Math.max(0, retries - 1)), 5 * 60 * 1000);
   }
 
   // How an update pass ended. `update_applied` is the node telling us whether
@@ -752,15 +789,17 @@ class Site {
   // The row marker: the xite's declared favicon when it loads, else a
   // letter tile in the address' brand-color bucket. "Epix Talk" -> T,
   // "EpixScreen" -> S: the brand prefix carries no identity, so the tile
-  // letter comes from the distinctive word instead.
+  // letter comes from the distinctive word instead. A retry carries a query
+  // so the browser fetches again instead of replaying its cached failure.
   renderMarker() {
     var content, letter, m, name;
     content = this.row.content || {};
-    if (content.favicon && !this.favicon_failed) {
+    if (content.favicon && this.favicon_failed !== this.faviconKey(this.row)) {
       return h("img.favicon", {
-        src: "/" + this.row.address + "/" + content.favicon,
+        src: "/" + this.row.address + "/" + content.favicon + (this.favicon_retries ? "?retry=" + this.favicon_retries : ""),
         alt: "",
-        onerror: this.handleFaviconError
+        onerror: this.handleFaviconError,
+        onload: this.handleFaviconLoad
       });
     }
     name = content.title || this.row.address;
