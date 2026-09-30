@@ -152,6 +152,11 @@ class Site {
     if (this.help_all_hold_until && Date.now() < this.help_all_hold_until) {
       row.settings.autodownloadoptional = this.help_all_value;
     }
+    // Clone progress can omit the update timestamp. Keep the last known
+    // value until a push supplies one, including an explicit zero to clear it.
+    if (!Object.prototype.hasOwnProperty.call(row.settings, "modified") && this.row && this.row.settings) {
+      row.settings.modified = this.row.settings.modified;
+    }
     if ((base = row.settings).modified == null) {
       base.modified = 0;
     }

@@ -2,6 +2,10 @@
 
   class Time {
     since(timestamp) {
+      timestamp = Number(timestamp);
+      if (!Number.isFinite(timestamp) || timestamp <= 0) {
+        return _("Unknown");
+      }
       var now = +(new Date) / 1000;
       if (timestamp > 1000000000000) {
         timestamp = timestamp / 1000;
