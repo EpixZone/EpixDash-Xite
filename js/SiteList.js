@@ -1,5 +1,15 @@
 (function() {
 
+// Sort keys. A merger with merged xites under it (merged_stats, set by
+// groupMergedSites) sorts as its group: newest update and summed peers.
+function sortModified(site) {
+  return (site.merged_stats ? site.merged_stats.modified : site.row.settings.modified) || 0;
+}
+
+function sortPeers(site) {
+  return site.merged_stats ? site.merged_stats.peers : Math.max(site.row.peers || 0, site.row.settings.peers || 0);
+}
+
 class SiteList {
   constructor() {
     this.onSiteInfo = this.onSiteInfo.bind(this);
@@ -72,9 +82,12 @@ class SiteList {
   }
 
   sortRows(rows) {
+    // Mergers sort by the group overview their row shows (newest update,
+    // summed peers), so refresh the grouping before comparing.
+    this.classifySites();
     if (Page.settings.sites_orderby === "modified") {
       rows.sort(function(a, b) {
-        return b.row.settings.modified - a.row.settings.modified;
+        return sortModified(b) - sortModified(a);
       });
     } else if (Page.settings.sites_orderby === "addtime") {
       rows.sort(function(a, b) {
@@ -86,7 +99,7 @@ class SiteList {
       });
     } else {
       rows.sort(function(a, b) {
-        return Math.max(b.row.peers, b.row.settings.peers) - Math.max(a.row.peers, a.row.settings.peers);
+        return sortPeers(b) - sortPeers(a);
       });
     }
     return rows;
@@ -143,6 +156,12 @@ class SiteList {
   groupMergedSites(section_rows) {
     var base, i, j, k, len, len1, len2, merged_type, merger, mergers_bytype, name, permission, ref, ref1, rows, site, stats;
     mergers_bytype = {};
+    // Drop last pass's aggregates: a merger whose merged xites are gone (or
+    // filtered out) shows and sorts by its own numbers again.
+    ref = this.sites;
+    for (i = 0, len = ref.length; i < len; i++) {
+      ref[i].merged_stats = null;
+    }
     for (i = 0, len = section_rows.length; i < len; i++) {
       rows = section_rows[i];
       for (j = 0, len1 = rows.length; j < len1; j++) {
@@ -188,7 +207,7 @@ class SiteList {
         continue;
       }
       stats = {
-        modified: merger.row.settings.modified,
+        modified: merger.row.settings.modified || 0,
         peers: Math.max(merger.row.settings.peers || 0, merger.row.peers || 0)
       };
       for (i = 0, len = rows.length; i < len; i++) {
@@ -270,17 +289,11 @@ class SiteList {
     return false;
   }
 
-  render() {
+  // Split the xites into the list's sections (honouring the filter) and
+  // rebuild the merged grouping. Shared by render and sortRows so mergers
+  // sort by the same group aggregates their rows display.
+  classifySites() {
     var filter_base, i, len, num_found, ref, ref1, ref2, site;
-    if (!this.loaded) {
-      // Same props shape as the loaded return: maquette throws if a node's
-      // properties appear only on a later render.
-      return h("div#SiteList", {
-        classes: {
-          compact: false
-        }
-      }, []);
-    }
     this.sites_needaction = [];
     this.sites_favorited = [];
     this.sites_owned = [];
@@ -317,6 +330,21 @@ class SiteList {
       num_found += 1;
     }
     this.groupMergedSites([this.sites_needaction, this.sites_favorited, this.sites_owned, this.sites_recent, this.sites_connected.slice(0, +(this.limit - 1) + 1 || 9e9), this.sites_connecting]);
+    return num_found;
+  }
+
+  render() {
+    var num_found;
+    if (!this.loaded) {
+      // Same props shape as the loaded return: maquette throws if a node's
+      // properties appear only on a later render.
+      return h("div#SiteList", {
+        classes: {
+          compact: false
+        }
+      }, []);
+    }
+    num_found = this.classifySites();
     return h("div#SiteList", {
       // Same threshold that shows the filter box: once the list is long
       // enough to need searching, rows tighten to one line each so more
