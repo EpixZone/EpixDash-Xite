@@ -58,8 +58,9 @@ epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t/
 │   ├── lib/               # Maquette, EpixFrame, marked
 │   └── utils/             # Animation, Deferred, Text, Time, Menu, etc.
 ├── languages/             # 22 languages
-└── template-new/
-    └── index.html          # Template for new sites
+└── template-new/          # Copied into every new xite (Settings > Create new xite)
+    ├── index.html          # Starter page
+    └── js/lib/epixframe.min.js  # EpixFrame, used by the starter's API example
 ```
 
 ## Modes
