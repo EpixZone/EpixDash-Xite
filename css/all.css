@@ -65,7 +65,7 @@
 	--epix-border-strong: var(--epix-neutral-4);
 	--epix-text: var(--epix-neutral-9);
 	--epix-text-mid: var(--epix-neutral-6);
-	--epix-text-low: var(--epix-neutral-5);
+	--epix-text-low: #575961;
 	--epix-accent: var(--epix-purple);
 	--epix-accent-soft: rgba(138, 75, 219, 0.14);
 	--epix-on-accent: #FEFEFE;
@@ -82,8 +82,8 @@
 	--dash-ok-ink: #177e53;
 	--dash-warn-ink: #8a6d0b;
 	--dash-bad-ink: #c11b3d;
-	--dot-cyan: #0d94ab;
-	--dot-teal: #17858d;
+	--dot-cyan: #087184;
+	--dot-teal: #086f76;
 	--dot-indigo: var(--epix-indigo);
 	--dot-purple: var(--epix-purple);
 	--dash-hl-bg: rgba(240, 182, 34, 0.32);
@@ -103,7 +103,7 @@
 	--viz-mag: #5954CD;
 	--viz-grid: rgba(114, 116, 123, 0.16);
 	--viz-zero: rgba(114, 116, 123, 0.35);
-	--viz-ink: #72747B;
+	--viz-ink: var(--epix-text-low);
 	--viz-tip-bg: #FEFEFE;
 	--viz-tip-ink: #1D1D1F;
 
@@ -2425,10 +2425,6 @@ code {
 	margin-left: 12px;
 }
 
-.SiteList .site .inner .details .modified {
-	opacity: 0.85;
-}
-
 .SiteList .site.modified-lastday .inner .details .modified {
 	opacity: 1;
 	color: var(--epix-text-mid);
@@ -2446,8 +2442,8 @@ code {
 	opacity: 0.35;
 }
 
-.SiteList .site.disabled .inner {
-	opacity: 0.5;
+.SiteList .site.disabled .inner .title {
+	color: var(--epix-text-mid);
 }
 
 /* Demo "Activate" + "Set limit" chips */
